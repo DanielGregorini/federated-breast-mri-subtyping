@@ -1,0 +1,7 @@
+experiment,name,algorithm,partition,site,split,patients,images,patients_HRposHER2neg,patients_TripleNeg,patients_HER2pos,cohorts,pct_patients,pct_images
+test11,test11_fedprox_cohort,fedprox,3_clients_cohort,hospital_1,train,514,4067,341,82,91,"{""duke"": 642}",33.66,33.53
+test11,test11_fedprox_cohort,fedprox,3_clients_cohort,hospital_1,val,128,1007,85,20,23,"{""duke"": 642}",8.38,8.3
+test11,test11_fedprox_cohort,fedprox,3_clients_cohort,hospital_2,train,82,652,34,22,26,"{""spy1"": 101}",5.37,5.37
+test11,test11_fedprox_cohort,fedprox,3_clients_cohort,hospital_2,val,19,152,8,5,6,"{""spy1"": 101}",1.24,1.25
+test11,test11_fedprox_cohort,fedprox,3_clients_cohort,hospital_3,train,627,5005,244,225,158,"{""spy2"": 784}",41.06,41.26
+test11,test11_fedprox_cohort,fedprox,3_clients_cohort,hospital_3,val,157,1248,61,56,40,"{""spy2"": 784}",10.28,10.29

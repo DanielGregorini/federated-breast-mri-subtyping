@@ -1,0 +1,28 @@
+{
+  "site": "hospital_2",
+  "global_class_weights": [
+    0.658473,
+    1.241463,
+    1.479651
+  ],
+  "partition": "2_clients_balanced",
+  "mode": "stratified",
+  "train": {
+    "patients": 611,
+    "slices": 4849,
+    "per_class_patients": [
+      309,
+      164,
+      138
+    ]
+  },
+  "val": {
+    "patients": 152,
+    "slices": 1198,
+    "per_class_patients": [
+      77,
+      41,
+      34
+    ]
+  }
+}

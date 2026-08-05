@@ -1,0 +1,69 @@
+{
+  "experiment": "test06",
+  "name": "test06_fedavg_4h",
+  "algorithm": "fedavg",
+  "kind": "federated",
+  "n_hospitals": 4,
+  "data_split": "4 hospitals, balanced (25 each)  ->  25.0% / 25.0% / 25.0% / 25.0%",
+  "seed": 42,
+  "model": "resnet18",
+  "dataset": "multi_subtype_80mm",
+  "model_used": "selected",
+  "best_epoch": null,
+  "best_round": 0,
+  "training_time_s": 317.0,
+  "training_time_kind": "job wall clock (incl. orchestration)",
+  "global_test": {
+    "n_patients": 268,
+    "auc": 0.653131540811975,
+    "accuracy": 0.47761194029850745,
+    "balanced_accuracy": 0.4521863085421824,
+    "macro_precision": 0.4646130830953352,
+    "macro_recall": 0.4521863085421824,
+    "macro_f1": 0.43783694948492186,
+    "per_class_auc": [
+      0.6666852398729592,
+      0.6845479082321188,
+      0.6081614743308469
+    ],
+    "per_class_precision": [
+      0.6201550387596899,
+      0.5,
+      0.2736842105263158
+    ],
+    "per_class_recall": [
+      0.583941605839416,
+      0.28205128205128205,
+      0.49056603773584906
+    ],
+    "per_class_f1": [
+      0.6015037593984962,
+      0.36065573770491804,
+      0.35135135135135137
+    ],
+    "class_counts": [
+      137,
+      78,
+      53
+    ],
+    "confusion": [
+      [
+        80,
+        14,
+        43
+      ],
+      [
+        30,
+        22,
+        26
+      ],
+      [
+        19,
+        8,
+        26
+      ]
+    ],
+    "trivial_baseline_accuracy": 0.5111940298507462
+  },
+  "per_client": {}
+}

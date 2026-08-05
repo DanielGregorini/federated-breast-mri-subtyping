@@ -1,0 +1,8 @@
+experiment,name,algorithm,n_hospitals,partition,data_split,accuracy,macro_precision,macro_recall,macro_f1,macro_auc,best_epoch,best_round,training_time_s,reference,reference_macro_auc,delta_macro_auc,within_noise_floor
+test01,test01_centralized,centralized,1,-,all data pooled,0.5299,0.4606,0.4503,0.4523,0.6068,4.0,,267.6,centralized (test01),0.6068,0.0,True
+test04,test04_fedavg_3h,fedavg,3,3_clients_balanced,"3 hospitals, balanced (33.3 each)  ->  33.3% / 33.3% / 33.3%",0.4851,0.4333,0.4198,0.4231,0.599,,27.0,313.0,centralized (test01),0.6068,-0.0078,True
+test05,test05_fedprox_3h,fedprox,3,3_clients_balanced,"3 hospitals, balanced (33.3 each)  ->  33.3% / 33.3% / 33.3%",0.459,0.4208,0.4127,0.4116,0.5958,,28.0,333.0,centralized (test01),0.6068,-0.011,True
+test10,test10_fedavg_cohort,fedavg,3,3_clients_cohort,"3 hospitals, one cohort each (DUKE | I-SPY1 | I-SPY2)  ->  42.0% / 6.6% / 51.3%",0.4291,0.3523,0.3582,0.3536,0.5426,,7.0,469.0,centralized (test01),0.6068,-0.0642,True
+test12,test12_fedavg_sizematched,fedavg,3,3_clients_sizematched,"3 hospitals, cohorts mixed, sizes matched to 3_clients_cohort  ->  42.0% / 6.6% / 51.3%",0.4478,0.4187,0.4183,0.4153,0.5836,,17.0,471.0,centralized (test01),0.6068,-0.0232,True
+test11,test11_fedprox_cohort,fedprox,3,3_clients_cohort,"3 hospitals, one cohort each (DUKE | I-SPY1 | I-SPY2)  ->  42.0% / 6.6% / 51.3%",0.459,0.4302,0.4105,0.4144,0.5678,,16.0,482.0,centralized (test01),0.6068,-0.039,True
+test13,test13_fedprox_sizematched,fedprox,3,3_clients_sizematched,"3 hospitals, cohorts mixed, sizes matched to 3_clients_cohort  ->  42.0% / 6.6% / 51.3%",0.4664,0.3925,0.3885,0.3884,0.5882,,27.0,485.0,centralized (test01),0.6068,-0.0186,True

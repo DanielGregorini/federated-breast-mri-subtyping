@@ -1,0 +1,111 @@
+{
+  "partition": "3_clients_sizematched",
+  "mode": "stratified",
+  "n_clients": 3,
+  "ratio": [
+    642,
+    101,
+    784
+  ],
+  "fractions": [
+    0.4204322200392927,
+    0.06614276358873608,
+    0.5134250163719711
+  ],
+  "seed": 42,
+  "source": "dataset/multi_subtype_80mm",
+  "built": "2026-08-05T14:00:29+00:00",
+  "local_val_fraction": 0.2,
+  "global_class_weights": [
+    0.6584734799482536,
+    1.2414634146341463,
+    1.4796511627906976
+  ],
+  "total_patients": 1527,
+  "sites": [
+    {
+      "site": "hospital_1",
+      "global_class_weights": [
+        0.658473,
+        1.241463,
+        1.479651
+      ],
+      "partition": "3_clients_sizematched",
+      "mode": "stratified",
+      "train": {
+        "patients": 514,
+        "slices": 4096,
+        "per_class_patients": [
+          260,
+          138,
+          116
+        ]
+      },
+      "val": {
+        "patients": 128,
+        "slices": 1020,
+        "per_class_patients": [
+          65,
+          34,
+          29
+        ]
+      }
+    },
+    {
+      "site": "hospital_2",
+      "global_class_weights": [
+        0.658473,
+        1.241463,
+        1.479651
+      ],
+      "partition": "3_clients_sizematched",
+      "mode": "stratified",
+      "train": {
+        "patients": 81,
+        "slices": 640,
+        "per_class_patients": [
+          41,
+          22,
+          18
+        ]
+      },
+      "val": {
+        "patients": 20,
+        "slices": 160,
+        "per_class_patients": [
+          10,
+          5,
+          5
+        ]
+      }
+    },
+    {
+      "site": "hospital_3",
+      "global_class_weights": [
+        0.658473,
+        1.241463,
+        1.479651
+      ],
+      "partition": "3_clients_sizematched",
+      "mode": "stratified",
+      "train": {
+        "patients": 628,
+        "slices": 4976,
+        "per_class_patients": [
+          318,
+          169,
+          141
+        ]
+      },
+      "val": {
+        "patients": 156,
+        "slices": 1239,
+        "per_class_patients": [
+          79,
+          42,
+          35
+        ]
+      }
+    }
+  ]
+}

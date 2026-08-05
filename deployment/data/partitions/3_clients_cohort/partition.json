@@ -1,0 +1,111 @@
+{
+  "partition": "3_clients_cohort",
+  "mode": "cohort",
+  "n_clients": 3,
+  "ratio": [
+    642,
+    101,
+    784
+  ],
+  "fractions": [
+    0.4204322200392927,
+    0.06614276358873608,
+    0.5134250163719711
+  ],
+  "seed": 42,
+  "source": "dataset/multi_subtype_80mm",
+  "built": "2026-08-05T14:00:35+00:00",
+  "local_val_fraction": 0.2,
+  "global_class_weights": [
+    0.6584734799482536,
+    1.2414634146341463,
+    1.4796511627906976
+  ],
+  "total_patients": 1527,
+  "sites": [
+    {
+      "site": "hospital_1",
+      "global_class_weights": [
+        0.658473,
+        1.241463,
+        1.479651
+      ],
+      "partition": "3_clients_cohort",
+      "mode": "cohort",
+      "train": {
+        "patients": 514,
+        "slices": 4067,
+        "per_class_patients": [
+          341,
+          82,
+          91
+        ]
+      },
+      "val": {
+        "patients": 128,
+        "slices": 1007,
+        "per_class_patients": [
+          85,
+          20,
+          23
+        ]
+      }
+    },
+    {
+      "site": "hospital_2",
+      "global_class_weights": [
+        0.658473,
+        1.241463,
+        1.479651
+      ],
+      "partition": "3_clients_cohort",
+      "mode": "cohort",
+      "train": {
+        "patients": 82,
+        "slices": 652,
+        "per_class_patients": [
+          34,
+          22,
+          26
+        ]
+      },
+      "val": {
+        "patients": 19,
+        "slices": 152,
+        "per_class_patients": [
+          8,
+          5,
+          6
+        ]
+      }
+    },
+    {
+      "site": "hospital_3",
+      "global_class_weights": [
+        0.658473,
+        1.241463,
+        1.479651
+      ],
+      "partition": "3_clients_cohort",
+      "mode": "cohort",
+      "train": {
+        "patients": 627,
+        "slices": 5005,
+        "per_class_patients": [
+          244,
+          225,
+          158
+        ]
+      },
+      "val": {
+        "patients": 157,
+        "slices": 1248,
+        "per_class_patients": [
+          61,
+          56,
+          40
+        ]
+      }
+    }
+  ]
+}

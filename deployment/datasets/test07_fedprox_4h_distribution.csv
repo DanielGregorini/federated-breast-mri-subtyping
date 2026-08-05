@@ -1,0 +1,9 @@
+experiment,name,algorithm,partition,site,split,patients,images,patients_HRposHER2neg,patients_TripleNeg,patients_HER2pos,cohorts,pct_patients,pct_images
+test07,test07_fedprox_4h,fedprox,4_clients_balanced,hospital_1,train,306,2439,155,82,69,"{""spy2"": 194, ""duke"": 160, ""spy1"": 29}",20.04,20.11
+test07,test07_fedprox_4h,fedprox,4_clients_balanced,hospital_1,val,77,614,39,21,17,"{""spy2"": 194, ""duke"": 160, ""spy1"": 29}",5.04,5.06
+test07,test07_fedprox_4h,fedprox,4_clients_balanced,hospital_2,train,305,2423,154,82,69,"{""spy2"": 202, ""duke"": 161, ""spy1"": 19}",19.97,19.97
+test07,test07_fedprox_4h,fedprox,4_clients_balanced,hospital_2,val,77,616,39,21,17,"{""spy2"": 202, ""duke"": 161, ""spy1"": 19}",5.04,5.08
+test07,test07_fedprox_4h,fedprox,4_clients_balanced,hospital_3,train,305,2426,154,82,69,"{""spy2"": 184, ""duke"": 169, ""spy1"": 28}",19.97,20.0
+test07,test07_fedprox_4h,fedprox,4_clients_balanced,hospital_3,val,76,608,39,20,17,"{""spy2"": 184, ""duke"": 169, ""spy1"": 28}",4.98,5.01
+test07,test07_fedprox_4h,fedprox,4_clients_balanced,hospital_4,train,305,2399,154,82,69,"{""spy2"": 204, ""duke"": 152, ""spy1"": 25}",19.97,19.78
+test07,test07_fedprox_4h,fedprox,4_clients_balanced,hospital_4,val,76,606,39,20,17,"{""spy2"": 204, ""duke"": 152, ""spy1"": 25}",4.98,5.0

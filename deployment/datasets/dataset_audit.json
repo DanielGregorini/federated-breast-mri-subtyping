@@ -1,0 +1,1335 @@
+{
+  "audited": "2026-08-05T14:00:46+00:00",
+  "source_dataset": "/Users/daniel/Developer/tese/federated-breast-mri-subtyping/dataset/multi_subtype_80mm",
+  "source": {
+    "config": {
+      "n_slices": 8,
+      "trim_frac": 0.15,
+      "crop_mm": 80.0,
+      "save_size": 224,
+      "normalization": "minmax",
+      "chanclip_q": 0.98,
+      "min_tumor_px": 10,
+      "roi_basis": "area_max",
+      "cohorts": [
+        "spy2",
+        "spy1",
+        "duke"
+      ],
+      "n_patients": 2063,
+      "n_images": 16378,
+      "errors": {}
+    },
+    "n_patients": 2063,
+    "n_images": 16378,
+    "patients_per_cohort": {
+      "spy2": 982,
+      "duke": 914,
+      "spy1": 167
+    },
+    "images_per_cohort": {
+      "spy2": 7835,
+      "duke": 7212,
+      "spy1": 1331
+    },
+    "patients_per_class": {
+      "HRposHER2neg": 1042,
+      "TripleNeg": 564,
+      "HER2pos": 457
+    },
+    "images_per_class": {
+      "HRposHER2neg": 8230,
+      "TripleNeg": 4495,
+      "HER2pos": 3653
+    },
+    "source_splits": {
+      "train": {
+        "patients": 1527,
+        "images": 12131
+      },
+      "val": {
+        "patients": 268,
+        "images": 2132
+      },
+      "test": {
+        "patients": 268,
+        "images": 2115
+      }
+    }
+  },
+  "global_splits": {
+    "val": {
+      "patients": 268,
+      "images": 2132,
+      "patients_per_class": [
+        132,
+        76,
+        60
+      ],
+      "images_per_class": [
+        1045,
+        608,
+        479
+      ],
+      "patients_per_cohort": {
+        "duke": 136,
+        "spy2": 99,
+        "spy1": 33
+      },
+      "trivial_baseline": 0.4925
+    },
+    "test": {
+      "patients": 268,
+      "images": 2115,
+      "patients_per_class": [
+        137,
+        78,
+        53
+      ],
+      "images_per_class": [
+        1067,
+        624,
+        424
+      ],
+      "patients_per_cohort": {
+        "duke": 136,
+        "spy2": 99,
+        "spy1": 33
+      },
+      "trivial_baseline": 0.5112
+    }
+  },
+  "partitions": {
+    "2_clients_balanced": {
+      "label": "2 hospitals, balanced (50/50)",
+      "n_clients": 2,
+      "ratio": [
+        1,
+        1
+      ],
+      "fractions": [
+        0.5,
+        0.5
+      ],
+      "stratified": true,
+      "total_patients": 1527,
+      "total_images": 12131,
+      "sites": {
+        "hospital_1": {
+          "splits": {
+            "train": {
+              "patients": 612,
+              "images": 4870,
+              "patients_per_class": [
+                310,
+                164,
+                138
+              ],
+              "images_per_class": [
+                2466,
+                1302,
+                1102
+              ],
+              "patients_per_cohort": {
+                "spy2": 322,
+                "duke": 254,
+                "spy1": 36
+              }
+            },
+            "val": {
+              "patients": 152,
+              "images": 1214,
+              "patients_per_class": [
+                77,
+                41,
+                34
+              ],
+              "images_per_class": [
+                614,
+                328,
+                272
+              ],
+              "patients_per_cohort": {
+                "spy2": 73,
+                "duke": 67,
+                "spy1": 12
+              }
+            }
+          },
+          "patients": 764,
+          "images": 6084,
+          "patients_per_class": [
+            387,
+            205,
+            172
+          ],
+          "class_pct": [
+            50.65,
+            26.83,
+            22.51
+          ],
+          "patients_per_cohort": {
+            "duke": 321,
+            "spy1": 48,
+            "spy2": 395
+          }
+        },
+        "hospital_2": {
+          "splits": {
+            "train": {
+              "patients": 611,
+              "images": 4849,
+              "patients_per_class": [
+                309,
+                164,
+                138
+              ],
+              "images_per_class": [
+                2438,
+                1307,
+                1104
+              ],
+              "patients_per_cohort": {
+                "spy2": 302,
+                "duke": 260,
+                "spy1": 49
+              }
+            },
+            "val": {
+              "patients": 152,
+              "images": 1198,
+              "patients_per_class": [
+                77,
+                41,
+                34
+              ],
+              "images_per_class": [
+                600,
+                326,
+                272
+              ],
+              "patients_per_cohort": {
+                "spy2": 87,
+                "duke": 61,
+                "spy1": 4
+              }
+            }
+          },
+          "patients": 763,
+          "images": 6047,
+          "patients_per_class": [
+            386,
+            205,
+            172
+          ],
+          "class_pct": [
+            50.59,
+            26.87,
+            22.54
+          ],
+          "patients_per_cohort": {
+            "duke": 321,
+            "spy1": 53,
+            "spy2": 389
+          }
+        }
+      }
+    },
+    "3_clients_balanced": {
+      "label": "3 hospitals, balanced (33.3 each)",
+      "n_clients": 3,
+      "ratio": [
+        1,
+        1,
+        1
+      ],
+      "fractions": [
+        0.333333,
+        0.333333,
+        0.333333
+      ],
+      "stratified": true,
+      "total_patients": 1527,
+      "total_images": 12131,
+      "sites": {
+        "hospital_1": {
+          "splits": {
+            "train": {
+              "patients": 408,
+              "images": 3245,
+              "patients_per_class": [
+                206,
+                110,
+                92
+              ],
+              "images_per_class": [
+                1634,
+                875,
+                736
+              ],
+              "patients_per_cohort": {
+                "spy2": 198,
+                "duke": 186,
+                "spy1": 24
+              }
+            },
+            "val": {
+              "patients": 102,
+              "images": 816,
+              "patients_per_class": [
+                52,
+                27,
+                23
+              ],
+              "images_per_class": [
+                416,
+                216,
+                184
+              ],
+              "patients_per_cohort": {
+                "spy2": 56,
+                "duke": 36,
+                "spy1": 10
+              }
+            }
+          },
+          "patients": 510,
+          "images": 4061,
+          "patients_per_class": [
+            258,
+            137,
+            115
+          ],
+          "class_pct": [
+            50.59,
+            26.86,
+            22.55
+          ],
+          "patients_per_cohort": {
+            "duke": 222,
+            "spy1": 34,
+            "spy2": 254
+          }
+        },
+        "hospital_2": {
+          "splits": {
+            "train": {
+              "patients": 408,
+              "images": 3249,
+              "patients_per_class": [
+                206,
+                110,
+                92
+              ],
+              "images_per_class": [
+                1644,
+                870,
+                735
+              ],
+              "patients_per_cohort": {
+                "spy2": 205,
+                "duke": 172,
+                "spy1": 31
+              }
+            },
+            "val": {
+              "patients": 102,
+              "images": 814,
+              "patients_per_class": [
+                52,
+                27,
+                23
+              ],
+              "images_per_class": [
+                416,
+                215,
+                183
+              ],
+              "patients_per_cohort": {
+                "spy2": 58,
+                "duke": 38,
+                "spy1": 6
+              }
+            }
+          },
+          "patients": 510,
+          "images": 4063,
+          "patients_per_class": [
+            258,
+            137,
+            115
+          ],
+          "class_pct": [
+            50.59,
+            26.86,
+            22.55
+          ],
+          "patients_per_cohort": {
+            "duke": 210,
+            "spy1": 37,
+            "spy2": 263
+          }
+        },
+        "hospital_3": {
+          "splits": {
+            "train": {
+              "patients": 406,
+              "images": 3206,
+              "patients_per_class": [
+                206,
+                109,
+                91
+              ],
+              "images_per_class": [
+                1607,
+                871,
+                728
+              ],
+              "patients_per_cohort": {
+                "spy2": 216,
+                "duke": 165,
+                "spy1": 25
+              }
+            },
+            "val": {
+              "patients": 101,
+              "images": 801,
+              "patients_per_class": [
+                51,
+                27,
+                23
+              ],
+              "images_per_class": [
+                401,
+                216,
+                184
+              ],
+              "patients_per_cohort": {
+                "spy2": 51,
+                "duke": 45,
+                "spy1": 5
+              }
+            }
+          },
+          "patients": 507,
+          "images": 4007,
+          "patients_per_class": [
+            257,
+            136,
+            114
+          ],
+          "class_pct": [
+            50.69,
+            26.82,
+            22.49
+          ],
+          "patients_per_cohort": {
+            "duke": 210,
+            "spy1": 30,
+            "spy2": 267
+          }
+        }
+      }
+    },
+    "4_clients_balanced": {
+      "label": "4 hospitals, balanced (25 each)",
+      "n_clients": 4,
+      "ratio": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "fractions": [
+        0.25,
+        0.25,
+        0.25,
+        0.25
+      ],
+      "stratified": true,
+      "total_patients": 1527,
+      "total_images": 12131,
+      "sites": {
+        "hospital_1": {
+          "splits": {
+            "train": {
+              "patients": 306,
+              "images": 2439,
+              "patients_per_class": [
+                155,
+                82,
+                69
+              ],
+              "images_per_class": [
+                1231,
+                656,
+                552
+              ],
+              "patients_per_cohort": {
+                "spy2": 155,
+                "duke": 128,
+                "spy1": 23
+              }
+            },
+            "val": {
+              "patients": 77,
+              "images": 614,
+              "patients_per_class": [
+                39,
+                21,
+                17
+              ],
+              "images_per_class": [
+                310,
+                168,
+                136
+              ],
+              "patients_per_cohort": {
+                "spy2": 39,
+                "duke": 32,
+                "spy1": 6
+              }
+            }
+          },
+          "patients": 383,
+          "images": 3053,
+          "patients_per_class": [
+            194,
+            103,
+            86
+          ],
+          "class_pct": [
+            50.65,
+            26.89,
+            22.45
+          ],
+          "patients_per_cohort": {
+            "duke": 160,
+            "spy1": 29,
+            "spy2": 194
+          }
+        },
+        "hospital_2": {
+          "splits": {
+            "train": {
+              "patients": 305,
+              "images": 2423,
+              "patients_per_class": [
+                154,
+                82,
+                69
+              ],
+              "images_per_class": [
+                1227,
+                646,
+                550
+              ],
+              "patients_per_cohort": {
+                "spy2": 157,
+                "duke": 131,
+                "spy1": 17
+              }
+            },
+            "val": {
+              "patients": 77,
+              "images": 616,
+              "patients_per_class": [
+                39,
+                21,
+                17
+              ],
+              "images_per_class": [
+                312,
+                168,
+                136
+              ],
+              "patients_per_cohort": {
+                "spy2": 45,
+                "duke": 30,
+                "spy1": 2
+              }
+            }
+          },
+          "patients": 382,
+          "images": 3039,
+          "patients_per_class": [
+            193,
+            103,
+            86
+          ],
+          "class_pct": [
+            50.52,
+            26.96,
+            22.51
+          ],
+          "patients_per_cohort": {
+            "duke": 161,
+            "spy1": 19,
+            "spy2": 202
+          }
+        },
+        "hospital_3": {
+          "splits": {
+            "train": {
+              "patients": 305,
+              "images": 2426,
+              "patients_per_class": [
+                154,
+                82,
+                69
+              ],
+              "images_per_class": [
+                1225,
+                649,
+                552
+              ],
+              "patients_per_cohort": {
+                "spy2": 150,
+                "duke": 132,
+                "spy1": 23
+              }
+            },
+            "val": {
+              "patients": 76,
+              "images": 608,
+              "patients_per_class": [
+                39,
+                20,
+                17
+              ],
+              "images_per_class": [
+                312,
+                160,
+                136
+              ],
+              "patients_per_cohort": {
+                "duke": 37,
+                "spy2": 34,
+                "spy1": 5
+              }
+            }
+          },
+          "patients": 381,
+          "images": 3034,
+          "patients_per_class": [
+            193,
+            102,
+            86
+          ],
+          "class_pct": [
+            50.66,
+            26.77,
+            22.57
+          ],
+          "patients_per_cohort": {
+            "duke": 169,
+            "spy1": 28,
+            "spy2": 184
+          }
+        },
+        "hospital_4": {
+          "splits": {
+            "train": {
+              "patients": 305,
+              "images": 2399,
+              "patients_per_class": [
+                154,
+                82,
+                69
+              ],
+              "images_per_class": [
+                1191,
+                656,
+                552
+              ],
+              "patients_per_cohort": {
+                "spy2": 158,
+                "duke": 125,
+                "spy1": 22
+              }
+            },
+            "val": {
+              "patients": 76,
+              "images": 606,
+              "patients_per_class": [
+                39,
+                20,
+                17
+              ],
+              "images_per_class": [
+                310,
+                160,
+                136
+              ],
+              "patients_per_cohort": {
+                "spy2": 46,
+                "duke": 27,
+                "spy1": 3
+              }
+            }
+          },
+          "patients": 381,
+          "images": 3005,
+          "patients_per_class": [
+            193,
+            102,
+            86
+          ],
+          "class_pct": [
+            50.66,
+            26.77,
+            22.57
+          ],
+          "patients_per_cohort": {
+            "duke": 152,
+            "spy1": 25,
+            "spy2": 204
+          }
+        }
+      }
+    },
+    "4_clients_skewed": {
+      "label": "4 hospitals, skewed 5:2:1:1 (dissertation: 50/20/10/10)",
+      "n_clients": 4,
+      "ratio": [
+        5,
+        2,
+        1,
+        1
+      ],
+      "fractions": [
+        0.555556,
+        0.222222,
+        0.111111,
+        0.111111
+      ],
+      "stratified": true,
+      "total_patients": 1527,
+      "total_images": 12131,
+      "sites": {
+        "hospital_1": {
+          "splits": {
+            "train": {
+              "patients": 678,
+              "images": 5395,
+              "patients_per_class": [
+                343,
+                182,
+                153
+              ],
+              "images_per_class": [
+                2730,
+                1443,
+                1222
+              ],
+              "patients_per_cohort": {
+                "spy2": 348,
+                "duke": 286,
+                "spy1": 44
+              }
+            },
+            "val": {
+              "patients": 170,
+              "images": 1358,
+              "patients_per_class": [
+                86,
+                46,
+                38
+              ],
+              "images_per_class": [
+                686,
+                368,
+                304
+              ],
+              "patients_per_cohort": {
+                "spy2": 90,
+                "duke": 71,
+                "spy1": 9
+              }
+            }
+          },
+          "patients": 848,
+          "images": 6753,
+          "patients_per_class": [
+            429,
+            228,
+            191
+          ],
+          "class_pct": [
+            50.59,
+            26.89,
+            22.52
+          ],
+          "patients_per_cohort": {
+            "duke": 357,
+            "spy1": 53,
+            "spy2": 438
+          }
+        },
+        "hospital_2": {
+          "splits": {
+            "train": {
+              "patients": 273,
+              "images": 2171,
+              "patients_per_class": [
+                138,
+                73,
+                62
+              ],
+              "images_per_class": [
+                1095,
+                580,
+                496
+              ],
+              "patients_per_cohort": {
+                "duke": 126,
+                "spy2": 124,
+                "spy1": 23
+              }
+            },
+            "val": {
+              "patients": 67,
+              "images": 534,
+              "patients_per_class": [
+                34,
+                18,
+                15
+              ],
+              "images_per_class": [
+                270,
+                144,
+                120
+              ],
+              "patients_per_cohort": {
+                "spy2": 41,
+                "duke": 24,
+                "spy1": 2
+              }
+            }
+          },
+          "patients": 340,
+          "images": 2705,
+          "patients_per_class": [
+            172,
+            91,
+            77
+          ],
+          "class_pct": [
+            50.59,
+            26.76,
+            22.65
+          ],
+          "patients_per_cohort": {
+            "duke": 150,
+            "spy1": 25,
+            "spy2": 165
+          }
+        },
+        "hospital_3": {
+          "splits": {
+            "train": {
+              "patients": 136,
+              "images": 1073,
+              "patients_per_class": [
+                69,
+                37,
+                30
+              ],
+              "images_per_class": [
+                537,
+                296,
+                240
+              ],
+              "patients_per_cohort": {
+                "spy2": 69,
+                "duke": 60,
+                "spy1": 7
+              }
+            },
+            "val": {
+              "patients": 34,
+              "images": 266,
+              "patients_per_class": [
+                17,
+                9,
+                8
+              ],
+              "images_per_class": [
+                130,
+                72,
+                64
+              ],
+              "patients_per_cohort": {
+                "duke": 17,
+                "spy2": 15,
+                "spy1": 2
+              }
+            }
+          },
+          "patients": 170,
+          "images": 1339,
+          "patients_per_class": [
+            86,
+            46,
+            38
+          ],
+          "class_pct": [
+            50.59,
+            27.06,
+            22.35
+          ],
+          "patients_per_cohort": {
+            "duke": 77,
+            "spy1": 9,
+            "spy2": 84
+          }
+        },
+        "hospital_4": {
+          "splits": {
+            "train": {
+              "patients": 135,
+              "images": 1066,
+              "patients_per_class": [
+                69,
+                36,
+                30
+              ],
+              "images_per_class": [
+                538,
+                288,
+                240
+              ],
+              "patients_per_cohort": {
+                "spy2": 79,
+                "duke": 42,
+                "spy1": 14
+              }
+            },
+            "val": {
+              "patients": 34,
+              "images": 268,
+              "patients_per_class": [
+                17,
+                9,
+                8
+              ],
+              "images_per_class": [
+                132,
+                72,
+                64
+              ],
+              "patients_per_cohort": {
+                "spy2": 18,
+                "duke": 16
+              }
+            }
+          },
+          "patients": 169,
+          "images": 1334,
+          "patients_per_class": [
+            86,
+            45,
+            38
+          ],
+          "class_pct": [
+            50.89,
+            26.63,
+            22.49
+          ],
+          "patients_per_cohort": {
+            "duke": 58,
+            "spy1": 14,
+            "spy2": 97
+          }
+        }
+      }
+    },
+    "3_clients_cohort": {
+      "label": "3 hospitals, one cohort each (DUKE | I-SPY1 | I-SPY2)",
+      "n_clients": 3,
+      "ratio": [
+        642,
+        101,
+        784
+      ],
+      "fractions": [
+        0.420432,
+        0.066143,
+        0.513425
+      ],
+      "stratified": false,
+      "total_patients": 1527,
+      "total_images": 12131,
+      "sites": {
+        "hospital_1": {
+          "splits": {
+            "train": {
+              "patients": 514,
+              "images": 4067,
+              "patients_per_class": [
+                341,
+                82,
+                91
+              ],
+              "images_per_class": [
+                2686,
+                655,
+                726
+              ],
+              "patients_per_cohort": {
+                "duke": 514
+              }
+            },
+            "val": {
+              "patients": 128,
+              "images": 1007,
+              "patients_per_class": [
+                85,
+                20,
+                23
+              ],
+              "images_per_class": [
+                668,
+                155,
+                184
+              ],
+              "patients_per_cohort": {
+                "duke": 128
+              }
+            }
+          },
+          "patients": 642,
+          "images": 5074,
+          "patients_per_class": [
+            426,
+            102,
+            114
+          ],
+          "class_pct": [
+            66.36,
+            15.89,
+            17.76
+          ],
+          "patients_per_cohort": {
+            "duke": 642
+          }
+        },
+        "hospital_2": {
+          "splits": {
+            "train": {
+              "patients": 82,
+              "images": 652,
+              "patients_per_class": [
+                34,
+                22,
+                26
+              ],
+              "images_per_class": [
+                271,
+                173,
+                208
+              ],
+              "patients_per_cohort": {
+                "spy1": 82
+              }
+            },
+            "val": {
+              "patients": 19,
+              "images": 152,
+              "patients_per_class": [
+                8,
+                5,
+                6
+              ],
+              "images_per_class": [
+                64,
+                40,
+                48
+              ],
+              "patients_per_cohort": {
+                "spy1": 19
+              }
+            }
+          },
+          "patients": 101,
+          "images": 804,
+          "patients_per_class": [
+            42,
+            27,
+            32
+          ],
+          "class_pct": [
+            41.58,
+            26.73,
+            31.68
+          ],
+          "patients_per_cohort": {
+            "spy1": 101
+          }
+        },
+        "hospital_3": {
+          "splits": {
+            "train": {
+              "patients": 627,
+              "images": 5005,
+              "patients_per_class": [
+                244,
+                225,
+                158
+              ],
+              "images_per_class": [
+                1943,
+                1798,
+                1264
+              ],
+              "patients_per_cohort": {
+                "spy2": 627
+              }
+            },
+            "val": {
+              "patients": 157,
+              "images": 1248,
+              "patients_per_class": [
+                61,
+                56,
+                40
+              ],
+              "images_per_class": [
+                486,
+                442,
+                320
+              ],
+              "patients_per_cohort": {
+                "spy2": 157
+              }
+            }
+          },
+          "patients": 784,
+          "images": 6253,
+          "patients_per_class": [
+            305,
+            281,
+            198
+          ],
+          "class_pct": [
+            38.9,
+            35.84,
+            25.26
+          ],
+          "patients_per_cohort": {
+            "spy2": 784
+          }
+        }
+      }
+    },
+    "3_clients_sizematched": {
+      "label": "3 hospitals, cohorts mixed, sizes matched to 3_clients_cohort",
+      "n_clients": 3,
+      "ratio": [
+        642,
+        101,
+        784
+      ],
+      "fractions": [
+        0.420432,
+        0.066143,
+        0.513425
+      ],
+      "stratified": true,
+      "total_patients": 1527,
+      "total_images": 12131,
+      "sites": {
+        "hospital_1": {
+          "splits": {
+            "train": {
+              "patients": 514,
+              "images": 4096,
+              "patients_per_class": [
+                260,
+                138,
+                116
+              ],
+              "images_per_class": [
+                2070,
+                1099,
+                927
+              ],
+              "patients_per_cohort": {
+                "spy2": 262,
+                "duke": 218,
+                "spy1": 34
+              }
+            },
+            "val": {
+              "patients": 128,
+              "images": 1020,
+              "patients_per_class": [
+                65,
+                34,
+                29
+              ],
+              "images_per_class": [
+                516,
+                272,
+                232
+              ],
+              "patients_per_cohort": {
+                "spy2": 67,
+                "duke": 52,
+                "spy1": 9
+              }
+            }
+          },
+          "patients": 642,
+          "images": 5116,
+          "patients_per_class": [
+            325,
+            172,
+            145
+          ],
+          "class_pct": [
+            50.62,
+            26.79,
+            22.59
+          ],
+          "patients_per_cohort": {
+            "duke": 270,
+            "spy1": 43,
+            "spy2": 329
+          }
+        },
+        "hospital_2": {
+          "splits": {
+            "train": {
+              "patients": 81,
+              "images": 640,
+              "patients_per_class": [
+                41,
+                22,
+                18
+              ],
+              "images_per_class": [
+                326,
+                171,
+                143
+              ],
+              "patients_per_cohort": {
+                "spy2": 42,
+                "duke": 36,
+                "spy1": 3
+              }
+            },
+            "val": {
+              "patients": 20,
+              "images": 160,
+              "patients_per_class": [
+                10,
+                5,
+                5
+              ],
+              "images_per_class": [
+                80,
+                40,
+                40
+              ],
+              "patients_per_cohort": {
+                "spy2": 12,
+                "duke": 7,
+                "spy1": 1
+              }
+            }
+          },
+          "patients": 101,
+          "images": 800,
+          "patients_per_class": [
+            51,
+            27,
+            23
+          ],
+          "class_pct": [
+            50.5,
+            26.73,
+            22.77
+          ],
+          "patients_per_cohort": {
+            "duke": 43,
+            "spy1": 4,
+            "spy2": 54
+          }
+        },
+        "hospital_3": {
+          "splits": {
+            "train": {
+              "patients": 628,
+              "images": 4976,
+              "patients_per_class": [
+                318,
+                169,
+                141
+              ],
+              "images_per_class": [
+                2503,
+                1345,
+                1128
+              ],
+              "patients_per_cohort": {
+                "spy2": 317,
+                "duke": 261,
+                "spy1": 50
+              }
+            },
+            "val": {
+              "patients": 156,
+              "images": 1239,
+              "patients_per_class": [
+                79,
+                42,
+                35
+              ],
+              "images_per_class": [
+                623,
+                336,
+                280
+              ],
+              "patients_per_cohort": {
+                "spy2": 84,
+                "duke": 68,
+                "spy1": 4
+              }
+            }
+          },
+          "patients": 784,
+          "images": 6215,
+          "patients_per_class": [
+            397,
+            211,
+            176
+          ],
+          "class_pct": [
+            50.64,
+            26.91,
+            22.45
+          ],
+          "patients_per_cohort": {
+            "duke": 329,
+            "spy1": 54,
+            "spy2": 401
+          }
+        }
+      }
+    }
+  },
+  "provenance": {
+    "format": "PNG",
+    "mode": "RGB",
+    "size": [
+      224,
+      224
+    ],
+    "sampled": 200,
+    "same_inode": 200,
+    "total_source_images": 16378
+  },
+  "checks_run": 127,
+  "failures": []
+}

@@ -1,0 +1,36 @@
+{
+  "source": "dataset/multi_subtype_80mm",
+  "built": "2026-08-05T13:59:57+00:00",
+  "hardlinked": true,
+  "classes": [
+    "HRposHER2neg",
+    "TripleNeg",
+    "HER2pos"
+  ],
+  "splits": {
+    "test": {
+      "split": "test",
+      "patients": 268,
+      "slices": 2115,
+      "files_placed": 2115,
+      "per_class_patients": [
+        137,
+        78,
+        53
+      ],
+      "trivial_baseline": 0.5111940298507462
+    },
+    "val": {
+      "split": "val",
+      "patients": 268,
+      "slices": 2132,
+      "files_placed": 2132,
+      "per_class_patients": [
+        132,
+        76,
+        60
+      ],
+      "trivial_baseline": 0.4925373134328358
+    }
+  }
+}

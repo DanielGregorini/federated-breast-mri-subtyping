@@ -1,0 +1,141 @@
+{
+  "partition": "4_clients_skewed",
+  "mode": "stratified",
+  "n_clients": 4,
+  "ratio": [
+    5,
+    2,
+    1,
+    1
+  ],
+  "fractions": [
+    0.5555555555555556,
+    0.2222222222222222,
+    0.1111111111111111,
+    0.1111111111111111
+  ],
+  "seed": 42,
+  "source": "dataset/multi_subtype_80mm",
+  "built": "2026-08-05T14:00:23+00:00",
+  "local_val_fraction": 0.2,
+  "global_class_weights": [
+    0.6584734799482536,
+    1.2414634146341463,
+    1.4796511627906976
+  ],
+  "total_patients": 1527,
+  "sites": [
+    {
+      "site": "hospital_1",
+      "global_class_weights": [
+        0.658473,
+        1.241463,
+        1.479651
+      ],
+      "partition": "4_clients_skewed",
+      "mode": "stratified",
+      "train": {
+        "patients": 678,
+        "slices": 5395,
+        "per_class_patients": [
+          343,
+          182,
+          153
+        ]
+      },
+      "val": {
+        "patients": 170,
+        "slices": 1358,
+        "per_class_patients": [
+          86,
+          46,
+          38
+        ]
+      }
+    },
+    {
+      "site": "hospital_2",
+      "global_class_weights": [
+        0.658473,
+        1.241463,
+        1.479651
+      ],
+      "partition": "4_clients_skewed",
+      "mode": "stratified",
+      "train": {
+        "patients": 273,
+        "slices": 2171,
+        "per_class_patients": [
+          138,
+          73,
+          62
+        ]
+      },
+      "val": {
+        "patients": 67,
+        "slices": 534,
+        "per_class_patients": [
+          34,
+          18,
+          15
+        ]
+      }
+    },
+    {
+      "site": "hospital_3",
+      "global_class_weights": [
+        0.658473,
+        1.241463,
+        1.479651
+      ],
+      "partition": "4_clients_skewed",
+      "mode": "stratified",
+      "train": {
+        "patients": 136,
+        "slices": 1073,
+        "per_class_patients": [
+          69,
+          37,
+          30
+        ]
+      },
+      "val": {
+        "patients": 34,
+        "slices": 266,
+        "per_class_patients": [
+          17,
+          9,
+          8
+        ]
+      }
+    },
+    {
+      "site": "hospital_4",
+      "global_class_weights": [
+        0.658473,
+        1.241463,
+        1.479651
+      ],
+      "partition": "4_clients_skewed",
+      "mode": "stratified",
+      "train": {
+        "patients": 135,
+        "slices": 1066,
+        "per_class_patients": [
+          69,
+          36,
+          30
+        ]
+      },
+      "val": {
+        "patients": 34,
+        "slices": 268,
+        "per_class_patients": [
+          17,
+          9,
+          8
+        ]
+      }
+    }
+  ]
+}

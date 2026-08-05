@@ -1,0 +1,100 @@
+# NVFLARE provisioning file — defines the participants of the federation.
+#
+# This produces the PKI "startup kits": one folder per participant, each holding its
+# own certificate, private key, and the scripts that start it. Those kits are what
+# makes the deployment real rather than simulated — every participant authenticates
+# to every other one with its own identity, exactly as separate hospitals would.
+#
+# Provision with:
+#     nvflare provision -p project.yml -w production
+#
+# or, preferably, `scripts/provision.sh`, which passes exactly that and then verifies
+# the kits. The output folder is named `production` because that is what it holds: the
+# real deployment. NVFLARE's simulator and POC modes never write here.
+#
+# GOING FROM ONE LAPTOP TO FOUR HOSPITALS
+# ---------------------------------------
+# Everything below is localhost today. To deploy for real, three things change and
+# nothing else does:
+#
+#   1. `default_host` on the server becomes the coordinating centre's DNS name or
+#      public IP, reachable by every hospital on ports 8002 and 8003.
+#   2. Each client entry may gain its own `default_host` if it must be reachable.
+#   3. Re-provision, then copy each hospital's startup kit to its own machine.
+#
+# The job definitions, the client code, and the data layout are untouched. That is
+# the whole reason addresses live here and only here — mirrored in
+# config/federation.py, which is what the Python code reads.
+#
+# PROVISION ONCE, REUSE FOR ALL NINE EXPERIMENTS
+# ----------------------------------------------
+# Four hospitals are provisioned even though tests 02-05 use only two or three. The
+# smaller experiments use a subset of the same kits, so certificates are identical
+# across every test and a difference between two results can never be a difference
+# in PKI.
+
+api_version: 3
+
+name: breast_fl_project
+
+description: Federated breast-cancer molecular-subtype classification (ResNet-18)
+
+participants:
+
+  # ------------------------------------------------------------------ #
+  # Aggregation server — the coordinating centre.                      #
+  # Holds no patient images. It receives model updates, averages them, #
+  # and holds the global test set used for the official evaluation.    #
+  # ------------------------------------------------------------------ #
+  - name: server
+    type: server
+    org: ips
+    # Clients connect here to receive tasks and return model updates.
+    fed_learn_port: 8002
+    # The admin API connects here to submit and monitor jobs. Keeping the two
+    # ports separate is what lets a hospital firewall expose only the first.
+    admin_port: 8003
+    default_host: localhost
+
+  # ------------------------------------------------------------------ #
+  # Federated hospitals — each holds its own patients and never shares #
+  # an image. Only model weights leave the site.                       #
+  # ------------------------------------------------------------------ #
+  - {name: hospital_1, type: client, org: h1}
+  - {name: hospital_2, type: client, org: h2}
+  - {name: hospital_3, type: client, org: h3}
+  - {name: hospital_4, type: client, org: h4}
+
+  # ------------------------------------------------------------------ #
+  # Administrator — submits jobs, monitors them, downloads results.    #
+  # In a real federation this is a person at the coordinating centre,  #
+  # holding their own certificate.                                     #
+  # ------------------------------------------------------------------ #
+  # NVFLARE validates admin names against a full email regex — it requires a TLD, so
+  # `admin@ips` is rejected with INVALID_ARGS at provisioning time. The name must
+  # match config/federation.py::ADMIN_USER exactly, or `run_experiment.py` looks for
+  # a startup kit that was never generated.
+  - {name: admin@ips.pt, type: admin, org: ips, role: project_admin}
+
+builders:
+
+  # Lays out the workspace folder structure for every participant.
+  - path: nvflare.lighter.impl.workspace.WorkspaceBuilder
+    args:
+      template_file:
+        - master_template.yml
+        - aws_template.yml
+        - azure_template.yml
+
+  # Writes each participant's static configuration (fed_server.json,
+  # fed_client.json, fed_admin.json) into its startup kit.
+  - path: nvflare.lighter.impl.static_file.StaticFileBuilder
+    args:
+      config_folder: config
+
+  # Issues the root CA and one certificate + private key per participant.
+  # This is what mutual TLS between sites is built on.
+  - path: nvflare.lighter.impl.cert.CertBuilder
+
+  # Signs the startup kits so tampering is detectable.
+  - path: nvflare.lighter.impl.signature.SignatureBuilder

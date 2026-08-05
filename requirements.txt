@@ -1,0 +1,26 @@
+# Federated arm of the dissertation. Install with:
+#     pip install -r requirements.txt
+#
+# The model, the augmentation and the patient-level evaluator are NOT listed here as a
+# dependency, because they are not a package — they are imported from the sibling
+# `src/` folder. See src/thesis.py, and set $BREASTDCEDL_THESIS if it
+# lives somewhere other than beside this project.
+
+# The federated runtime. 2.8 is where the Recipes API and ProdEnv used here settled;
+# developed and smoke-tested against 2.8.0.
+nvflare>=2.8,<3
+
+# The model. CUDA build strongly recommended — Apple MPS corrupts this network's
+# weights to NaN partway through the first epoch (measured), so src/models.py falls
+# back to CPU there rather than risk a silently diverged client being averaged into
+# the global model.
+torch>=2.2
+torchvision>=0.17
+
+numpy>=1.24
+pandas>=2.0
+pillow>=10.0            # PNG decoding in the slice dataset
+scikit-learn>=1.3       # every metric in src/evaluation.py
+
+# Figures, for analysis/ only. Nothing in the training path imports it.
+matplotlib>=3.7

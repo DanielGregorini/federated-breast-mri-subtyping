@@ -1,0 +1,23 @@
+\begin{table}
+\caption{Global test-set results for every experiment. Noise floor 0.067 macro-AUC.}
+\label{tab:main-results}
+\begin{tabular}{llrrrrr}
+\toprule
+experiment & algorithm & n_hospitals & accuracy & macro_f1 & macro_auc & best_round \\
+\midrule
+test01 & centralized & 1 & 0.5299 & 0.4523 & 0.6068 & -- \\
+test02 & fedavg & 2 & 0.4030 & 0.3744 & 0.5594 & 25.0000 \\
+test03 & fedprox & 2 & 0.4328 & 0.4001 & 0.5917 & 29.0000 \\
+test04 & fedavg & 3 & 0.4851 & 0.4231 & 0.5990 & 27.0000 \\
+test05 & fedprox & 3 & 0.4590 & 0.4116 & 0.5958 & 28.0000 \\
+test06 & fedavg & 4 & 0.4776 & 0.4378 & 0.6531 & 0.0000 \\
+test07 & fedprox & 4 & 0.4739 & 0.4362 & 0.6075 & 0.0000 \\
+test08 & fedavg & 4 & 0.4888 & 0.4292 & 0.5982 & 21.0000 \\
+test09 & fedprox & 4 & 0.4515 & 0.4197 & 0.6250 & 2.0000 \\
+test10 & fedavg & 3 & 0.4291 & 0.3536 & 0.5426 & 7.0000 \\
+test12 & fedavg & 3 & 0.4478 & 0.4153 & 0.5836 & 17.0000 \\
+test11 & fedprox & 3 & 0.4590 & 0.4144 & 0.5678 & 16.0000 \\
+test13 & fedprox & 3 & 0.4664 & 0.3884 & 0.5882 & 27.0000 \\
+\bottomrule
+\end{tabular}
+\end{table}

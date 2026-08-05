@@ -1,0 +1,131 @@
+{
+  "dataset": "multi_subtype_80mm_chanclip",
+  "model": "resnet18",
+  "best_epoch": 3,
+  "epochs_run": 33,
+  "target": "subtype",
+  "aggregation": "mean",
+  "class_names": [
+    "HRposHER2neg",
+    "TripleNeg",
+    "HER2pos"
+  ],
+  "parameters": {
+    "total": 11178051,
+    "trainable": 10494979,
+    "frozen": 683072,
+    "trainable_fraction": 0.938892
+  },
+  "trivial_baseline_accuracy": 0.5111940298507462,
+  "config": {
+    "model_name": "resnet18",
+    "pretrained": true,
+    "image_size": 224,
+    "num_classes": 3,
+    "batch_size": 24,
+    "learning_rate": 0.0001,
+    "weight_decay": 0.0005,
+    "dropout": 0.5,
+    "epochs": 100,
+    "early_stopping_patience": 30,
+    "scheduler": "cosine",
+    "optimizer": "adamw",
+    "label_smoothing": 0.1,
+    "class_weighted_loss": true,
+    "slice_selection": "all",
+    "n_central": 5,
+    "train_mode": "full",
+    "freeze_until": "layer3",
+    "freeze_bn": false,
+    "mixup_alpha": 0.0,
+    "aug_profile": "half",
+    "backbone_lr_scale": 0.1,
+    "max_slices_per_patient_per_batch": 1,
+    "mixed_precision": true,
+    "num_workers": 16,
+    "seed": 42,
+    "aggregation": "mean",
+    "monitor_metric": "patient_auc",
+    "monitor_mode": "max"
+  },
+  "val": {
+    "n_patients": 268,
+    "auc": 0.6623261314171724,
+    "accuracy": 0.47761194029850745,
+    "balanced_accuracy": 0.44779372674109513,
+    "macro_f1": 0.4444470960275156,
+    "per_class_auc": [
+      0.6834,
+      0.6534,
+      0.6502
+    ],
+    "per_class_recall": [
+      0.553,
+      0.4737,
+      0.3167
+    ],
+    "class_counts": [
+      132,
+      76,
+      60
+    ],
+    "confusion": [
+      [
+        73,
+        34,
+        25
+      ],
+      [
+        19,
+        36,
+        21
+      ],
+      [
+        18,
+        23,
+        19
+      ]
+    ],
+    "trivial_baseline_accuracy": 0.4925373134328358
+  },
+  "internal_test": {
+    "n_patients": 268,
+    "auc": 0.5994176593886856,
+    "accuracy": 0.4216417910447761,
+    "balanced_accuracy": 0.38965989709688925,
+    "macro_f1": 0.3871840058337385,
+    "per_class_auc": [
+      0.6087,
+      0.6466,
+      0.543
+    ],
+    "per_class_recall": [
+      0.4818,
+      0.4231,
+      0.2642
+    ],
+    "class_counts": [
+      137,
+      78,
+      53
+    ],
+    "confusion": [
+      [
+        66,
+        37,
+        34
+      ],
+      [
+        25,
+        33,
+        20
+      ],
+      [
+        27,
+        12,
+        14
+      ]
+    ],
+    "trivial_baseline_accuracy": 0.5111940298507462
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "experiment": "test04",
+  "name": "test04_fedavg_3h",
+  "job_id": "b20e3502-231a-4f36-9754-b36b2d54cf5f",
+  "algorithm": "fedavg",
+  "partition": "3_clients_balanced",
+  "n_clients": 3,
+  "num_rounds": 30,
+  "local_epochs": 1,
+  "fedprox_mu": 0.0,
+  "key_metric": "val_balanced_accuracy",
+  "submitted": "2026-08-04T00:24:09+00:00",
+  "status": "FINISHED:COMPLETED",
+  "job_workspace": "/root/tese/federated/production/workspace/breast_fl_project/prod_00/admin@ips.pt/transfer/b20e3502-231a-4f36-9754-b36b2d54cf5f",
+  "finished": "2026-08-04T00:29:22+00:00"
+}

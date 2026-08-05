@@ -1,0 +1,4 @@
+experiment,name,algorithm,n_hospitals,partition,data_split,accuracy,macro_precision,macro_recall,macro_f1,macro_auc,best_epoch,best_round,training_time_s,reference,reference_macro_auc,delta_macro_auc,within_noise_floor
+test01,test01_centralized,centralized,1,-,all data pooled,0.5299,0.4606,0.4503,0.4523,0.6068,4.0,,267.6,centralized (test01),0.6068,0.0,True
+test08,test08_fedavg_skewed,fedavg,4,4_clients_skewed,"4 hospitals, skewed 5:2:1:1 (dissertation: 50/20/10/10)  ->  55.6% / 22.2% / 11.1% / 11.1%",0.4888,0.4374,0.4259,0.4292,0.5982,,21.0,323.0,centralized (test01),0.6068,-0.0086,True
+test09,test09_fedprox_skewed,fedprox,4,4_clients_skewed,"4 hospitals, skewed 5:2:1:1 (dissertation: 50/20/10/10)  ->  55.6% / 22.2% / 11.1% / 11.1%",0.4515,0.4365,0.421,0.4197,0.625,,2.0,387.0,centralized (test01),0.6068,0.0182,True

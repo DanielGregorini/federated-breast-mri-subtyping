@@ -1,0 +1,165 @@
+{
+  "experiment": "test01",
+  "name": "test01_centralized",
+  "kind": "centralized",
+  "seed": 42,
+  "epochs": 30,
+  "best_epoch": 4,
+  "train_acc_at_best": 0.7524523946912868,
+  "generalisation_gap": {
+    "val": 0.20767627528830168,
+    "test": 0.22260164842263008
+  },
+  "source": "/root/bdl/breastdcedl_project/processed/multi_subtype_80mm",
+  "architecture": "2d3031acc2075813",
+  "finished": "2026-08-03T23:48:43+00:00",
+  "config": {
+    "pipeline": "thesis",
+    "task": "subtype",
+    "model": "resnet18",
+    "cohorts": [
+      "spy2"
+    ],
+    "image_size": 224,
+    "batch_size": 24,
+    "num_workers": 8,
+    "max_slices_per_patient_per_batch": 1,
+    "optimizer": "adamw",
+    "learning_rate": 0.0001,
+    "weight_decay": 0.0005,
+    "scheduler": "cosine",
+    "epochs": 30,
+    "early_stopping_patience": 0,
+    "label_smoothing": 0.1,
+    "class_weighted_loss": true,
+    "dropout": 0.5,
+    "freeze_until": "layer3",
+    "freeze_bn": false,
+    "mixup_alpha": 0.0,
+    "augmentation": "default",
+    "seed": 42,
+    "mixed_precision": true,
+    "aggregation": "mean",
+    "monitor_metric": "auc",
+    "dataset_name": "/root/bdl/breastdcedl_project/processed/multi_subtype_80mm",
+    "notes": "",
+    "num_classes": 3,
+    "class_names": [
+      "HRposHER2neg",
+      "TripleNeg",
+      "HER2pos"
+    ]
+  },
+  "splits": {
+    "val": {
+      "n_patients": 268,
+      "auc": 0.6660621512667758,
+      "accuracy": 0.5447761194029851,
+      "balanced_accuracy": 0.48091440723019674,
+      "macro_f1": 0.4854555381474624,
+      "macro_precision": 0.5039195637355146,
+      "macro_recall": 0.48091440723019674,
+      "per_class_auc": [
+        0.6701,
+        0.6941,
+        0.634
+      ],
+      "per_class_precision": [
+        0.5951,
+        0.5167,
+        0.4
+      ],
+      "per_class_recall": [
+        0.7348,
+        0.4079,
+        0.3
+      ],
+      "per_class_f1": [
+        0.6576,
+        0.4559,
+        0.3429
+      ],
+      "class_counts": [
+        132,
+        76,
+        60
+      ],
+      "confusion": [
+        [
+          97,
+          20,
+          15
+        ],
+        [
+          33,
+          31,
+          12
+        ],
+        [
+          33,
+          9,
+          18
+        ]
+      ],
+      "trivial_baseline_accuracy": 0.4925373134328358,
+      "slice_accuracy": 0.5070356472795498,
+      "slice_loss": 1.2529363632202148,
+      "n_slices": 2132
+    },
+    "test": {
+      "n_patients": 268,
+      "auc": 0.6067918080145278,
+      "accuracy": 0.5298507462686567,
+      "balanced_accuracy": 0.4503158779429266,
+      "macro_f1": 0.45232732732732733,
+      "macro_precision": 0.4605954232983631,
+      "macro_recall": 0.4503158779429266,
+      "per_class_auc": [
+        0.6238,
+        0.6886,
+        0.5079
+      ],
+      "per_class_precision": [
+        0.6038,
+        0.5455,
+        0.2326
+      ],
+      "per_class_recall": [
+        0.7007,
+        0.4615,
+        0.1887
+      ],
+      "per_class_f1": [
+        0.6486,
+        0.5,
+        0.2083
+      ],
+      "class_counts": [
+        137,
+        78,
+        53
+      ],
+      "confusion": [
+        [
+          96,
+          20,
+          21
+        ],
+        [
+          30,
+          36,
+          12
+        ],
+        [
+          33,
+          10,
+          10
+        ]
+      ],
+      "trivial_baseline_accuracy": 0.5111940298507462,
+      "slice_accuracy": 0.47706855791962177,
+      "slice_loss": 1.3461010456085205,
+      "n_slices": 2115
+    }
+  }
+}

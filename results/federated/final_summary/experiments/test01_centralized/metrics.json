@@ -1,0 +1,69 @@
+{
+  "experiment": "test01",
+  "name": "test01_centralized",
+  "algorithm": "centralized",
+  "kind": "centralized",
+  "n_hospitals": 1,
+  "data_split": "all data pooled",
+  "seed": 42,
+  "model": "resnet18",
+  "dataset": "multi_subtype_80mm",
+  "model_used": "selected",
+  "best_epoch": 4,
+  "best_round": null,
+  "training_time_s": 267.59999999999997,
+  "training_time_kind": "sum of per-epoch compute",
+  "global_test": {
+    "n_patients": 268,
+    "auc": 0.6067918080145278,
+    "accuracy": 0.5298507462686567,
+    "balanced_accuracy": 0.4503158779429266,
+    "macro_precision": 0.4605954232983631,
+    "macro_recall": 0.4503158779429266,
+    "macro_f1": 0.45232732732732733,
+    "per_class_auc": [
+      0.6238368529559258,
+      0.6885964912280702,
+      0.5079420798595875
+    ],
+    "per_class_precision": [
+      0.6037735849056604,
+      0.5454545454545454,
+      0.23255813953488372
+    ],
+    "per_class_recall": [
+      0.7007299270072993,
+      0.46153846153846156,
+      0.18867924528301888
+    ],
+    "per_class_f1": [
+      0.6486486486486487,
+      0.5,
+      0.20833333333333334
+    ],
+    "class_counts": [
+      137,
+      78,
+      53
+    ],
+    "confusion": [
+      [
+        96,
+        20,
+        21
+      ],
+      [
+        30,
+        36,
+        12
+      ],
+      [
+        33,
+        10,
+        10
+      ]
+    ],
+    "trivial_baseline_accuracy": 0.5111940298507462
+  },
+  "per_client": {}
+}

@@ -1,0 +1,16 @@
+{
+  "experiment": "test13",
+  "name": "test13_fedprox_sizematched",
+  "job_id": "8b9d5855-b6c4-49ef-8cda-18b20039195d",
+  "algorithm": "fedprox",
+  "partition": "3_clients_sizematched",
+  "n_clients": 3,
+  "num_rounds": 30,
+  "local_epochs": 1,
+  "fedprox_mu": 0.01,
+  "key_metric": "val_balanced_accuracy",
+  "submitted": "2026-08-05T01:34:08+00:00",
+  "status": "FINISHED:COMPLETED",
+  "job_workspace": "/root/tese/federated/production/workspace/breast_fl_project/prod_00/admin@ips.pt/transfer/8b9d5855-b6c4-49ef-8cda-18b20039195d",
+  "finished": "2026-08-05T01:42:13+00:00"
+}

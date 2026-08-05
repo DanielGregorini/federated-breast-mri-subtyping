@@ -1,0 +1,131 @@
+{
+  "dataset": "paper_subtype",
+  "model": "vit_mae_base",
+  "best_epoch": 2,
+  "epochs_run": 32,
+  "target": "subtype",
+  "aggregation": "mean",
+  "class_names": [
+    "HRposHER2neg",
+    "TripleNeg",
+    "HER2pos"
+  ],
+  "parameters": {
+    "total": 85800963,
+    "trainable": 85800963,
+    "frozen": 0,
+    "trainable_fraction": 1.0
+  },
+  "trivial_baseline_accuracy": 0.5111940298507462,
+  "config": {
+    "model_name": "vit_mae_base",
+    "pretrained": true,
+    "image_size": 224,
+    "num_classes": 3,
+    "batch_size": 24,
+    "learning_rate": 3e-05,
+    "weight_decay": 0.0005,
+    "dropout": 0.5,
+    "epochs": 100,
+    "early_stopping_patience": 30,
+    "scheduler": "cosine",
+    "optimizer": "adamw",
+    "label_smoothing": 0.1,
+    "class_weighted_loss": true,
+    "slice_selection": "all",
+    "n_central": 5,
+    "train_mode": "full",
+    "freeze_until": "none",
+    "freeze_bn": false,
+    "mixup_alpha": 0.0,
+    "aug_profile": "default",
+    "backbone_lr_scale": 0.1,
+    "max_slices_per_patient_per_batch": 1,
+    "mixed_precision": true,
+    "num_workers": 16,
+    "seed": 42,
+    "aggregation": "mean",
+    "monitor_metric": "patient_auc",
+    "monitor_mode": "max"
+  },
+  "val": {
+    "n_patients": 268,
+    "auc": 0.6721804836138233,
+    "accuracy": 0.5111940298507462,
+    "balanced_accuracy": 0.4781765018607123,
+    "macro_f1": 0.4712692041884588,
+    "per_class_auc": [
+      0.671,
+      0.7065,
+      0.6391
+    ],
+    "per_class_recall": [
+      0.5758,
+      0.5921,
+      0.2667
+    ],
+    "class_counts": [
+      132,
+      76,
+      60
+    ],
+    "confusion": [
+      [
+        76,
+        42,
+        14
+      ],
+      [
+        23,
+        45,
+        8
+      ],
+      [
+        22,
+        22,
+        16
+      ]
+    ],
+    "trivial_baseline_accuracy": 0.4925373134328358
+  },
+  "internal_test": {
+    "n_patients": 268,
+    "auc": 0.6297781198949136,
+    "accuracy": 0.5335820895522388,
+    "balanced_accuracy": 0.4708023311521452,
+    "macro_f1": 0.45512571154419673,
+    "per_class_auc": [
+      0.6646,
+      0.6842,
+      0.5405
+    ],
+    "per_class_recall": [
+      0.6204,
+      0.641,
+      0.1509
+    ],
+    "class_counts": [
+      137,
+      78,
+      53
+    ],
+    "confusion": [
+      [
+        85,
+        38,
+        14
+      ],
+      [
+        21,
+        50,
+        7
+      ],
+      [
+        21,
+        24,
+        8
+      ]
+    ],
+    "trivial_baseline_accuracy": 0.5111940298507462
+  }
+}

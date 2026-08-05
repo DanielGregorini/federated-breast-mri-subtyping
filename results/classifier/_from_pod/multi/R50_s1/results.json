@@ -1,0 +1,91 @@
+{
+  "dataset": "multi_subtype_80mm",
+  "model": "resnet50",
+  "best_epoch": 1,
+  "epochs_run": 31,
+  "target": "subtype",
+  "aggregation": "mean",
+  "class_names": [
+    "HRposHER2neg",
+    "TripleNeg",
+    "HER2pos"
+  ],
+  "trivial_baseline_accuracy": 0.5111940298507462,
+  "config": {
+    "model_name": "resnet50",
+    "pretrained": true,
+    "image_size": 224,
+    "num_classes": 3,
+    "batch_size": 24,
+    "learning_rate": 0.0001,
+    "weight_decay": 0.0005,
+    "dropout": 0.5,
+    "epochs": 100,
+    "early_stopping_patience": 30,
+    "scheduler": "cosine",
+    "optimizer": "adamw",
+    "label_smoothing": 0.1,
+    "class_weighted_loss": true,
+    "slice_selection": "all",
+    "n_central": 5,
+    "train_mode": "full",
+    "freeze_until": "none",
+    "freeze_bn": false,
+    "mixup_alpha": 0.0,
+    "aug_profile": "default",
+    "backbone_lr_scale": 0.1,
+    "max_slices_per_patient_per_batch": 1,
+    "mixed_precision": true,
+    "num_workers": 16,
+    "seed": 1,
+    "aggregation": "mean",
+    "monitor_metric": "patient_auc",
+    "monitor_mode": "max"
+  },
+  "val": {
+    "n_patients": 268,
+    "auc": 0.661191500546667,
+    "accuracy": 0.39925373134328357,
+    "balanced_accuracy": 0.46796916533758637,
+    "macro_f1": 0.40119623446195457,
+    "per_class_auc": [
+      0.661,
+      0.721,
+      0.6015
+    ],
+    "per_class_recall": [
+      0.2197,
+      0.4342,
+      0.75
+    ],
+    "class_counts": [
+      132,
+      76,
+      60
+    ],
+    "trivial_baseline_accuracy": 0.4925373134328358
+  },
+  "internal_test": {
+    "n_patients": 268,
+    "auc": 0.6167596307933433,
+    "accuracy": 0.35447761194029853,
+    "balanced_accuracy": 0.4251798332503469,
+    "macro_f1": 0.36207636207636207,
+    "per_class_auc": [
+      0.6075,
+      0.7012,
+      0.5416
+    ],
+    "per_class_recall": [
+      0.2117,
+      0.3846,
+      0.6792
+    ],
+    "class_counts": [
+      137,
+      78,
+      53
+    ],
+    "trivial_baseline_accuracy": 0.5111940298507462
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "site": "hospital_3",
+  "global_class_weights": [
+    0.658473,
+    1.241463,
+    1.479651
+  ],
+  "partition": "3_clients_cohort",
+  "mode": "cohort",
+  "train": {
+    "patients": 627,
+    "slices": 5005,
+    "per_class_patients": [
+      244,
+      225,
+      158
+    ]
+  },
+  "val": {
+    "patients": 157,
+    "slices": 1248,
+    "per_class_patients": [
+      61,
+      56,
+      40
+    ]
+  }
+}

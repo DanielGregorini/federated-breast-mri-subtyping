@@ -1,0 +1,81 @@
+{
+  "partition": "2_clients_balanced",
+  "mode": "stratified",
+  "n_clients": 2,
+  "ratio": [
+    1,
+    1
+  ],
+  "fractions": [
+    0.5,
+    0.5
+  ],
+  "seed": 42,
+  "source": "dataset/multi_subtype_80mm",
+  "built": "2026-08-05T14:00:05+00:00",
+  "local_val_fraction": 0.2,
+  "global_class_weights": [
+    0.6584734799482536,
+    1.2414634146341463,
+    1.4796511627906976
+  ],
+  "total_patients": 1527,
+  "sites": [
+    {
+      "site": "hospital_1",
+      "global_class_weights": [
+        0.658473,
+        1.241463,
+        1.479651
+      ],
+      "partition": "2_clients_balanced",
+      "mode": "stratified",
+      "train": {
+        "patients": 612,
+        "slices": 4870,
+        "per_class_patients": [
+          310,
+          164,
+          138
+        ]
+      },
+      "val": {
+        "patients": 152,
+        "slices": 1214,
+        "per_class_patients": [
+          77,
+          41,
+          34
+        ]
+      }
+    },
+    {
+      "site": "hospital_2",
+      "global_class_weights": [
+        0.658473,
+        1.241463,
+        1.479651
+      ],
+      "partition": "2_clients_balanced",
+      "mode": "stratified",
+      "train": {
+        "patients": 611,
+        "slices": 4849,
+        "per_class_patients": [
+          309,
+          164,
+          138
+        ]
+      },
+      "val": {
+        "patients": 152,
+        "slices": 1198,
+        "per_class_patients": [
+          77,
+          41,
+          34
+        ]
+      }
+    }
+  ]
+}

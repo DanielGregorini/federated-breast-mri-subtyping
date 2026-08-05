@@ -1,0 +1,111 @@
+{
+  "partition": "3_clients_balanced",
+  "mode": "stratified",
+  "n_clients": 3,
+  "ratio": [
+    1,
+    1,
+    1
+  ],
+  "fractions": [
+    0.3333333333333333,
+    0.3333333333333333,
+    0.3333333333333333
+  ],
+  "seed": 42,
+  "source": "dataset/multi_subtype_80mm",
+  "built": "2026-08-05T14:00:11+00:00",
+  "local_val_fraction": 0.2,
+  "global_class_weights": [
+    0.6584734799482536,
+    1.2414634146341463,
+    1.4796511627906976
+  ],
+  "total_patients": 1527,
+  "sites": [
+    {
+      "site": "hospital_1",
+      "global_class_weights": [
+        0.658473,
+        1.241463,
+        1.479651
+      ],
+      "partition": "3_clients_balanced",
+      "mode": "stratified",
+      "train": {
+        "patients": 408,
+        "slices": 3245,
+        "per_class_patients": [
+          206,
+          110,
+          92
+        ]
+      },
+      "val": {
+        "patients": 102,
+        "slices": 816,
+        "per_class_patients": [
+          52,
+          27,
+          23
+        ]
+      }
+    },
+    {
+      "site": "hospital_2",
+      "global_class_weights": [
+        0.658473,
+        1.241463,
+        1.479651
+      ],
+      "partition": "3_clients_balanced",
+      "mode": "stratified",
+      "train": {
+        "patients": 408,
+        "slices": 3249,
+        "per_class_patients": [
+          206,
+          110,
+          92
+        ]
+      },
+      "val": {
+        "patients": 102,
+        "slices": 814,
+        "per_class_patients": [
+          52,
+          27,
+          23
+        ]
+      }
+    },
+    {
+      "site": "hospital_3",
+      "global_class_weights": [
+        0.658473,
+        1.241463,
+        1.479651
+      ],
+      "partition": "3_clients_balanced",
+      "mode": "stratified",
+      "train": {
+        "patients": 406,
+        "slices": 3206,
+        "per_class_patients": [
+          206,
+          109,
+          91
+        ]
+      },
+      "val": {
+        "patients": 101,
+        "slices": 801,
+        "per_class_patients": [
+          51,
+          27,
+          23
+        ]
+      }
+    }
+  ]
+}

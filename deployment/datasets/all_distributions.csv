@@ -1,0 +1,79 @@
+experiment,name,algorithm,partition,site,split,patients,images,patients_HRposHER2neg,patients_TripleNeg,patients_HER2pos,cohorts,pct_patients,pct_images
+test01,test01_centralized,centralized,pooled,centralized,train,1221,9687,617,328,276,"{""spy2"": 1221}",79.96,79.85
+test01,test01_centralized,centralized,pooled,centralized,val,306,2444,156,82,68,"{""spy2"": 306}",20.04,20.15
+test02,test02_fedavg_2h,fedavg,2_clients_balanced,hospital_1,train,612,4870,310,164,138,"{""spy2"": 395, ""duke"": 321, ""spy1"": 48}",40.08,40.15
+test02,test02_fedavg_2h,fedavg,2_clients_balanced,hospital_1,val,152,1214,77,41,34,"{""spy2"": 395, ""duke"": 321, ""spy1"": 48}",9.95,10.01
+test02,test02_fedavg_2h,fedavg,2_clients_balanced,hospital_2,train,611,4849,309,164,138,"{""spy2"": 389, ""duke"": 321, ""spy1"": 53}",40.01,39.97
+test02,test02_fedavg_2h,fedavg,2_clients_balanced,hospital_2,val,152,1198,77,41,34,"{""spy2"": 389, ""duke"": 321, ""spy1"": 53}",9.95,9.88
+test03,test03_fedprox_2h,fedprox,2_clients_balanced,hospital_1,train,612,4870,310,164,138,"{""spy2"": 395, ""duke"": 321, ""spy1"": 48}",40.08,40.15
+test03,test03_fedprox_2h,fedprox,2_clients_balanced,hospital_1,val,152,1214,77,41,34,"{""spy2"": 395, ""duke"": 321, ""spy1"": 48}",9.95,10.01
+test03,test03_fedprox_2h,fedprox,2_clients_balanced,hospital_2,train,611,4849,309,164,138,"{""spy2"": 389, ""duke"": 321, ""spy1"": 53}",40.01,39.97
+test03,test03_fedprox_2h,fedprox,2_clients_balanced,hospital_2,val,152,1198,77,41,34,"{""spy2"": 389, ""duke"": 321, ""spy1"": 53}",9.95,9.88
+test04,test04_fedavg_3h,fedavg,3_clients_balanced,hospital_1,train,408,3245,206,110,92,"{""spy2"": 254, ""duke"": 222, ""spy1"": 34}",26.72,26.75
+test04,test04_fedavg_3h,fedavg,3_clients_balanced,hospital_1,val,102,816,52,27,23,"{""spy2"": 254, ""duke"": 222, ""spy1"": 34}",6.68,6.73
+test04,test04_fedavg_3h,fedavg,3_clients_balanced,hospital_2,train,408,3249,206,110,92,"{""spy2"": 263, ""duke"": 210, ""spy1"": 37}",26.72,26.78
+test04,test04_fedavg_3h,fedavg,3_clients_balanced,hospital_2,val,102,814,52,27,23,"{""spy2"": 263, ""duke"": 210, ""spy1"": 37}",6.68,6.71
+test04,test04_fedavg_3h,fedavg,3_clients_balanced,hospital_3,train,406,3206,206,109,91,"{""spy2"": 267, ""duke"": 210, ""spy1"": 30}",26.59,26.43
+test04,test04_fedavg_3h,fedavg,3_clients_balanced,hospital_3,val,101,801,51,27,23,"{""spy2"": 267, ""duke"": 210, ""spy1"": 30}",6.61,6.6
+test05,test05_fedprox_3h,fedprox,3_clients_balanced,hospital_1,train,408,3245,206,110,92,"{""spy2"": 254, ""duke"": 222, ""spy1"": 34}",26.72,26.75
+test05,test05_fedprox_3h,fedprox,3_clients_balanced,hospital_1,val,102,816,52,27,23,"{""spy2"": 254, ""duke"": 222, ""spy1"": 34}",6.68,6.73
+test05,test05_fedprox_3h,fedprox,3_clients_balanced,hospital_2,train,408,3249,206,110,92,"{""spy2"": 263, ""duke"": 210, ""spy1"": 37}",26.72,26.78
+test05,test05_fedprox_3h,fedprox,3_clients_balanced,hospital_2,val,102,814,52,27,23,"{""spy2"": 263, ""duke"": 210, ""spy1"": 37}",6.68,6.71
+test05,test05_fedprox_3h,fedprox,3_clients_balanced,hospital_3,train,406,3206,206,109,91,"{""spy2"": 267, ""duke"": 210, ""spy1"": 30}",26.59,26.43
+test05,test05_fedprox_3h,fedprox,3_clients_balanced,hospital_3,val,101,801,51,27,23,"{""spy2"": 267, ""duke"": 210, ""spy1"": 30}",6.61,6.6
+test06,test06_fedavg_4h,fedavg,4_clients_balanced,hospital_1,train,306,2439,155,82,69,"{""spy2"": 194, ""duke"": 160, ""spy1"": 29}",20.04,20.11
+test06,test06_fedavg_4h,fedavg,4_clients_balanced,hospital_1,val,77,614,39,21,17,"{""spy2"": 194, ""duke"": 160, ""spy1"": 29}",5.04,5.06
+test06,test06_fedavg_4h,fedavg,4_clients_balanced,hospital_2,train,305,2423,154,82,69,"{""spy2"": 202, ""duke"": 161, ""spy1"": 19}",19.97,19.97
+test06,test06_fedavg_4h,fedavg,4_clients_balanced,hospital_2,val,77,616,39,21,17,"{""spy2"": 202, ""duke"": 161, ""spy1"": 19}",5.04,5.08
+test06,test06_fedavg_4h,fedavg,4_clients_balanced,hospital_3,train,305,2426,154,82,69,"{""spy2"": 184, ""duke"": 169, ""spy1"": 28}",19.97,20.0
+test06,test06_fedavg_4h,fedavg,4_clients_balanced,hospital_3,val,76,608,39,20,17,"{""spy2"": 184, ""duke"": 169, ""spy1"": 28}",4.98,5.01
+test06,test06_fedavg_4h,fedavg,4_clients_balanced,hospital_4,train,305,2399,154,82,69,"{""spy2"": 204, ""duke"": 152, ""spy1"": 25}",19.97,19.78
+test06,test06_fedavg_4h,fedavg,4_clients_balanced,hospital_4,val,76,606,39,20,17,"{""spy2"": 204, ""duke"": 152, ""spy1"": 25}",4.98,5.0
+test07,test07_fedprox_4h,fedprox,4_clients_balanced,hospital_1,train,306,2439,155,82,69,"{""spy2"": 194, ""duke"": 160, ""spy1"": 29}",20.04,20.11
+test07,test07_fedprox_4h,fedprox,4_clients_balanced,hospital_1,val,77,614,39,21,17,"{""spy2"": 194, ""duke"": 160, ""spy1"": 29}",5.04,5.06
+test07,test07_fedprox_4h,fedprox,4_clients_balanced,hospital_2,train,305,2423,154,82,69,"{""spy2"": 202, ""duke"": 161, ""spy1"": 19}",19.97,19.97
+test07,test07_fedprox_4h,fedprox,4_clients_balanced,hospital_2,val,77,616,39,21,17,"{""spy2"": 202, ""duke"": 161, ""spy1"": 19}",5.04,5.08
+test07,test07_fedprox_4h,fedprox,4_clients_balanced,hospital_3,train,305,2426,154,82,69,"{""spy2"": 184, ""duke"": 169, ""spy1"": 28}",19.97,20.0
+test07,test07_fedprox_4h,fedprox,4_clients_balanced,hospital_3,val,76,608,39,20,17,"{""spy2"": 184, ""duke"": 169, ""spy1"": 28}",4.98,5.01
+test07,test07_fedprox_4h,fedprox,4_clients_balanced,hospital_4,train,305,2399,154,82,69,"{""spy2"": 204, ""duke"": 152, ""spy1"": 25}",19.97,19.78
+test07,test07_fedprox_4h,fedprox,4_clients_balanced,hospital_4,val,76,606,39,20,17,"{""spy2"": 204, ""duke"": 152, ""spy1"": 25}",4.98,5.0
+test08,test08_fedavg_skewed,fedavg,4_clients_skewed,hospital_1,train,678,5395,343,182,153,"{""spy2"": 438, ""duke"": 357, ""spy1"": 53}",44.4,44.47
+test08,test08_fedavg_skewed,fedavg,4_clients_skewed,hospital_1,val,170,1358,86,46,38,"{""spy2"": 438, ""duke"": 357, ""spy1"": 53}",11.13,11.19
+test08,test08_fedavg_skewed,fedavg,4_clients_skewed,hospital_2,train,273,2171,138,73,62,"{""duke"": 150, ""spy2"": 165, ""spy1"": 25}",17.88,17.9
+test08,test08_fedavg_skewed,fedavg,4_clients_skewed,hospital_2,val,67,534,34,18,15,"{""duke"": 150, ""spy2"": 165, ""spy1"": 25}",4.39,4.4
+test08,test08_fedavg_skewed,fedavg,4_clients_skewed,hospital_3,train,136,1073,69,37,30,"{""spy2"": 84, ""duke"": 77, ""spy1"": 9}",8.91,8.85
+test08,test08_fedavg_skewed,fedavg,4_clients_skewed,hospital_3,val,34,266,17,9,8,"{""spy2"": 84, ""duke"": 77, ""spy1"": 9}",2.23,2.19
+test08,test08_fedavg_skewed,fedavg,4_clients_skewed,hospital_4,train,135,1066,69,36,30,"{""spy2"": 97, ""duke"": 58, ""spy1"": 14}",8.84,8.79
+test08,test08_fedavg_skewed,fedavg,4_clients_skewed,hospital_4,val,34,268,17,9,8,"{""spy2"": 97, ""duke"": 58, ""spy1"": 14}",2.23,2.21
+test09,test09_fedprox_skewed,fedprox,4_clients_skewed,hospital_1,train,678,5395,343,182,153,"{""spy2"": 438, ""duke"": 357, ""spy1"": 53}",44.4,44.47
+test09,test09_fedprox_skewed,fedprox,4_clients_skewed,hospital_1,val,170,1358,86,46,38,"{""spy2"": 438, ""duke"": 357, ""spy1"": 53}",11.13,11.19
+test09,test09_fedprox_skewed,fedprox,4_clients_skewed,hospital_2,train,273,2171,138,73,62,"{""duke"": 150, ""spy2"": 165, ""spy1"": 25}",17.88,17.9
+test09,test09_fedprox_skewed,fedprox,4_clients_skewed,hospital_2,val,67,534,34,18,15,"{""duke"": 150, ""spy2"": 165, ""spy1"": 25}",4.39,4.4
+test09,test09_fedprox_skewed,fedprox,4_clients_skewed,hospital_3,train,136,1073,69,37,30,"{""spy2"": 84, ""duke"": 77, ""spy1"": 9}",8.91,8.85
+test09,test09_fedprox_skewed,fedprox,4_clients_skewed,hospital_3,val,34,266,17,9,8,"{""spy2"": 84, ""duke"": 77, ""spy1"": 9}",2.23,2.19
+test09,test09_fedprox_skewed,fedprox,4_clients_skewed,hospital_4,train,135,1066,69,36,30,"{""spy2"": 97, ""duke"": 58, ""spy1"": 14}",8.84,8.79
+test09,test09_fedprox_skewed,fedprox,4_clients_skewed,hospital_4,val,34,268,17,9,8,"{""spy2"": 97, ""duke"": 58, ""spy1"": 14}",2.23,2.21
+test10,test10_fedavg_cohort,fedavg,3_clients_cohort,hospital_1,train,514,4067,341,82,91,"{""duke"": 642}",33.66,33.53
+test10,test10_fedavg_cohort,fedavg,3_clients_cohort,hospital_1,val,128,1007,85,20,23,"{""duke"": 642}",8.38,8.3
+test10,test10_fedavg_cohort,fedavg,3_clients_cohort,hospital_2,train,82,652,34,22,26,"{""spy1"": 101}",5.37,5.37
+test10,test10_fedavg_cohort,fedavg,3_clients_cohort,hospital_2,val,19,152,8,5,6,"{""spy1"": 101}",1.24,1.25
+test10,test10_fedavg_cohort,fedavg,3_clients_cohort,hospital_3,train,627,5005,244,225,158,"{""spy2"": 784}",41.06,41.26
+test10,test10_fedavg_cohort,fedavg,3_clients_cohort,hospital_3,val,157,1248,61,56,40,"{""spy2"": 784}",10.28,10.29
+test12,test12_fedavg_sizematched,fedavg,3_clients_sizematched,hospital_1,train,514,4096,260,138,116,"{""spy2"": 329, ""duke"": 270, ""spy1"": 43}",33.66,33.76
+test12,test12_fedavg_sizematched,fedavg,3_clients_sizematched,hospital_1,val,128,1020,65,34,29,"{""spy2"": 329, ""duke"": 270, ""spy1"": 43}",8.38,8.41
+test12,test12_fedavg_sizematched,fedavg,3_clients_sizematched,hospital_2,train,81,640,41,22,18,"{""spy2"": 54, ""duke"": 43, ""spy1"": 4}",5.3,5.28
+test12,test12_fedavg_sizematched,fedavg,3_clients_sizematched,hospital_2,val,20,160,10,5,5,"{""spy2"": 54, ""duke"": 43, ""spy1"": 4}",1.31,1.32
+test12,test12_fedavg_sizematched,fedavg,3_clients_sizematched,hospital_3,train,628,4976,318,169,141,"{""spy2"": 401, ""duke"": 329, ""spy1"": 54}",41.13,41.02
+test12,test12_fedavg_sizematched,fedavg,3_clients_sizematched,hospital_3,val,156,1239,79,42,35,"{""spy2"": 401, ""duke"": 329, ""spy1"": 54}",10.22,10.21
+test11,test11_fedprox_cohort,fedprox,3_clients_cohort,hospital_1,train,514,4067,341,82,91,"{""duke"": 642}",33.66,33.53
+test11,test11_fedprox_cohort,fedprox,3_clients_cohort,hospital_1,val,128,1007,85,20,23,"{""duke"": 642}",8.38,8.3
+test11,test11_fedprox_cohort,fedprox,3_clients_cohort,hospital_2,train,82,652,34,22,26,"{""spy1"": 101}",5.37,5.37
+test11,test11_fedprox_cohort,fedprox,3_clients_cohort,hospital_2,val,19,152,8,5,6,"{""spy1"": 101}",1.24,1.25
+test11,test11_fedprox_cohort,fedprox,3_clients_cohort,hospital_3,train,627,5005,244,225,158,"{""spy2"": 784}",41.06,41.26
+test11,test11_fedprox_cohort,fedprox,3_clients_cohort,hospital_3,val,157,1248,61,56,40,"{""spy2"": 784}",10.28,10.29
+test13,test13_fedprox_sizematched,fedprox,3_clients_sizematched,hospital_1,train,514,4096,260,138,116,"{""spy2"": 329, ""duke"": 270, ""spy1"": 43}",33.66,33.76
+test13,test13_fedprox_sizematched,fedprox,3_clients_sizematched,hospital_1,val,128,1020,65,34,29,"{""spy2"": 329, ""duke"": 270, ""spy1"": 43}",8.38,8.41
+test13,test13_fedprox_sizematched,fedprox,3_clients_sizematched,hospital_2,train,81,640,41,22,18,"{""spy2"": 54, ""duke"": 43, ""spy1"": 4}",5.3,5.28
+test13,test13_fedprox_sizematched,fedprox,3_clients_sizematched,hospital_2,val,20,160,10,5,5,"{""spy2"": 54, ""duke"": 43, ""spy1"": 4}",1.31,1.32
+test13,test13_fedprox_sizematched,fedprox,3_clients_sizematched,hospital_3,train,628,4976,318,169,141,"{""spy2"": 401, ""duke"": 329, ""spy1"": 54}",41.13,41.02
+test13,test13_fedprox_sizematched,fedprox,3_clients_sizematched,hospital_3,val,156,1239,79,42,35,"{""spy2"": 401, ""duke"": 329, ""spy1"": 54}",10.22,10.21

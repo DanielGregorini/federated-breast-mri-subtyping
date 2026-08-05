@@ -1,0 +1,341 @@
+{
+  "_comment": "GENERATED SNAPSHOT \u2014 written by scripts/snapshot_config.py. Nothing reads this back; editing it changes nothing. The source is config/experiments.py and config/federation.py.",
+  "generated": "2026-08-05T14:01:34+00:00",
+  "project": {
+    "name": "breast_fl_project",
+    "description": "Federated breast-cancer molecular-subtype classification (ResNet-18)",
+    "organisation": "ips",
+    "source_dataset": "dataset/multi_subtype_80mm",
+    "classes": [
+      "HRposHER2neg",
+      "TripleNeg",
+      "HER2pos"
+    ],
+    "num_classes": 3
+  },
+  "deployment": {
+    "server": {
+      "name": "server",
+      "host": "localhost",
+      "fed_learn_port": 8002,
+      "admin_port": 8003
+    },
+    "admin": {
+      "user": "admin@ips.pt",
+      "role": "project_admin"
+    },
+    "hospitals": [
+      {
+        "name": "hospital_1",
+        "org": "h1",
+        "host": "localhost",
+        "description": "Site 1 \u2014 also the large site in the skewed split"
+      },
+      {
+        "name": "hospital_2",
+        "org": "h2",
+        "host": "localhost",
+        "description": "Site 2"
+      },
+      {
+        "name": "hospital_3",
+        "org": "h3",
+        "host": "localhost",
+        "description": "Site 3"
+      },
+      {
+        "name": "hospital_4",
+        "org": "h4",
+        "host": "localhost",
+        "description": "Site 4"
+      }
+    ],
+    "workspace": "deployment/workspace",
+    "project_yml": "deployment/project.yml"
+  },
+  "training": {
+    "model_name": "resnet18",
+    "pretrained": true,
+    "image_size": 224,
+    "num_classes": 3,
+    "batch_size": 24,
+    "learning_rate": 0.0001,
+    "weight_decay": 0.0005,
+    "dropout": 0.5,
+    "label_smoothing": 0.1,
+    "optimizer": "adamw",
+    "scheduler": "cosine",
+    "freeze_until": "layer3",
+    "freeze_bn": false,
+    "class_weighted_loss": true,
+    "class_weight_scope": "local",
+    "max_slices_per_patient_per_batch": 1,
+    "aggregation": "mean",
+    "monitor_metric": "auc",
+    "seed": 42,
+    "num_workers": 8,
+    "mixed_precision": true
+  },
+  "federation": {
+    "num_rounds": 30,
+    "local_epochs": 1,
+    "centralized_epochs": 30,
+    "fedprox_mu": 0.01,
+    "fedopt_lr": 1.0,
+    "fedopt_momentum": 0.6,
+    "key_metric": "val_balanced_accuracy",
+    "local_val_fraction": 0.2
+  },
+  "partitions": {
+    "2_clients_balanced": {
+      "n_clients": 2,
+      "ratio": [
+        1,
+        1
+      ],
+      "fractions": [
+        0.5,
+        0.5
+      ],
+      "label": "2 hospitals, balanced (50/50)",
+      "stratified": true
+    },
+    "3_clients_balanced": {
+      "n_clients": 3,
+      "ratio": [
+        1,
+        1,
+        1
+      ],
+      "fractions": [
+        0.333333,
+        0.333333,
+        0.333333
+      ],
+      "label": "3 hospitals, balanced (33.3 each)",
+      "stratified": true
+    },
+    "4_clients_balanced": {
+      "n_clients": 4,
+      "ratio": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "fractions": [
+        0.25,
+        0.25,
+        0.25,
+        0.25
+      ],
+      "label": "4 hospitals, balanced (25 each)",
+      "stratified": true
+    },
+    "4_clients_skewed": {
+      "n_clients": 4,
+      "ratio": [
+        5,
+        2,
+        1,
+        1
+      ],
+      "fractions": [
+        0.555556,
+        0.222222,
+        0.111111,
+        0.111111
+      ],
+      "label": "4 hospitals, skewed 5:2:1:1 (dissertation: 50/20/10/10)",
+      "stratified": true
+    },
+    "3_clients_cohort": {
+      "n_clients": 3,
+      "ratio": [
+        642,
+        101,
+        784
+      ],
+      "fractions": [
+        0.420432,
+        0.066143,
+        0.513425
+      ],
+      "label": "3 hospitals, one cohort each (DUKE | I-SPY1 | I-SPY2)",
+      "stratified": false
+    },
+    "3_clients_sizematched": {
+      "n_clients": 3,
+      "ratio": [
+        642,
+        101,
+        784
+      ],
+      "fractions": [
+        0.420432,
+        0.066143,
+        0.513425
+      ],
+      "label": "3 hospitals, cohorts mixed, sizes matched to 3_clients_cohort",
+      "stratified": true
+    }
+  },
+  "experiments": [
+    {
+      "id": "test01",
+      "name": "test01_centralized",
+      "kind": "centralized",
+      "algorithm": "centralized",
+      "partition": null,
+      "n_hospitals": 1,
+      "split": "all data pooled",
+      "objective": "Upper-bound baseline: one machine, all training data pooled.",
+      "research_question": "RQ1 \u2014 the reference every federated run is measured against.",
+      "notes": "Not an NVFLARE job. Runs the same trainer the clients run, on the union of every hospital's data, for the same number of epochs."
+    },
+    {
+      "id": "test02",
+      "name": "test02_fedavg_2h",
+      "kind": "federated",
+      "algorithm": "fedavg",
+      "partition": "2_clients_balanced",
+      "n_hospitals": 2,
+      "split": "2 hospitals, balanced (50/50)  ->  50.0% / 50.0%",
+      "objective": "Smallest federation: does splitting across two sites cost anything?",
+      "research_question": "RQ1 \u2014 federated versus centralised.",
+      "notes": ""
+    },
+    {
+      "id": "test03",
+      "name": "test03_fedprox_2h",
+      "kind": "federated",
+      "algorithm": "fedprox",
+      "partition": "2_clients_balanced",
+      "n_hospitals": 2,
+      "split": "2 hospitals, balanced (50/50)  ->  50.0% / 50.0%",
+      "objective": "Same two-site split under FedProx.",
+      "research_question": "RQ3 \u2014 FedAvg versus FedProx at two clients.",
+      "notes": ""
+    },
+    {
+      "id": "test04",
+      "name": "test04_fedavg_3h",
+      "kind": "federated",
+      "algorithm": "fedavg",
+      "partition": "3_clients_balanced",
+      "n_hospitals": 3,
+      "split": "3 hospitals, balanced (33.3 each)  ->  33.3% / 33.3% / 33.3%",
+      "objective": "Three sites: does further fragmentation compound the cost?",
+      "research_question": "RQ1 \u2014 the shape of degradation as sites increase.",
+      "notes": ""
+    },
+    {
+      "id": "test05",
+      "name": "test05_fedprox_3h",
+      "kind": "federated",
+      "algorithm": "fedprox",
+      "partition": "3_clients_balanced",
+      "n_hospitals": 3,
+      "split": "3 hospitals, balanced (33.3 each)  ->  33.3% / 33.3% / 33.3%",
+      "objective": "Same three-site split under FedProx.",
+      "research_question": "RQ3 \u2014 FedAvg versus FedProx at three clients.",
+      "notes": ""
+    },
+    {
+      "id": "test06",
+      "name": "test06_fedavg_4h",
+      "kind": "federated",
+      "algorithm": "fedavg",
+      "partition": "4_clients_balanced",
+      "n_hospitals": 4,
+      "split": "4 hospitals, balanced (25 each)  ->  25.0% / 25.0% / 25.0% / 25.0%",
+      "objective": "Four balanced sites. The primary federated configuration.",
+      "research_question": "RQ1 \u2014 the headline comparison against Test 01. Also the IID control for RQ2.",
+      "notes": ""
+    },
+    {
+      "id": "test07",
+      "name": "test07_fedprox_4h",
+      "kind": "federated",
+      "algorithm": "fedprox",
+      "partition": "4_clients_balanced",
+      "n_hospitals": 4,
+      "split": "4 hospitals, balanced (25 each)  ->  25.0% / 25.0% / 25.0% / 25.0%",
+      "objective": "Same four-site split under FedProx.",
+      "research_question": "RQ3 \u2014 FedAvg versus FedProx at four clients.",
+      "notes": ""
+    },
+    {
+      "id": "test08",
+      "name": "test08_fedavg_skewed",
+      "kind": "federated",
+      "algorithm": "fedavg",
+      "partition": "4_clients_skewed",
+      "n_hospitals": 4,
+      "split": "4 hospitals, skewed 5:2:1:1 (dissertation: 50/20/10/10)  ->  55.6% / 22.2% / 11.1% / 11.1%",
+      "objective": "Four sites of very unequal size, one holding half the data.",
+      "research_question": "RQ2 \u2014 the impact of heterogeneity, against Test 06.",
+      "notes": "Quantity skew only: each hospital keeps the global class ratio. A genuinely non-IID partition would also skew the label distribution. Stated as a limitation in docs/EXPERIMENTS.md."
+    },
+    {
+      "id": "test09",
+      "name": "test09_fedprox_skewed",
+      "kind": "federated",
+      "algorithm": "fedprox",
+      "partition": "4_clients_skewed",
+      "n_hospitals": 4,
+      "split": "4 hospitals, skewed 5:2:1:1 (dissertation: 50/20/10/10)  ->  55.6% / 22.2% / 11.1% / 11.1%",
+      "objective": "The skewed four-site split under FedProx, which exists precisely to stabilise training under heterogeneity.",
+      "research_question": "RQ4 \u2014 does FedProx mitigate the skew that Test 08 exposes?",
+      "notes": ""
+    },
+    {
+      "id": "test10",
+      "name": "test10_fedavg_cohort",
+      "kind": "federated",
+      "algorithm": "fedavg",
+      "partition": "3_clients_cohort",
+      "n_hospitals": 3,
+      "split": "3 hospitals, one cohort each (DUKE | I-SPY1 | I-SPY2)  ->  42.0% / 6.6% / 51.3%",
+      "objective": "One real cohort per hospital \u2014 genuine label and feature heterogeneity, not quantity skew.",
+      "research_question": "RQ2 \u2014 the primary test, against test12.",
+      "notes": "Report the cohort probe beside this result."
+    },
+    {
+      "id": "test12",
+      "name": "test12_fedavg_sizematched",
+      "kind": "federated",
+      "algorithm": "fedavg",
+      "partition": "3_clients_sizematched",
+      "n_hospitals": 3,
+      "split": "3 hospitals, cohorts mixed, sizes matched to 3_clients_cohort  ->  42.0% / 6.6% / 51.3%",
+      "objective": "The control for test10: identical site sizes, cohorts mixed.",
+      "research_question": "RQ2 \u2014 the control that isolates cohort identity.",
+      "notes": ""
+    },
+    {
+      "id": "test11",
+      "name": "test11_fedprox_cohort",
+      "kind": "federated",
+      "algorithm": "fedprox",
+      "partition": "3_clients_cohort",
+      "n_hospitals": 3,
+      "split": "3 hospitals, one cohort each (DUKE | I-SPY1 | I-SPY2)  ->  42.0% / 6.6% / 51.3%",
+      "objective": "FedProx under genuine cohort heterogeneity.",
+      "research_question": "RQ3 \u2014 against test10, under real heterogeneity.",
+      "notes": ""
+    },
+    {
+      "id": "test13",
+      "name": "test13_fedprox_sizematched",
+      "kind": "federated",
+      "algorithm": "fedprox",
+      "partition": "3_clients_sizematched",
+      "n_hospitals": 3,
+      "split": "3 hospitals, cohorts mixed, sizes matched to 3_clients_cohort  ->  42.0% / 6.6% / 51.3%",
+      "objective": "FedProx on the size-matched control.",
+      "research_question": "RQ3 \u2014 against test12.",
+      "notes": ""
+    }
+  ]
+}
