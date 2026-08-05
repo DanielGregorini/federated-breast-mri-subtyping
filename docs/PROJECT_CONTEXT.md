@@ -6,8 +6,16 @@ continue it without losing anything. Failed experiments and retired decisions ar
 recorded as carefully as successes, because in this project several of them are the
 most valuable results.
 
-**Last updated: 2026-08-04.** Written after inspecting the actual repository, not from
+**Last updated: 2026-08-05.** Written after inspecting the actual repository, not from
 memory. Companion document: `docs/PROJECT_HISTORY.md` (chronological history).
+
+**What changed on 2026-08-05** — read this first if you knew the previous version:
+the campaign grew from **9 experiments to 13**; FedOpt was **removed entirely** and
+tests 10–13 now hold the **cohort-heterogeneity pair** that gives RQ2 its first real
+answer; the whole repository was **reorganised** (`src/`, `docs/`, `deployment/`,
+`results/`, `notebooks/`) so almost every path in the previous version is stale; the
+repository is now **under git**; and the Apple-MPS NaN whose cause was recorded as
+"never established" has been **root-caused and fixed**.
 
 ---
 
@@ -21,10 +29,24 @@ memory. Companion document: `docs/PROJECT_HISTORY.md` (chronological history).
 | **NOT VERIFIED** | Stated somewhere in the project but not confirmable from the files present today. |
 | **INFORMATION NOT FOUND** | Asked for, and does not exist anywhere in the repository. |
 
-**Repository root:** `/Users/daniel/Developer/tese/federated-breast-classification`
-**The repository is NOT under git.** `git rev-parse` fails; there is no `.git` at the
-root. `BreastDCEDL/.git` exists but that is the *authors'* cloned repository, not ours.
-Nothing in this project is version controlled. This is a real risk and is listed in §20.
+**Repository root:** `/Users/daniel/Developer/tese/federated-breast-mri-subtyping`
+(76 GB; the code itself is under 1 MB).
+
+**⚠ THERE IS A SECOND, STALE COPY ON DISK.**
+`/Users/daniel/Developer/tese/federated-breast-classification` is a snapshot taken
+2026-08-05 ~13:17 and abandoned. It looks complete and is not. Its
+`notebooks/03_train_centralized.ipynb` is the old 12-cell version, its
+`src/core/training.py` predates the MPS fix, and it holds no tests 10–13 results.
+**Everything in this document refers to `federated-breast-mri-subtyping`.** Verify
+which tree you are in before editing anything; comparing file sizes of
+`notebooks/03_train_centralized.ipynb` (27,678 bytes live vs 5,119 stale) is the
+quickest test.
+
+**The repository IS under git** as of 2026-08-05 — two commits (`9e7dc5e Initial
+commit`, `89f0c0c inicial`), both made outside the working sessions, and the five
+notebooks are currently modified and uncommitted. The earlier per-session commit
+history was replaced by those two and is gone. Nothing has been lost from the working
+tree, but the history is not a record of how the project was built.
 
 ### The one thing a newcomer must internalise
 
@@ -86,13 +108,45 @@ in this repository — only these three objectives were ever transcribed into it
 
 | | question | measured by |
 |---|---|---|
-| **RQ1** | Can federated learning match centralised training? | test01 (centralised) vs test06 (4-hospital FedAvg) |
-| **RQ2** | What is the impact of non-IID heterogeneity? | test06 (balanced) vs test08 (skewed) |
-| **RQ3** | Trade-offs between privacy, communication and performance? | each FedAvg/FedProx pair (02/03, 04/05, 06/07, 08/09) |
-| **RQ4** | What mitigates FL limitations in clinical environments? | test09 (FedProx under skew), plus class-weight scope and the security measures |
+| **RQ1** | Can federated learning reach performance **comparable** to centralised training? | test01 (centralised) against the mean of tests 02–13, as an equivalence claim |
+| **RQ2** | What is the impact of non-IID data heterogeneity? | **test10 vs test12 and test11 vs test13** — the matched cohort pair. Tests 06 vs 08 vary quantity only |
+| **RQ3** | Trade-offs between privacy, communication efficiency and performance? | the per-round convergence curves (communication) and each FedAvg/FedProx pair, of which **10 vs 11** is the only one with real drift to correct |
+| **RQ4** | What mitigates FL limitations in clinical environments? | test11 (FedProx under genuine heterogeneity), the security measures, and the class-weight-scope experiment that has **not** been run |
 
-Source: `src/src/federated/config/experiments.py` (module docstring) and
+Source: `src/federated/config/experiments.py` (module docstring) and
 `docs/EXPERIMENTS.md`.
+
+#### RQ1 is an EQUIVALENCE claim, not a failed significance test
+
+This distinction decides how the whole results chapter reads, and getting it wrong is
+the easiest way to make a real finding sound like a null result.
+
+A null-hypothesis test that fails to find a difference proves nothing: absence of
+evidence is not evidence of absence, and with one seed per configuration it never
+could be. An **equivalence test** inverts the burden. It fixes a margin of practical
+equivalence *in advance*, then asks whether the observed difference falls inside it —
+the two-one-sided-tests framing (Lakens, <https://doi.org/10.1177/1948550617697177>).
+
+**The margin is 0.067 macro-AUC and it was measured, not chosen.** It is the spread
+between two runs of a byte-identical configuration differing only in random seed
+(0.7023 and 0.6351, campaign B; §8.4). `seed` fixes initialisation, augmentation draws
+and the split, but not cuDNN kernel selection, AMP behaviour or DataLoader worker
+ordering. That residual is the method's own irreducible variability, so a difference
+smaller than it cannot be attributed to anything the experiment varied.
+
+Measured: centralised **0.6068**, the mean of the twelve federated runs **0.5927**, a
+gap of **0.0141** — **4.8× smaller than the margin**, with every federated run inside
+it (largest single deviation **0.0642**, test10) and three of them scoring *above* the centralised
+baseline. The claim that follows is positive and quotable:
+
+> The cost of federation on this task is smaller than the cost of re-running the
+> centralised configuration with a different random seed.
+
+**"No difference detected" is therefore a finding, not a failure.** What limits it is
+stated plainly and is not a technicality: one seed per experiment means the margin is
+applied to point estimates rather than to confidence intervals. Three seeds would
+convert "the points fall inside the margin" into "the interval falls inside the
+margin", which is the stronger form and is item 1 of §21.
 
 ### 1.6 Hard constraints (non-negotiable, set by the supervisor)
 
@@ -157,32 +211,48 @@ process per participant. Details in §13.
   the real setting. Here: test01.
 * **Federated learning** — each hospital trains locally on its own patients; only
   weights are sent to a server, which aggregates and sends a new global model back. No
-  image ever leaves a site. Here: tests 02–09 (and 10–13 for FedOpt).
+  image ever leaves a site. Here: tests 02–13.
 * **FedAvg** (McMahan et al., 2017) — the server replaces the global model with the
   **weighted mean** of the client models, weighted by each client's sample count. The
   baseline aggregation rule. Tests 02, 04, 06, 08.
 * **FedProx** (Li et al., 2020) — identical server-side; adds a **client-side** penalty
   `mu/2 · ‖w_local − w_global‖²` to the local loss, keeping a site from drifting away
   from the model it was given. The entire difference from FedAvg is one number,
-  `mu = 0.01`. Tests 03, 05, 07, 09.
+  `mu = 0.01`. Tests 03, 05, 07, 09, 11, 13.
 * **FedOpt** — a **server-side** optimiser. The mean client delta is treated as a
   pseudo-gradient and the server takes an SGD step with it
   (`w_global ← ServerOpt(w_global, mean(w_client − w_global))`). SGD with lr 1.0 and
   momentum 0 *is* FedAvg exactly, so the momentum (0.6) is the whole difference. Clients
   are untouched (mu = 0), which makes FedOpt **orthogonal** to FedProx rather than an
-  alternative. Tests 10–13, implemented and **cancelled by the user** before completion.
+  alternative. **Implemented, never completed, and now removed from the experiment
+  table** — see §10.7. `FederationConfig` still carries `fedopt_lr` and
+  `fedopt_momentum`, and `recipes.py` still builds it, so reviving it is a matter of
+  adding rows back. **No FedOpt result is reported anywhere in this project.**
 * **Number of hospitals (2 / 3 / 4)** — with the training pool fixed at 1,527 patients,
   more hospitals means each site holds fewer patients and the server averages more
   divergent models. This tests whether degradation is *progressive* or *all-or-nothing*.
 * **Balanced vs skewed** — balanced gives every site the same number of patients
   (25/25/25/25); skewed gives 5:2:1:1 (55.6 / 22.2 / 11.1 / 11.1%). This is **quantity
   skew**.
-* **Non-IID data** — data whose distribution differs *between* sites. Quantity skew is
-  the weakest form. **Our partitions are stratified, so every hospital keeps the global
-  class ratio and only the quantity varies.** This is a deliberate, documented
-  limitation: tests 08/09 measure quantity skew, not label or feature heterogeneity. A
-  `--by-cohort` partitioner exists (one real cohort per hospital) and is the strongest
-  available upgrade to RQ2; it has never been run.
+* **Non-IID data** — data whose distribution differs *between* sites. Kairouz et al.
+  (<https://doi.org/10.1561/2200000083>) enumerate the ways it can differ: **quantity
+  skew** (sites hold different *amounts* of the same distribution), **label
+  distribution skew** (different class priors), **feature distribution skew** (the same
+  class looks different at different sites), and concept shift. Quantity skew is
+  formally in the taxonomy and is the **weakest entry in it**: the sites still sample
+  from one distribution, so the expected local gradient is the same everywhere and only
+  its variance differs. It is what tests 02–09 vary, all four of those partitions being
+  stratified to within **0.43 percentage points** of class spread (measured;
+  `final_summary/cohort/per_client_data.csv`).
+* **Cohort-native vs size-matched partitions — the pair that actually answers RQ2.**
+  Tests 10/11 give each hospital one complete source cohort; tests 12/13 give the same
+  three hospitals the same **642 / 101 / 784** patients drawn from all three cohorts.
+  Site sizes, client count, rounds, seed and algorithm are identical, so the *only*
+  thing varying between the pair is whether a site's data is cohort-native. That brings
+  in label skew (class spread **27.45 pp** against **0.32 pp**), feature skew (Duke's
+  tumours are ~5× smaller by volume and its scanner population differs) and quantity
+  skew simultaneously — the realistic case. **This is the strongest available test of
+  RQ2 in this project, and unlike quantity skew it produced a consistent answer (§14.1).**
 * **Medical imaging** — supplies the realism: small patient counts, strong site
   signatures, class imbalance, and a genuine privacy constraint.
 * **Privacy / distributed learning** — the reason federation exists. The cost of that
@@ -796,11 +866,28 @@ recall `[0.60, 0.50, 0.37]`.
 
 ## 5. BEFORE/AFTER PREPROCESSING — ALL VISUALISATIONS
 
-All regenerated by `src/scripts/build_dataset_report_figures.py`, in
-`docs/report_figures/`. Every figure exists as both `.pdf` and `.png`.
-They are embedded in `docs/DATASET_REPORT.md`.
+**There are two figure families and they live in two folders.** The dataset/report
+family below is regenerated by `src/scripts/build_dataset_report_figures.py` into
+**`docs/images/report_figures/`** (12 figures × 2 formats, all present, all regenerated
+2026-08-05T13:16) and is embedded in `docs/DATASET_REPORT.md`. The preprocessing
+walkthrough family is regenerated by `src/scripts/build_preprocessing_walkthrough.py`
+into **`docs/images/preprocessing_figures/`** (5 figures × 2 formats, same timestamp)
+and is embedded in `docs/PREPROCESSING_AND_IMAGING.md`.
 
-| path (add `.pdf` / `.png`) | what it shows |
+**The preprocessing walkthrough** — built for the dissertation's methodology chapter,
+every panel produced by the same functions the dataset builder calls:
+
+| path (add `.pdf` / `.png`) | what it shows | thesis section |
+|---|---|---|
+| `docs/images/preprocessing_figures/fig_p1_walkthrough` | **the same slice at every step**, raw → ROI → 80 mm crop → resample → normalise → 8-bit → RGB fusion → final 224×224. Labels state only *what was done*; the justification belongs in the text | Preprocessing |
+| `.../fig_p2_normalisation` | **normalisation SCOPE**, whole-volume against per-slice. Note: an earlier version of this figure compared raw against normalised histograms, which are identical because min–max is affine and the display windowing is itself a min–max — it was misleading and was replaced | Normalisation |
+| `.../fig_p3_slice_selection` | which 8 of the tumour-bearing slices are kept, and the 15% trim at each end | **3.3.4 Slice Selection** |
+| `.../fig_p4_load_time` | what happens at load time: ImageNet normalisation and the augmentation pipeline | Training setup |
+| `.../fig_p5_flowchart` | the whole pipeline as one flowchart, deliberately simple | Preprocessing overview |
+
+**The dataset report family:**
+
+| path (add `.pdf` / `.png`, all under `docs/images/report_figures/`) | what it shows |
 |---|---|
 | `fig1_dataset_composition` | 4-panel overview: patients per cohort · images per cohort · patients+images per class · **class composition within each cohort** (the panel to read first — Duke 64.8% HR+/HER2− vs I-SPY2 38.8%) |
 | `fig1_p1_patients_per_cohort` | standalone: 982 / 914 / 167 |
@@ -1226,13 +1313,22 @@ why it is run on every new dataset.
 * **The probe is reported beside every pooled result**, in the dataset report, the
   production README, `config/experiments.py` and this document.
 
-**Proposed and NOT done:**
-* **Inter-cohort intensity harmonisation (ComBat or similar).** Never implemented.
+**Done since the previous version of this document:**
+* **The cohort-based federated partition (`--by-cohort`) was built and run** — tests
+  10–13, 2026-08-05. It turns the confound into the experiment: one real cohort per
+  hospital, against a size-matched control (§14.1). **The probe must be quoted beside
+  test10 in particular**, because with one cohort per site "identify the cohort, then
+  use that cohort's prior" becomes available to the *aggregated* model. The
+  counter-argument belongs in the same paragraph: within any single client of test10 the
+  cohort is constant, so it carries no discriminative information locally and can only
+  re-emerge after aggregation.
+
+**Proposed and STILL NOT done:**
+* **Inter-cohort intensity harmonisation (ComBat or similar).** Never implemented. The
+  one intervention that would attack the confound at its source.
 * **Adversarial / gradient-reversal de-biasing on the cohort label.** Never implemented.
-* **Cohort-based federated partition (`--by-cohort`).** Implemented in
-  `scripts/partition_data.py`, **never run.** It would turn the confound into the
-  experiment: one real cohort per hospital is genuine non-IID and the strongest available
-  upgrade to RQ2.
+* **Re-running the probe on a harmonised dataset.** The measurement that would tell you
+  whether harmonisation removed the shortcut or removed the signal.
 
 ### 9.6 Scientific implications
 
@@ -1257,92 +1353,155 @@ Fields that do not exist anywhere are marked. **Common to every experiment in §
 dataset `multi_subtype_80mm` (2,063 patients / 16,378 images), 3-class subtype task,
 global test set 268 patients / 2,115 images, trivial baseline **0.5112**.
 
-### 10.1 THE FEDERATED CAMPAIGN — 2026-08-04 (the current, headline result)
+### 10.1 THE FEDERATED CAMPAIGN — 13 experiments, 2026-08-04 and 2026-08-05
 
 **Environment:** NVIDIA **RTX 4000 Ada** (20 GB), RunPod host, CUDA 12.8, torch 2.8.0,
-NVFLARE 2.8.0. **Whole matrix: 47.9 minutes wall clock. Zero failures.**
-**One run per job, seed 42.**
-Source of every number: `results/federated/final_summary/summary.{md,csv,json}`
-and `results/<name>/metrics.json`.
+NVFLARE 2.8.0. Tests 01–09 ran 2026-08-03T23:48 → 2026-08-04T00:59, **47.9 minutes,
+zero failures**. Tests 10–13 ran on a second rented host and finished at
+2026-08-05T01:16:51, 01:25:10, 01:33:40 and 01:42:13 — **four sequential jobs of ~8
+minutes each, ~34 minutes end to end, zero failures**. (The campaign start time is not
+recorded in `job.json`; 34 min is inferred from the finish times and the per-job wall
+clocks of 469–485 s.) **One run per job, seed 42, throughout.**
 
-| test | algorithm | hosp | seed | best epoch | best round | time (s) | accuracy | balanced acc | macro P | macro R | macro F1 | **macro AUC** |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| **test01** | centralized | 1 | 42 | **4** | — | 268 | **0.5299** | 0.4503 | 0.4606 | 0.4503 | 0.4523 | **0.6068** |
-| **test02** | fedavg | 2 | 42 | — | 25 | 313 | 0.4067 | 0.3766 | 0.3934 | 0.3766 | 0.3769 | **0.5598** |
-| **test03** | fedprox | 2 | 42 | — | 29 | 351 | 0.4328 | 0.4025 | 0.4028 | 0.4025 | 0.4001 | **0.5923** |
-| **test04** | fedavg | 3 | 42 | — | 27 | 313 | 0.4888 | 0.4222 | 0.4353 | 0.4222 | 0.4253 | **0.5990** |
-| **test05** | fedprox | 3 | 42 | — | 28 | 333 | 0.4627 | 0.4151 | 0.4227 | 0.4151 | 0.4140 | **0.5957** |
-| **test06** | fedavg | 4 | 42 | — | **0** | 317 | 0.4776 | 0.4522 | 0.4646 | 0.4522 | 0.4378 | **0.6527** ★ |
-| **test07** | fedprox | 4 | 42 | — | **0** | 335 | 0.4813 | 0.4442 | 0.4444 | 0.4442 | 0.4416 | **0.6078** |
-| **test08** | fedavg | 4 skew | 42 | — | 21 | 323 | 0.4888 | 0.4259 | 0.4374 | 0.4259 | 0.4292 | **0.5985** |
-| **test09** | fedprox | 4 skew | 42 | — | 2 | 387 | 0.4515 | 0.4210 | 0.4365 | 0.4210 | 0.4197 | **0.6248** |
+Every number below is read from `results/federated/final_summary/summary.csv`
+(regenerated 2026-08-05T11:03) and cross-checked against each
+`results/federated/<name>/test_metrics.json`.
 
-`training_time_kind`: test01 = *sum of per-epoch compute*; tests 02–09 = *job wall clock
-including orchestration*. **They are not the same quantity and must not be compared.**
+| test | algorithm | hosp | partition | best epoch | best round | time (s) | accuracy | balanced acc | macro P | macro F1 | **macro AUC** |
+|---|---|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| **test01** | centralized | 1 | — pooled | **4** | — | 267.6 | **0.5299** | 0.4503 | 0.4606 | 0.4523 | **0.6068** |
+| **test02** | fedavg | 2 | balanced | — | 25 | 313 | 0.4030 | 0.3742 | 0.3915 | 0.3744 | 0.5594 |
+| **test03** | fedprox | 2 | balanced | — | 29 | 351 | 0.4328 | 0.4025 | 0.4028 | 0.4001 | 0.5917 |
+| **test04** | fedavg | 3 | balanced | — | 27 | 313 | 0.4851 | 0.4198 | 0.4333 | 0.4231 | 0.5990 |
+| **test05** | fedprox | 3 | balanced | — | 28 | 333 | 0.4590 | 0.4127 | 0.4208 | 0.4116 | 0.5958 |
+| **test06** | fedavg | 4 | balanced | — | **0** | 317 | 0.4776 | 0.4522 | 0.4646 | 0.4378 | **0.6531** ★ |
+| **test07** | fedprox | 4 | balanced | — | **0** | 335 | 0.4739 | 0.4393 | 0.4389 | 0.4362 | 0.6075 |
+| **test08** | fedavg | 4 | skewed 5:2:1:1 | — | 21 | 323 | 0.4888 | 0.4259 | 0.4374 | 0.4292 | 0.5982 |
+| **test09** | fedprox | 4 | skewed 5:2:1:1 | — | 2 | 387 | 0.4515 | 0.4210 | 0.4365 | 0.4197 | 0.6250 |
+| **test10** | fedavg | 3 | **one cohort each** | — | 7 | 469 | 0.4291 | 0.3582 | 0.3523 | 0.3536 | **0.5426** ▼ |
+| **test11** | fedprox | 3 | **one cohort each** | — | 16 | 482 | 0.4590 | 0.4105 | 0.4302 | 0.4144 | 0.5678 |
+| **test12** | fedavg | 3 | size-matched control | — | 17 | 471 | 0.4478 | 0.4183 | 0.4187 | 0.4153 | 0.5836 |
+| **test13** | fedprox | 3 | size-matched control | — | 27 | 485 | 0.4664 | 0.3885 | 0.3925 | 0.3884 | 0.5882 |
 
-**Per-class AUC / precision / recall / F1 and confusion matrices** (rows = true, cols =
-predicted, order `[HRposHER2neg, TripleNeg, HER2pos]`):
+★ best · ▼ worst. `training_time_kind`: test01 = *sum of per-epoch compute*; tests 02–13
+= *job wall clock including orchestration*. **They are not the same quantity and must
+not be compared.** Tests 10–13 took ~50% longer per job than 02–09 on the same hardware;
+the campaigns ran on two separately rented hosts and the difference is **NOT VERIFIED**
+as anything other than host variation.
+
+**⚠ Three files disagree about test01's macro-AUC in the fourth decimal.** The
+authoritative value is in `results/federated/test01_centralized/seed_42/results.json`:
+**0.6067918080145278 → 0.6068**. `final_summary/summary.csv` agrees (0.6068);
+**`all_experiments.csv` says 0.6069**, and `docs/RESULTS.md` and the root `README.md`
+repeat that. A 0.0001 rounding artefact that changes nothing, but quote 0.6068 in the
+dissertation and correct the other three when convenient.
+
+**A discrepancy you will notice if you read the older version of this document.** The
+previous §10.1 quoted test02 as 0.5598/0.4067 and test06 as 0.6527; the files now say
+0.5594/0.4030 and 0.6531. `test_metrics.json` and `predictions_test.csv` for every test
+carry mtimes of 2026-08-05 04:06–06:56, well after the runs themselves (2026-08-04
+01:17 for test02) — the **test-set evaluation was re-run locally** from the saved
+`global_model.pt` after the campaign. Differences are ≤0.0005 macro-AUC and at most one
+patient in a confusion matrix, consistent with re-inference on different hardware
+flipping a borderline argmax. **The exact cause of the individual flips is NOT
+VERIFIED.** The current files are authoritative; nothing in any conclusion moves.
+
+**Per-class AUC, recall and confusion matrices** (rows = true, cols = predicted, order
+`[HRposHER2neg, TripleNeg, HER2pos]`), from `test_metrics.json`:
 
 | test | per-class AUC | per-class recall | confusion |
 |---|---|---|---|
 | test01 | 0.6238 / 0.6886 / **0.5079** | 0.7007 / 0.4615 / 0.1887 | `[[96,20,21],[30,36,12],[33,10,10]]` |
-| test02 | 0.5580 / 0.6285 / **0.4928** | 0.4818 / 0.3462 / 0.3019 | `[[66,26,45],[22,27,29],[27,10,16]]` |
-| test03 | 0.6095 / 0.6474 / 0.5200 | 0.4818 / 0.4615 / 0.2642 | `[[66,34,37],[23,36,19],[28,11,14]]` |
-| test04 | 0.6196 / 0.6469 / 0.5306 | 0.6496 / 0.3718 / 0.2453 | `[[89,20,28],[29,29,20],[30,10,13]]` |
-| test05 | 0.6036 / 0.6347 / 0.5487 | 0.5912 / 0.3333 / 0.3208 | `[[81,24,32],[24,26,28],[24,12,17]]` |
-| test06 | 0.6666 / 0.6835 / **0.6080** | 0.5839 / 0.2821 / 0.4906 | `[[80,14,43],[30,22,26],[19,8,26]]` |
-| test07 | 0.6067 / 0.6595 / 0.5573 | 0.5766 / 0.3974 / 0.3585 | `[[79,28,30],[26,31,21],[24,10,19]]` |
-| test08 | 0.6146 / 0.6578 / 0.5232 | 0.6350 / 0.3974 / 0.2453 | `[[87,19,31],[32,31,15],[28,12,13]]` |
-| test09 | 0.6393 / 0.6805 / 0.5545 | 0.5328 / 0.3718 / 0.3585 | `[[73,20,44],[26,29,23],[25,9,19]]` |
+| test02 | 0.5569 / 0.6285 / **0.4928** | 0.4745 / 0.3462 / 0.3019 | `[[65,26,46],[22,27,29],[27,10,16]]` |
+| test03 | 0.6091 / 0.6461 / 0.5199 | 0.4818 / 0.4615 / 0.2642 | `[[66,34,37],[23,36,19],[28,11,14]]` |
+| test04 | 0.6191 / 0.6468 / 0.5311 | 0.6423 / 0.3718 / 0.2453 | `[[88,21,28],[29,29,20],[30,10,13]]` |
+| test05 | 0.6030 / 0.6355 / 0.5488 | 0.5839 / 0.3333 / 0.3208 | `[[80,25,32],[24,26,28],[24,12,17]]` |
+| test06 | 0.6667 / 0.6845 / **0.6082** | 0.5839 / 0.2821 / 0.4906 | `[[80,14,43],[30,22,26],[19,8,26]]` |
+| test07 | 0.6066 / 0.6588 / 0.5572 | 0.5620 / 0.3974 / 0.3585 | `[[77,29,31],[26,31,21],[24,10,19]]` |
+| test08 | 0.6139 / 0.6580 / 0.5227 | 0.6350 / 0.3974 / 0.2453 | `[[87,19,31],[32,31,15],[28,12,13]]` |
+| test09 | 0.6394 / 0.6811 / 0.5545 | 0.5328 / 0.3718 / 0.3585 | `[[73,20,44],[26,29,23],[25,9,19]]` |
+| **test10** | 0.5473 / 0.6078 / **0.4728** | 0.5766 / 0.3846 / **0.1132** | see `test_metrics.json` |
+| **test11** | 0.5723 / 0.6323 / 0.4988 | 0.5766 / 0.3718 / 0.2830 | see `test_metrics.json` |
+| **test12** | 0.5923 / 0.6567 / 0.5019 | 0.5109 / 0.4231 / 0.3208 | see `test_metrics.json` |
+| **test13** | 0.6196 / 0.6488 / 0.4963 | 0.6496 / 0.3462 / 0.1698 | see `test_metrics.json` |
 
-Per-class precision and F1 are in each `metrics.json`; the centralised
-`sklearn` report is in `results/test01_centralized/seed_42/report_test.txt`.
-
-**Job IDs and timestamps** (from `results/<name>/job.json`), e.g. test06:
+**Job IDs and timestamps** (from `results/federated/<name>/job.json`), e.g. test06:
 `9efefb2e-42c6-41bc-922e-fb98271f568d`, submitted `2026-08-04T00:35:44+00:00`, finished
 `2026-08-04T00:41:01+00:00`, status `FINISHED:COMPLETED`, 4 clients, 30 rounds ×
 1 local epoch, `fedprox_mu = 0.0`, `key_metric = val_balanced_accuracy`.
 test09: `0bf42b80-2e29-46c2-9091-697a9e4b8e15`, duration `0:06:24`.
 test01 `results.json` records `finished: 2026-08-03T23:48:43+00:00`.
+Tests 10–13 finished 01:16:51, 01:33:40, 01:25:10 and 01:42:13 on 2026-08-05.
 
-**Result / log / figure paths for every test:**
+**Result / log / figure paths for every test** (post-reorganisation):
 
 | what | path |
 |---|---|
-| results | `results/federated/test0N_*/` |
-| centralised checkpoint | `results/test01_centralized/seed_42/best_model.pt` |
-| federated global models | `results/test0N_*/global_model.pt` (43 MB each) |
-| per-round metrics | `results/test0N_*/sites/rounds.csv` (federated) · `seed_42/rounds.csv` (centralised) |
-| per-patient predictions | `results/final_summary/experiments/<name>/predictions_test.csv` |
-| confusion / ROC / PR figures | `results/final_summary/experiments/<name>/figures/` |
-| logs | `deployment/logs/test0N/` — `server.log`, `hospital_N.log`, `admin.log`, `timeline.log`, `pids` |
-| campaign log | `deployment/logs/run_all.log` |
+| per-test results | `results/federated/testNN_*/` |
+| centralised output | `results/federated/test01_centralized/`**`seed_42/`** — `best_model.pt`, `results.json`, `rounds.csv` (30 epochs), `predictions_test.csv`, `report_test.txt`. **Note the extra `seed_42/` level**, which the federated tests do not have |
+| federated global models | `results/federated/testNN_*/global_model.pt` — **44,789,067 bytes each, identical size for all twelve** |
+| per-round metrics | `results/federated/testNN_*/sites/rounds.csv` (all federated tests; **note the `sites/` level**) |
+| per-site client log | `results/federated/testNN_*/sites/train.log` |
+| per-patient predictions | `results/federated/testNN_*/predictions_test.csv` |
+| aggregated deliverable | `results/federated/final_summary/` |
+| logs | `deployment/logs/testNN/` — `server.log`, `hospital_N.log`, `admin.log`, `timeline.log`, `pids` |
 
-**Interpretation — this is the honest reading and it must be carried forward.**
+**Interpretation — the honest reading, and it must be carried forward.**
 
-* **No comparison in this table is attributable.** The noise floor is **0.067** macro-AUC;
-  the full spread worst-to-best is **0.093**. With one seed per job, a difference smaller
-  than the noise cannot be assigned to the factor that distinguishes two runs.
-* **Four federated runs scored ABOVE the centralised baseline** (test06 +0.046, test09
-  +0.018, test07 +0.001, and test04/test08 within 0.008). That is the signature of noise
-  dominating, **not** of federation outperforming pooled training.
-* **What the table does support:** federated training produces models in the **same
-  range** as centralised training on this task.
-* **Accuracy is the real finding.** Every federated run lands **below** the trivial
+* **RQ1 is answered as equivalence** (§1.5): centralised 0.6068 vs federated mean
+  0.5927, gap **0.0141** against a 0.067 margin. Positive claim, single-seed caveat.
+* **No single pairwise comparison inside the table is attributable.** The full spread
+  worst-to-best is now **0.1105** (test06 0.6531 − test10 0.5426) against a 0.067 noise
+  floor, so the extremes are separated but no adjacent pair is.
+* **Three federated runs scored ABOVE the centralised baseline** — test06 +0.0463,
+  test09 +0.0182, test07 +0.0007 — and a fourth, test04, is 0.0078 below it. Signature
+  of noise dominating, **not** of federation outperforming pooled training. (Earlier
+  drafts said "four above"; only three are strictly above.)
+* **The cohort pair is the exception that does support a claim** — not because any one
+  difference clears the noise floor, but because **two independent comparisons agree in
+  direction** (§14.1).
+* **Accuracy is still the real finding.** Every federated run lands **below** the trivial
   baseline of 0.5112; only the centralised run clears it (0.5299). The models rank
-  patients better than chance (AUC 0.56–0.65) but **decide** worse than always predicting
+  patients better than chance (AUC 0.54–0.65) but **decide** worse than always predicting
   the majority class.
-* **HER2+ per-class AUC was 0.5079 in the centralised run — indistinguishable from
-  chance.**
-* Two patterns worth repeating with more seeds and **not worth claiming yet:** more
-  hospitals scored *higher*, not lower (2h 0.56/0.59 · 3h 0.60/0.60 · 4h 0.65/0.61); and
-  FedAvg vs FedProx **flips sign** across configurations (+0.033, −0.003, −0.045, +0.026).
+* **HER2+ per-class AUC was 0.5079 centralised and 0.4728 in test10 — at and below
+  chance.** Under real heterogeneity the minority class goes first.
+* Patterns worth repeating with more seeds and **not worth claiming yet:** among the
+  stratified runs more hospitals scored *higher*, not lower (2h 0.56/0.59 · 3h 0.60/0.60
+  · 4h 0.65/0.61); and on those same partitions FedAvg vs FedProx **flips sign**
+  (+0.033, −0.003, −0.045, +0.026).
 
 ### 10.2 Per-hospital results (federated tests only)
 
 Every hospital evaluated with the final global model on its **own local validation
-split**. Full table with per-class metrics and confusion matrices:
-`results/federated/final_summary/per_client_metrics.csv`.
+split**.
+
+**⚠ THE CURRENT `per_client_metrics.csv` IS STALE AND INCOMPLETE — READ THIS BEFORE
+USING IT.** `results/federated/final_summary/per_client_metrics.csv` (mtime
+2026-08-05T02:43) contains **only twelve rows**, covering the cohort experiments under
+their **pre-renumbering names `test14`–`test17`**:
+
+| file says | is actually |
+|---|---|
+| `test14_fedavg_cohort` | **test10** |
+| `test15_fedavg_sizematched` | **test12** |
+| `test16_fedprox_cohort` | **test11** |
+| `test17_fedprox_sizematched` | **test13** |
+
+The rows for tests 02–09 are **not in the current file**. The last rebuild ran
+`build_final_summary.py --no-client-eval`, which regenerates `summary.csv` (mtime
+11:03) but leaves `per_client_metrics.csv` untouched — so the ids were never renamed
+and the earlier tests were never re-scored. The table below for tests 02–09 is
+therefore transcribed from the **2026-08-04 build of that file, which no longer exists
+on disk**; the same is true of the copy kept at
+`/private/tmp/claude-501/.../2fc77b2f-.../scratchpad/final_summary_pod_backup`, which
+was checked and holds the identical twelve `test14`–`test17` rows.
+
+**Nothing is lost and this is cheaply fixed.** Every input still exists — each
+`global_model.pt` and each `deployment/data/partitions/<partition>/hospital_N/val.csv`
+— so re-running `python src/scripts/build_final_summary.py` **without**
+`--no-client-eval` regenerates all 39 rows under the correct ids. Do that before
+quoting per-hospital numbers in the dissertation.
 
 | test | site | train pat / img | val pat | accuracy | bal acc | macro F1 | **macro AUC** |
 |---|---|---|---:|---:|---:|---:|---:|
@@ -1377,6 +1536,42 @@ split**. Full table with per-class metrics and confusion matrices:
 tests 08/09 (0.5237 to 0.7519) is dominated by having 34 patients in a split, not by the
 skew. `per_client` in the per-experiment `metrics.json` is `{}` — the per-client numbers
 live only in `per_client_metrics.csv`.
+
+**Per-hospital results for the cohort pair (tests 10–13)**, read from the current
+`per_client_metrics.csv` with the ids translated as above. These are the rows that
+matter for RQ2, because they show *where* the aggregate difference comes from:
+
+| test | site | cohort held | val pat | trivial baseline | accuracy | bal acc | macro F1 | **macro AUC** |
+|---|---|---|---:|---:|---:|---:|---:|---:|
+| test10 fedavg cohort | hospital_1 | DUKE | 128 | 0.6641 | 0.4531 | 0.4183 | 0.3875 | 0.6170 |
+| test10 fedavg cohort | hospital_2 | I-SPY1 | 19 | 0.4211 | 0.3684 | 0.3167 | 0.2571 | **0.4794** |
+| test10 fedavg cohort | hospital_3 | I-SPY2 | 157 | 0.3885 | 0.4522 | 0.4255 | 0.4214 | 0.5804 |
+| test12 fedavg mixed | hospital_1 | mixed | 128 | 0.5078 | 0.4375 | 0.4006 | 0.3993 | 0.6345 |
+| test12 fedavg mixed | hospital_2 | mixed | 20 | 0.5000 | 0.6500 | 0.6667 | 0.6530 | **0.7389** |
+| test12 fedavg mixed | hospital_3 | mixed | 156 | 0.5064 | 0.4359 | 0.4047 | 0.4023 | 0.5908 |
+| test11 fedprox cohort | hospital_1 | DUKE | 128 | 0.6641 | 0.4375 | 0.3890 | 0.3641 | 0.6068 |
+| test11 fedprox cohort | hospital_2 | I-SPY1 | 19 | 0.4211 | 0.5263 | 0.4972 | 0.4845 | 0.6274 |
+| test11 fedprox cohort | hospital_3 | I-SPY2 | 157 | 0.3885 | 0.4076 | 0.3834 | 0.3728 | 0.5840 |
+| test13 fedprox mixed | hospital_1 | mixed | 128 | 0.5078 | 0.4922 | 0.4412 | 0.4411 | 0.6146 |
+| test13 fedprox mixed | hospital_2 | mixed | 20 | 0.5000 | 0.7500 | 0.7333 | 0.7313 | **0.7778** |
+| test13 fedprox mixed | hospital_3 | mixed | 156 | 0.5064 | 0.4167 | 0.3417 | 0.3377 | 0.6000 |
+
+**Three things in that table are worth the dissertation's space.**
+
+1. **The small site is where heterogeneity bites hardest.** hospital_2 holds 19–20
+   validation patients either way. Cohort-native (I-SPY1 only) it scores **0.4794**
+   under FedAvg — *below chance*; the same site with the same 20 patients drawn from all
+   three cohorts scores **0.7389**. With n = 20 neither number is stable, but the
+   direction is the same under FedProx (0.6274 vs 0.7778).
+2. **FedProx rescues that site and costs the large one.** From test10 to test11,
+   hospital_2 goes 0.4794 → 0.6274 while hospital_1 goes 0.6170 → 0.6068 and hospital_3
+   0.5804 → 0.5840. That is exactly the behaviour the proximal term is designed for:
+   it stops the small, distributionally-odd site from being pulled apart, at a small
+   cost to the site that dominates the average.
+3. **The trivial baselines differ per site under the cohort partition** — 0.6641 at
+   DUKE against 0.3885 at I-SPY2 — which is the class skew made concrete. A per-site
+   accuracy is uninterpretable without its own baseline here, and the size-matched
+   control has all three sites at ~0.50 by construction.
 
 ### 10.3 THE CLASSIFIER PHASE — 21 runs (`results/classifier/all_runs_pod.csv`)
 
@@ -1448,7 +1643,7 @@ dataset, run through `run_centralized.py`.
 | `freeze_none_seed_42` | none | 4 | 0.7821 | 0.6582 | **0.5989** | 0.5187 | 0.2560 / 0.2635 |
 
 Also present: `cpu_check_seed_42` (a 1-epoch smoke test used to confirm the CPU path on
-the MacBook; not a scientific result). Logs in `production/logs/_ablations/`.
+the MacBook; not a scientific result). Logs in `deployment/logs/_ablations/`.
 
 **Caveat found while writing this document:** both `_ablations` and `test01` record
 `"cohorts": ["spy2"]` in their `config.json` while training on the **pooled** dataset. The
@@ -1522,7 +1717,7 @@ and was re-run. Per-test wall clocks: 4,771–6,545 s each.
   to 27–40% in eight of nine configurations. Papers usually report only the aggregate.
 
 **Note the disagreement between (b) and §10.1:** on the binary task federation cost
-0.068–0.110; on the current 3-class task four federated runs *beat* the baseline. The
+0.068–0.110; on the current 3-class task three federated runs *beat* the baseline. The
 difference is that the current campaign has one seed per job and a spread (0.093) barely
 above the noise floor (0.067). **This is a real open question, not a resolved one.**
 
@@ -1547,11 +1742,42 @@ ResNet-50 10/20/200 epochs → 0.6639 / 0.6652 / **0.7023**; DenseNet-121 → 0.
 → 0.6813**; multi-task 3 binary heads + attention → mean AUC 0.5907 and 3-class
 composed 0.5490.
 
-### 10.7 FedOpt — tests 10–13, IMPLEMENTED, RUN CANCELLED
+### 10.7 FedOpt — IMPLEMENTED, CANCELLED, AND REMOVED FROM THE EXPERIMENT TABLE
 
-Added after 01–09 completed. Same partitions, same clients, same seed 42, same 30 rounds;
-only the **server's** update rule differs (`fedopt_lr = 1.0`, `fedopt_momentum = 0.6`;
-client `mu = 0`). Pairs: 10↔02, 11↔04, 12↔06, 13↔08.
+**⚠ The ids `test10`–`test13` no longer mean FedOpt.** For roughly one day they did;
+they now hold the cohort-heterogeneity pair (§14.1). This section records what the
+FedOpt attempt was and why nothing from it is reported, because any older note, log
+filename or figure that says "test10 = FedOpt" is from that window.
+
+FedOpt was added after 01–09 completed and was to run **on the MacBook CPU**. Same four
+partitions, same clients, same seed 42, same 30 rounds; only the **server's** update
+rule differed (`fedopt_lr = 1.0`, `fedopt_momentum = 0.6`; client `mu = 0`). Pairs were
+10↔02, 11↔04, 12↔06, 13↔08.
+
+| old id | old name | partition | outcome |
+|---|---|---|---|
+| test10 | `test10_fedopt_2h` | 2_clients_balanced | **partial** — job `7e92f496-290f-4db2-aaf1-84e36347e3f8` submitted 2026-08-04T10:36:55Z on **CPU**, reached **round 19 of 30**, cancelled by the user |
+| test11 | `test11_fedopt_3h` | 3_clients_balanced | job folder + README generated; never completed |
+| test12 | `test12_fedopt_4h` | 4_clients_balanced | **failed at launch** — `TypeError: FedOptRecipe.__init__() got an unexpected keyword argument 'key_metric'` (§17.10) |
+| test13 | `test13_fedopt_skewed` | 4_clients_skewed | same failure |
+
+**Why it was removed rather than left as four empty rows.** Nothing completed, so
+nothing can be reported; and a results table carrying four permanently blank
+experiments invites the reader to ask what happened to them in every chapter. The
+rationale is written into `src/federated/config/experiments.py` at the point where the
+rows used to be, so the removal cannot be mistaken for an oversight.
+
+**The asymmetry that made FedOpt unusable here, worth keeping if it is ever revived:**
+`FedOptRecipe` rejects `key_metric`, so `common.pop("key_metric", None)` was added.
+FedOpt therefore has **no server-side model selection — it keeps the LAST round, while
+FedAvg and FedProx keep the best of thirty.** The three algorithms would not be measured
+the same way, and any future FedOpt number must carry that caveat.
+
+**Confirmed: no FedOpt result appears anywhere in the reported campaign.**
+`results/federated/all_experiments.csv`, `final_summary/summary.csv` and
+`final_summary/manifest.json` each list exactly 13 experiments, all `fedavg`,
+`fedprox` or `centralized`. The partial output is archived at
+`unused/reference_implementations/fedopt_cancelled_2026-08-04/`; nothing was deleted.
 
 | id | name | partition | status |
 |---|---|---|---|
@@ -1796,75 +2022,78 @@ minutes of compute.** This is the single highest-value pending item.
 
 ### 13.1 Directory structure
 
+**Post-reorganisation (2026-08-05).** The federation used to live under one
+`federated/` folder with its own `production/` subtree; the code now sits in `src/` with
+everything else, and the deployment and its output are split into `deployment/` and
+`results/`.
+
 ```
-federated/
+src/federated/
 ├── config/
-│   ├── experiments.py     ★ THE SINGLE SOURCE OF TRUTH — 13 experiments, 4 partitions,
+│   ├── experiments.py     ★ THE SINGLE SOURCE OF TRUTH — 13 experiments, 6 partitions,
 │   │                        TrainingConfig, FederationConfig, every path
 │   ├── federation.py      ★ THE ONLY FILE THAT KNOWS A HOST OR PORT
 │   └── README.md
-├── src/                   the training/eval code the clients AND the centralised run use
+├── common/                the training/eval code the clients AND the centralised run use
 │   ├── models.py          FederatedClassifier + architecture fingerprint
 │   ├── data.py            loaders, class weights
 │   ├── training.py        the trainer (delegates to src/core/training.py)
 │   ├── evaluation.py      patient-level metrics
-│   └── thesis.py          the bridge that imports src
-├── federation/
-│   ├── recipes.py         build_recipe() — FedAvg / FedProx / FedOpt
-│   └── client.py          the NVFLARE client loop (flare.init/receive/send)
-├── scripts/               ★ all real logic lives here
-│   ├── provision.sh                 nvflare provision
-│   ├── prepare_data.py              global test/val, HARDLINKED
-│   ├── partition_data.py            per-hospital splits (--by-cohort, --stratify none)
-│   ├── verify_data.py               split integrity
-│   ├── generate_jobs.py             writes production/jobs/ from experiments.py
-│   ├── verify_production.py         ★ 198 pre-flight checks
-│   ├── start_federation.sh          server + N hospitals as separate OS processes
-│   ├── stop_federation.sh
-│   ├── run_experiment.py            submits ONE job through the admin API
-│   ├── run_all_experiments.py       the whole matrix
-│   ├── run_centralized.py           test01 — NOT an NVFLARE job
-│   ├── run_fedopt_overnight.sh      tests 10-13
-│   ├── collect_results.py           scores every model on the ONE global test set
-│   ├── build_final_summary.py       ★ ~1500 lines — all tables, figures, reports
-│   ├── build_distribution_report.py
-│   ├── audit_dataset.py             verifies hardlinks by INODE
-│   └── snapshot_config.py
+│   └── thesis.py          the bridge that imports src/core
+└── federation/
+    ├── recipes.py         build_recipe() — FedAvg / FedProx / FedOpt
+    └── client.py          the NVFLARE client loop (flare.init/receive/send)
+
+src/scripts/               ★ all real logic lives here
+├── prepare_data.py              global test/val, HARDLINKED
+├── partition_data.py            per-hospital splits (--by-cohort, --stratify none)
+├── verify_data.py               split integrity
+├── generate_jobs.py             writes deployment/jobs/ from experiments.py
+├── verify_production.py         ★ 219 pre-flight checks
+├── run_experiment.py            submits ONE job through the admin API
+├── run_all_experiments.py       the whole matrix
+├── run_centralized.py           test01 — NOT an NVFLARE job
+├── collect_results.py           scores every model on the ONE global test set
+├── build_final_summary.py       ★ ~1500 lines — all tables, figures, reports
+├── build_distribution_report.py
+├── build_dataset_report_figures.py · build_preprocessing_walkthrough.py
+├── audit_dataset.py             verifies hardlinks by INODE
+└── snapshot_config.py
+
+deployment/                ★ THE DEPLOYMENT LAYER
+├── project.yml            NVFLARE provisioning — participants, ports, builders
+├── config/                resolved_config.{json,md} — a SNAPSHOT; nothing reads it back
 ├── data/
 │   ├── global/{test.csv, val.csv, images/}          identical for ALL experiments
-│   └── partitions/
-│       ├── 2_clients_balanced/hospital_{1,2}/{train,val}.csv + images/
-│       ├── 3_clients_balanced/hospital_{1..3}/
-│       ├── 4_clients_balanced/hospital_{1..4}/
-│       └── 4_clients_skewed/hospital_{1..4}/
-├── production/            ★ THE DEPLOYMENT AND OUTPUT LAYER
-│   ├── project.yml        NVFLARE provisioning — participants, ports, builders
-│   ├── config/            resolved_config.{json,md} — a SNAPSHOT; nothing reads it back
-│   ├── datasets/          all_distributions.{csv,json}, global_splits.csv,
-│   │                      dataset_audit.json, testNN_*_distribution.csv (13)
-│   ├── figures/           3 overviews + 13 per-test distribution figures (.pdf/.png)
-│   ├── jobs/testNN_*/     13 folders, each README.md + job.py — GENERATED
-│   ├── logs/testNN/       server.log, hospital_N.log, admin.log, timeline.log, pids
-│   ├── logs/_ablations/   the freezing ablation logs
-│   ├── results/testNN_*/  job.json, sites/rounds.csv, sites/train.log,
-│   │                      predictions_test.csv, test_metrics.json, global_model.pt
-│   ├── results/_ablations/
-│   ├── results/final_summary/    ★ the aggregated deliverable
-│   ├── scripts/           thin wrappers: provision.sh distributions.sh verify.sh
-│   │                      start.sh run.sh stop.sh collect.sh summary.sh
-│   ├── docs/DATASET.md    the dataset spec, regenerated by audit_dataset.py
-│   └── workspace/breast_fl_project/prod_00/   ★ the PKI startup kits
-│       ├── server/        startup/{server.crt, server.key, fed_server.json, start.sh}
-│       ├── hospital_1..4/ startup/{client.crt, client.key, fed_client.json, start.sh}
-│       └── admin@ips.pt/  startup/{client.crt, client.key, fed_admin.json}
-├── docs/{ARCHITECTURE,DEPLOYMENT,EXPERIMENTS,README}.md
-└── analysis/notebooks/
+│   └── partitions/        2_clients_balanced · 3_clients_balanced · 4_clients_balanced
+│                          4_clients_skewed · 3_clients_cohort · 3_clients_sizematched
+│                            each: hospital_N/{train,val}.csv + images/ (hardlinks)
+├── datasets/              all_distributions.{csv,json}, global_splits.csv,
+│                          dataset_audit.json, testNN_*_distribution.csv (13)
+├── figures/               overviews + 13 per-test distribution figures (.pdf/.png)
+├── jobs/testNN_*/         13 folders, each README.md + job.py — GENERATED
+├── logs/testNN/           server.log, hospital_N.log, admin.log, timeline.log, pids
+├── scripts/               thin wrappers: provision.sh distributions.sh verify.sh
+│                          start.sh run.sh stop.sh collect.sh summary.sh
+└── workspace/breast_fl_project/prod_00/   ★ the PKI startup kits — GITIGNORED
+    ├── server/            startup/{server.crt, server.key, fed_server.json, start.sh}
+    ├── hospital_1..4/     startup/{client.crt, client.key, fed_client.json, start.sh}
+    └── admin@ips.pt/      startup/{client.crt, client.key, fed_admin.json}
+
+results/federated/         ★ THE OUTPUT LAYER
+├── testNN_*/              job.json, sites/rounds.csv, sites/train.log,
+│                          predictions_test.csv, test_metrics.json, global_model.pt
+├── _ablations/            freeze_layer3_seed_42 · freeze_none_seed_42
+├── all_experiments.csv    13 rows
+└── final_summary/         ★ the aggregated deliverable
+
+docs/{ARCHITECTURE,DEPLOYMENT,EXPERIMENTS,NVFLARE_CONFIGURATION,...}.md
 ```
 
-**`production/` holds no second definition of any hyperparameter.** `jobs/` is generated,
-`config/` is a snapshot, `scripts/` are wrappers. Three bugs in this project's history had
-one cause — two copies of a setting drifting apart — and each produced a run that
-completed with meaningless numbers.
+**`deployment/` holds no second definition of any hyperparameter.** `jobs/` is
+generated, `config/` is a snapshot, `scripts/` are wrappers. Three bugs in this project's
+history had one cause — two copies of a setting drifting apart — and each produced a run
+that completed with meaningless numbers.
 
 ### 13.2 Participants
 
@@ -1929,7 +2158,7 @@ participant's own `start.sh` from its own startup kit with `nohup`, so each beco
 file, authenticating over a real TCP connection on localhost.
 
 ```bash
-./production/scripts/start.sh 4 test06     # server + hospital_1..4, logs -> logs/test06/
+./deployment/scripts/start.sh 4 test06     # server + hospital_1..4, logs -> logs/test06/
 ```
 
 The script starts the server first and **polls the admin port** until it accepts
@@ -1945,6 +2174,31 @@ context-switching (**measured: 2 concurrent jobs → 0.074 epochs/s; 7 → 0.058
 | `SimEnv` | clients as **threads in one process**, no PKI, no network | **never for a reported number** |
 | `PocEnv` | separate processes, throwaway certificates | smoke tests only |
 | **`ProdEnv`** | separate processes, real PKI startup kits, own ports, jobs through the admin API | **every reported result** |
+
+### 13.5b The execution environment — where the code was written and where it ran
+
+**Two machines, and the dissertation must not conflate them.**
+
+| | development | execution |
+|---|---|---|
+| machine | Apple MacBook (Apple Silicon), macOS Darwin 25.5.0 | rented RunPod cloud GPU host |
+| accelerator | Apple MPS — **usable again since 2026-08-05** (§17.12) | **NVIDIA RTX 4000 Ada, 20 GB** for the federated campaigns; **RTX 4090** for most of the classifier phase |
+| CUDA / torch | — | CUDA 12.8, torch 2.8.0 |
+| NVFLARE | 2.8.0 | 2.8.0 |
+| what ran there | all code, documentation, figures, notebooks, the CPU smoke test, the cancelled FedOpt attempt | **every reported result** |
+
+**Exactly which GPU served which classifier run is INFORMATION NOT FOUND** —
+`all_runs_pod.csv` records no hardware column. The vCPU, RAM and disk of the RunPod
+instances are **NOT VERIFIED from this repository**; the values used in the
+dissertation's environment table came from the RunPod console at rental time and are
+recorded in no file here. If that table has to be defensible, re-check it against the
+RunPod billing history rather than against this document.
+
+**The one thing worth saying about the topology:** all five processes of a federation ran
+on a single host. That is faithful about PKI, process isolation, the admin API, the
+network protocol and data isolation on disk; it is **not** faithful about latency,
+bandwidth, or the failure modes of a real WAN — which is why the communication result of
+§15.6 is a statement about payload volume rather than about wall-clock cost.
 
 ### 13.6 How the infrastructure represents real hospitals
 
@@ -2013,7 +2267,7 @@ holds at epoch `r` centrally. Both arms follow the same curve; the client keeps 
 ### 13.9 How jobs are launched, and the admin interface
 
 Jobs are **not** hand-written JSON. `scripts/generate_jobs.py` writes
-`production/jobs/testNN_*/job.py` from `config/experiments.py`;
+`deployment/jobs/testNN_*/job.py` from `src/federated/config/experiments.py`;
 `generate_jobs.py --check` fails if any job has drifted from the table.
 
 `scripts/run_experiment.py <testNN>` then:
@@ -2038,28 +2292,28 @@ makes the server's copy the same object the clients construct.
 cd federated
 
 # once
-./production/scripts/provision.sh
-./production/scripts/distributions.sh
-./production/scripts/verify.sh                 # must pass before anything starts
+./deployment/scripts/provision.sh
+./deployment/scripts/distributions.sh
+./deployment/scripts/verify.sh                 # must pass before anything starts
 
 # the centralised baseline (NOT an NVFLARE job)
 python scripts/run_centralized.py --seed 42
 
 # one federated experiment
-./production/scripts/start.sh 4 test06         # server + 4 hospitals
-./production/scripts/run.sh test06             # submit through the admin API
-./production/scripts/stop.sh
+./deployment/scripts/start.sh 4 test06         # server + 4 hospitals
+./deployment/scripts/run.sh test06             # submit through the admin API
+./deployment/scripts/stop.sh
 
 # after the runs
-./production/scripts/collect.sh                # score every model on the one test set
-./production/scripts/summary.sh                # build results/final_summary/
+./deployment/scripts/collect.sh                # score every model on the one test set
+./deployment/scripts/summary.sh                # build results/final_summary/
 ```
 
 Client count per test: 2 for test02–03, 3 for test04–05, 4 for test06–09.
 
 ### 13.11 Verification
 
-`scripts/verify_production.py` runs **198 pre-flight checks** and writes nothing. It
+`src/scripts/verify_production.py` runs **219 pre-flight checks** and writes nothing. It
 covers: the `production/` structure; `project.yml` (api_version, project name, both ports
 against `federation.py`, all four clients, the admin e-mail regex, all four builders); the
 provisioned workspace and every certificate; the dataset partitions against their
@@ -2072,33 +2326,53 @@ not merely builds.
 
 ## 14. FEDERATED EXPERIMENT MATRIX
 
-**Held fixed across all nine** (this is the whole design): ResNet-18 ImageNet pretrained,
-freeze `layer3`, dropout 0.5, AdamW lr 1e-4 / wd 5e-4, label smoothing 0.1, batch 24,
-1 slice per patient per batch, class weights inverse-frequency per patient scope `local`,
-cosine schedule, **seed 42**, 224×224 RGB, dataset `multi_subtype_80mm`, global test set
-268 patients. The centralised baseline and the federated clients run **literally the same
-trainer** — `src/training.py` delegates to `src/core/training.py` — so the
-gap RQ1 measures is federation rather than a difference in code.
+**Held fixed across all thirteen** (this is the whole design): ResNet-18 ImageNet
+pretrained, freeze `layer3`, dropout 0.5, AdamW lr 1e-4 / wd 5e-4, label smoothing 0.1,
+batch 24, 1 slice per patient per batch, class weights inverse-frequency per patient
+scope `local`, cosine schedule, **seed 42**, 224×224 RGB, dataset `multi_subtype_80mm`,
+global test set 268 patients. The centralised baseline and the federated clients run
+**literally the same trainer** — `src/federated/common/training.py` delegates to
+`src/core/training.py` — so the gap RQ1 measures is federation rather than a difference
+in code.
 
 **Budget matching:** 30 rounds × 1 local epoch against 30 centralised epochs. The model
 sees the data the same number of times on both sides. Without that, RQ1 would read a
 difference in compute as a difference in federation. `verify_production.py` asserts it.
 
-| Test | folder | clients | partition | patients per hospital | algorithm | mu | rounds × local epochs | RQ |
+Reproduced from `src/federated/config/experiments.py`, which is the **single source of
+truth** — ids, partition names, ratios and algorithms all come from `EXPERIMENTS` and
+`PARTITIONS` there, and every job under `deployment/jobs/` is generated from it by
+`generate_jobs.py`.
+
+| Test | folder | clients | partition (ratio → shares) | patients per hospital | algorithm | mu | rounds × local epochs | RQ |
 |---|---|---:|---|---|---|---:|---|---|
 | **01** | `test01_centralized` | 1 | — (all pooled) | 1,527 | — | — | 30 epochs | RQ1 reference |
 | **02** | `test02_fedavg_2h` | 2 | `2_clients_balanced` (1:1 → 50.0/50.0%) | 393 / 391 | FedAvg | — | 30 × 1 | RQ1 |
 | **03** | `test03_fedprox_2h` | 2 | `2_clients_balanced` | 393 / 391 | FedProx | 0.01 | 30 × 1 | RQ3 |
 | **04** | `test04_fedavg_3h` | 3 | `3_clients_balanced` (1:1:1 → 33.3% each) | 262 / 262 / 260 | FedAvg | — | 30 × 1 | RQ1 |
 | **05** | `test05_fedprox_3h` | 3 | `3_clients_balanced` | 262 / 262 / 260 | FedProx | 0.01 | 30 × 1 | RQ3 |
-| **06** | `test06_fedavg_4h` | 4 | `4_clients_balanced` (1:1:1:1 → 25.0% each) | 198 / 196 / 195 / 195 | FedAvg | — | 30 × 1 | **RQ1 headline** + RQ2 IID control |
+| **06** | `test06_fedavg_4h` | 4 | `4_clients_balanced` (1:1:1:1 → 25.0% each) | 198 / 196 / 195 / 195 | FedAvg | — | 30 × 1 | RQ1 + RQ2 IID control |
 | **07** | `test07_fedprox_4h` | 4 | `4_clients_balanced` | 198 / 196 / 195 / 195 | FedProx | 0.01 | 30 × 1 | RQ3 |
-| **08** | `test08_fedavg_skewed` | 4 | `4_clients_skewed` (**5:2:1:1** → 55.6/22.2/11.1/11.1%) | 435 / 175 / 87 / 87 | FedAvg | — | 30 × 1 | **RQ2** |
-| **09** | `test09_fedprox_skewed` | 4 | `4_clients_skewed` | 435 / 175 / 87 / 87 | FedProx | 0.01 | 30 × 1 | **RQ4** |
+| **08** | `test08_fedavg_skewed` | 4 | `4_clients_skewed` (**5:2:1:1** → 55.6/22.2/11.1/11.1%) | 435 / 175 / 87 / 87 | FedAvg | — | 30 × 1 | RQ2 — **quantity skew only** |
+| **09** | `test09_fedprox_skewed` | 4 | `4_clients_skewed` | 435 / 175 / 87 / 87 | FedProx | 0.01 | 30 × 1 | RQ4 |
+| **10** | `test10_fedavg_cohort` | 3 | `3_clients_cohort` (**642:101:784** → 42.0/6.6/51.3%), `stratified=False` | 642 / 101 / 784 — **DUKE / I-SPY1 / I-SPY2** | FedAvg | — | 30 × 1 | **RQ2 primary**, against test12 |
+| **11** | `test11_fedprox_cohort` | 3 | `3_clients_cohort` | 642 / 101 / 784, one cohort each | FedProx | 0.01 | 30 × 1 | **RQ3 strongest**, against test10 |
+| **12** | `test12_fedavg_sizematched` | 3 | `3_clients_sizematched` (**642:101:784**), stratified | 642 / 101 / 784, cohorts mixed | FedAvg | — | 30 × 1 | **RQ2 control** |
+| **13** | `test13_fedprox_sizematched` | 3 | `3_clients_sizematched` | 642 / 101 / 784, cohorts mixed | FedProx | 0.01 | 30 × 1 | RQ3, against test12 |
 
-Counts are read from `production/datasets/all_distributions.csv`, not from the nominal
-percentages: 1,527 does not divide evenly, so the splitter allocates the remainder to the
-earlier sites.
+**On the numbering.** Tests 10–13 are ordered so each *partition* owns a consecutive
+FedAvg/FedProx pair, exactly as 02–09 are ordered: 10/11 is the cohort split, 12/13 its
+control. The matched pairs for RQ2 are therefore **10 vs 12** and **11 vs 13** — across
+the pair, not adjacent within it. (An earlier layout numbered them 10/12 cohort and
+11/13 mixed; that was swapped so the tables read consistently. Result folders,
+`experiments.py`, `all_experiments.csv` and `summary.csv` were all renamed together, but
+`per_client_metrics.csv` was not — see §10.2.)
+
+Counts for tests 01–09 are read from `deployment/datasets/all_distributions.csv`, not
+from the nominal percentages: 1,527 does not divide evenly, so the splitter allocates
+the remainder to the earlier sites. Counts for 10–13 come from the cohorts themselves
+(the training split holds 642 DUKE, 101 I-SPY1 and 784 I-SPY2 patients), which is why
+that partition's "ratio" is written as absolute patient counts.
 
 **On "50/20/10/10":** that sums to 90, not 100. It is a **5:2:1:1 ratio**, which
 normalises to 55.6 / 22.2 / 11.1 / 11.1. `Partition` stores the ratio and normalises in
@@ -2122,35 +2396,103 @@ differing by ten percent.
 | 4c skewed | hospital_2 | 273 | 2,171 | 67 | 534 | 50.5 / 26.7 / 22.7 |
 | 4c skewed | hospital_3 | 136 | 1,073 | 34 | 266 | 50.7 / 27.2 / 22.1 |
 | 4c skewed | hospital_4 | 135 | 1,066 | 34 | 268 | 51.1 / 26.7 / 22.2 |
+| **3c cohort** | hospital_1 **DUKE** | 514 | 4,067 | 128 | 1,007 | **66.3 / 16.0 / 17.7** |
+| **3c cohort** | hospital_2 **I-SPY1** | 82 | 652 | 19 | 152 | **41.5 / 26.8 / 31.7** |
+| **3c cohort** | hospital_3 **I-SPY2** | 627 | 5,005 | 157 | 1,248 | **38.9 / 35.9 / 25.2** |
+| 3c size-matched | hospital_1 | 514 | 4,096 | 128 | 1,020 | 50.6 / 26.8 / 22.6 |
+| 3c size-matched | hospital_2 | 81 | 640 | 20 | 160 | 50.6 / 27.2 / 22.2 |
+| 3c size-matched | hospital_3 | 628 | 4,976 | 156 | 1,239 | 50.6 / 26.9 / 22.5 |
 
-**⚠ THE LIMITATION THE DISSERTATION MUST STATE.** All four partitions are **stratified**:
-every hospital keeps the global class ratio, **maximum measured spread across hospitals
-0.4 percentage points**. So between hospitals only the **quantity** of data varies. Tests
-08 and 09 are **quantity skew, not genuine non-IID label heterogeneity.** The normalised
-class panel in every distribution figure is what makes it visible — flat bars mean
-quantity-only. A reader who misses this will over-claim what tests 08/09 measure.
+Every row above is read from `results/federated/final_summary/cohort/per_client_data.csv`.
+Each site's local 20% validation split is carved out of its own patients, so
+514 + 128 = 642 for hospital_1 and so on.
 
-**Two genuine alternatives are implemented and neither is the default:**
+**⚠ THE LIMITATION THE DISSERTATION MUST STATE ABOUT TESTS 02–09.** All four of those
+partitions are **stratified**: every hospital keeps the global class ratio. Recomputed
+from the patient counts above, the maximum class-share spread across hospitals is
+**0.43 percentage points** for the skewed partition (and 0.32 pp for the size-matched
+one). So between hospitals only the **quantity** of data varies. **Tests 08 and 09 are
+quantity skew, not genuine non-IID label heterogeneity.** The normalised class panel in
+every distribution figure is what makes it visible — flat bars mean quantity-only. A
+reader who misses this will over-claim what tests 08/09 measure.
+
+**What quantity skew alone does and does not demonstrate.** It *does* test whether
+FedAvg's sample-weighted averaging behaves when one site dominates the mean and three
+sites contribute few, noisy updates — a real engineering property of the aggregation
+rule. It does *not* test heterogeneity in any distributional sense: each site's expected
+local gradient is the same, only the variance differs, so a proximal term has nearly
+nothing to pull against. That is why FedProx's effect flipped sign across those four
+configurations, and why RQ2 had no defensible answer until tests 10–13 existed.
+
+**Evaluation procedure, identical for all thirteen:** the selected global model is scored
+on the **same** global test set (268 patients, 2,115 images), slice probabilities
+averaged per patient first. `collect_results.py` does this for every experiment, so a
+difference between two rows can never be a difference in evaluation.
+
+### 14.1 Tests 10–13 — the matched pair that answers RQ2
+
+This is the design contribution of the second campaign, and it is worth stating
+carefully because its whole value lies in what is held constant.
+
+**Both partitions hold the same three site sizes: 642, 101 and 784 patients.** In
+`3_clients_cohort` each site *is* one real cohort. In `3_clients_sizematched` the same
+three sites are filled with a stratified draw from all three cohorts. Client count,
+rounds, local epochs, seed, model, hyperparameters, global test set and evaluation code
+are identical. **The only quantity that varies is whether a site's data is
+cohort-native.**
+
+| | one cohort per site | size-matched control |
+|---|---|---|
+| partition | `3_clients_cohort` (`stratified=False`) | `3_clients_sizematched` (stratified) |
+| site sizes | 642 / 101 / 784 | 642 / 101 / 784 |
+| class shares | 66.4/15.9/17.8 · 41.6/26.7/31.7 · 38.9/35.8/25.3 | ~50.6/26.9/22.5 at all three |
+| **class-share spread** | **27.45 pp** | **0.32 pp** |
+| tumour size | DUKE ~5× smaller by volume than I-SPY2 | same mix everywhere |
+| what else differs | scanner population, acquisition protocol, annotation type | nothing |
+
+Both spreads were recomputed for this document from the patient counts in
+`per_client_data.csv` (train + val rows combined), not taken from any earlier note.
+
+**The result.**
+
+| Algorithm | one cohort per site | cohorts mixed | difference |
+|---|---:|---:|---:|
+| FedAvg (test10 vs test12) | 0.5426 | 0.5836 | **−0.0410** |
+| FedProx (test11 vs test13) | 0.5678 | 0.5882 | **−0.0204** |
+
+**Both point the same way: real heterogeneity costs performance.** That consistency is
+what the quantity-skew comparison never produced — there the two pairs disagreed in sign
+(−0.0549 and +0.0175), the signature of noise dominating. Under a null hypothesis, two
+independent comparisons both landing in the predicted direction has probability 0.25:
+suggestive, not conclusive, and both differences are still inside the 0.067 noise floor,
+so **the magnitude is not established**.
+
+**The finding that is not in the aggregate.** Recall on the minority HER2+ class:
+
+| test | HR+/HER2− | Triple Negative | HER2+ |
+|---|---:|---:|---:|
+| test10 — one cohort per site | 0.577 | 0.385 | **0.113** |
+| test12 — cohorts mixed | 0.511 | 0.423 | **0.321** |
+
+HER2+ recall collapses from 32% to 11%, and that class's AUC falls to **0.4728** — below
+chance. **Under genuine heterogeneity the minority class goes first**, and a paper
+reporting only aggregate metrics would not show this. FedProx partially recovers it
+(0.113 → 0.283 in test11), which is the clearest RQ4 evidence the project has.
+
+**Report the source probe beside test10, always.** With one cohort per site, "identify
+the cohort, then use that cohort's prior" becomes available to the *aggregated* model in
+a way it is not under stratified partitions. Worth noting as the honest counter-argument:
+within any single client of test10 the cohort is **constant**, so it carries no
+discriminative information locally and cannot be learned as a shortcut there — it can
+only re-emerge after aggregation.
+
+**Rebuild either partition with:**
 ```bash
-python scripts/partition_data.py --stratify none     # label skew
-python scripts/partition_data.py --by-cohort         # one real cohort per hospital
+python src/scripts/partition_data.py --by-cohort --only 3_clients_cohort --hardlink
+python src/scripts/partition_data.py --only 3_clients_sizematched --hardlink
 ```
-`--by-cohort` gives Duke at 64.8% HR+/HER2− against I-SPY2's 38.8%, tumours five times
-smaller by volume, a different scanner population. **That is the strongest available
-upgrade to RQ2, and it has never been run.**
-
-**Evaluation procedure, identical for all nine:** the selected global model is scored on
-the **same** global test set (268 patients, 2,115 images), slice probabilities averaged
-per patient first. `collect_results.py` does this for every experiment, so a difference
-between two rows can never be a difference in evaluation.
-
-### 14.1 Tests 10–13 (FedOpt), for completeness
-
-Same four partitions, same clients, same seed, same 30 rounds; only the server's update
-rule differs (`fedopt_lr = 1.0`, `fedopt_momentum = 0.6`, client `mu = 0`). SGD with
-lr 1.0 and momentum 0 **is** FedAvg exactly, so the momentum is the whole of the
-difference: it gives the server memory of the previous rounds' direction. Pairs: 10↔02,
-11↔04, 12↔06, 13↔08. RQ3 for 10–12, RQ4 for 13. **Cancelled by the user; see §10.7.**
+A third partitioner, `--stratify none` (label skew without cohort identity), is
+implemented and **has never been run**.
 
 ---
 
@@ -2196,7 +2538,7 @@ for different ones.
 
 The class distribution is **1,042 / 564 / 457** patients (2.25:1) and on the test set
 **137 / 78 / 53**. Plain accuracy is dominated by HR+/HER2−: **always predicting it scores
-0.5112**, which is *higher* than eight of the nine models achieved. Macro-averaging gives
+0.5112**, which is *higher* than every one of the twelve federated models achieved. Macro-averaging gives
 each class equal weight, so a model that ignores HER2+ entirely cannot hide. This is
 exactly what happened: test01 has accuracy 0.5299 (above baseline) but balanced accuracy
 0.4503 and HER2+ recall 0.1887.
@@ -2211,23 +2553,71 @@ patients, 2,115 images, trivial baseline 0.5112.** It is held out before any par
 and is never trained on by anybody.
 
 **The server holds it.** In a production federation the server would hold nothing; here it
-holds a held-out set because the nine experiments must be compared on identical ground.
-**This is a benchmarking decision, not a claim about deployment**, and the dissertation
-must say so.
+holds a held-out set because the thirteen experiments must be compared on identical
+ground. **This is a benchmarking decision, not a claim about deployment**, and the
+dissertation must say so.
 
-**Client-specific evaluation also exists** but is secondary: each hospital's own 20% local
-validation split produces the metric the server selects on, and
-`per_client_metrics.csv` reports the final global model's performance on each site
-separately. Those splits are 34–170 patients and are **not** comparable across
-experiments.
+**The server's *validation* signal is different and does not come from that set.** The
+metric the server selects the global model on (`val_balanced_accuracy`) is computed by
+each **client**, on that client's own 20% local validation split, and reported upward as
+a scalar. The server never sees an image. Under the stratified partitions those local
+splits are all draws from the same distribution; **under the cohort partition they are
+not**, so in tests 10–13 the server is selecting on a mean of three metrics measured on
+three genuinely different populations — a property of federated model selection worth
+one sentence in the dissertation.
+
+**Client-specific evaluation also exists** but is secondary: `per_client_metrics.csv`
+reports the final global model's performance on each site separately. Those splits are
+19–170 patients and are **not** comparable across experiments. **⚠ The current file is
+stale and incomplete — see §10.2 and §17.14b.** Honest statement of what is in the
+repository today: per-client metrics exist for the four cohort/size-matched experiments
+only, under their old ids, and must be regenerated before use.
+
+### 15.6 Communication — the RQ3 measurement
+
+Each global model file is **44,789,067 bytes**, identical for all twelve federated runs
+(11,178,051 parameters plus buffers, fp32). That is what crosses the boundary per client
+per round **in each direction**, so a 30-round run with *n* clients moves
+`2 × 30 × n × 44.8 MB`: **2.6 GB** at 2 clients, **3.9 GB** at 3, **5.3 GB** at 4.
+
+**Almost none of it is necessary.** Averaged across sites, the aggregated global model's
+validation AUC after **one** communication round is already 94–98% of its best value on
+the stratified partitions. Recomputed from every `sites/rounds.csv` for this document
+(column `agg_val_auc`, mean across clients per round):
+
+| test | partition | round-1 / best | reaches 95% at round | reaches 99% at round |
+|---|---|---:|---:|---:|
+| 02 | 2c balanced | 0.960 | 1 | 2 |
+| 03 | 2c balanced | 0.944 | 2 | 2 |
+| 04 | 3c balanced | 0.960 | 1 | 3 |
+| 05 | 3c balanced | 0.967 | 1 | 2 |
+| 06 | 4c balanced | 0.973 | 1 | 3 |
+| 07 | 4c balanced | 0.983 | 1 | 4 |
+| 08 | 4c skewed | 0.963 | 1 | 3 |
+| 09 | 4c skewed | 0.953 | 1 | 2 |
+| **10** | **3c cohort** | **0.909** | **5** | **9** |
+| **11** | **3c cohort** | 0.945 | 2 | 2 |
+| **12** | 3c size-matched | 0.956 | 1 | 4 |
+| **13** | 3c size-matched | 0.942 | 4 | 13 |
+
+Stopping at round 4 would have saved **~87%** of the traffic on tests 02–09 with no
+measurable loss. **Note the cohort rows:** test10 needs five rounds to reach 95% where
+almost every stratified run needs one, and test13 needs thirteen rounds to reach 99%.
+Slower convergence under heterogeneity is the expected behaviour of FedAvg on non-IID
+clients and is a second, independent signature of the effect §14.1 measures — obtained
+from the round curves rather than from the final score.
+
+**What is NOT measured:** wall-clock communication time, bandwidth, and any
+compression/quantisation scheme. Only payload size and round count. The 87% figure is
+therefore a statement about *what was sent*, not about *what it cost in seconds*.
 
 ### 15.5 Model selection differs between the two arms — stated, not hidden
 
 | arm | selects on | why |
 |---|---|---|
 | centralised (test01) | validation **macro-AUC** | the classifier phase's rule; AUC is well defined on 268 patients |
-| federated (02–09) | **`val_balanced_accuracy`**, per hospital | a site holding 39 patients can draw a validation split missing a class, and macro-AUC is then NaN |
-| FedOpt (10–13) | **nothing** — `FedOptRecipe` rejects `key_metric`, so the LAST round is kept | must be stated with any FedOpt number |
+| federated (02–13) | **`val_balanced_accuracy`**, averaged over hospitals | a site holding 19 patients can draw a validation split missing a class, and macro-AUC is then NaN. Under the cohort partition hospital_2 holds exactly 19 validation patients, so this is not a hypothetical |
+| FedOpt (never reported) | **nothing** — `FedOptRecipe` rejects `key_metric`, so the LAST round would be kept | the reason FedOpt is not comparable and was dropped (§10.7) |
 
 Both of the first two are computed on held-out patients, which is the part that matters.
 Neither is training accuracy.
@@ -2236,77 +2626,112 @@ Neither is training accuracy.
 
 ## 16. FILES AND RESULTS — the complete map
 
-**Repository root:** `/Users/daniel/Developer/tese/federated-breast-classification`
-(≈73 GB total, **not under git**).
+**Repository root:** `/Users/daniel/Developer/tese/federated-breast-mri-subtyping`
+(76 GB total, under git since 2026-08-05).
+**Do not confuse it with the stale copy** at `.../federated-breast-classification` —
+see §0.
+
+**The layout below is the result of the 2026-08-05 reorganisation.** Every path in the
+previous version of this document (`src/config.py`, `federated/production/…`,
+`BreastDCEDL/` at the root, `src/data/multi_subtype_80mm/`, `src/docs/report_figures/`,
+notebooks numbered 01/03/05/06/07) is **stale**. The rule the reorganisation follows:
+the root holds only `README.md`, `requirements.txt` and seven folders; everything else
+belongs to one of them.
 
 ### 16.1 Top level
 
+| PATH | PURPOSE | CONTENT | size |
+|---|---|---|---:|
+| `README.md` | project entry point | 10 KB, links to every folder README and to the six documents | |
+| `requirements.txt` | dependencies | `nvflare>=2.8,<3`, `torch>=2.2`, `torchvision`, `numpy`, `pandas`, `pillow`, `scikit-learn`, `matplotlib`. **⚠ its comment about Apple MPS is stale — see §17.12** | |
+| `raw_dataset_BreastDCEDL/` | **the ZENODO RELEASE — raw imaging.** Never written to | `BreastDCEDL_{DUKE,ISPY1,ISPY2}_min_crop/`, `BreastDCEDL_metadata_min_crop.csv`, `BreastDCEDL_models.tar.gz` (released ViT weights), `BreastDCEDL_dataset.pdf`, `BreastDCEDL_demo_data/`, `README.md`, **`download_dataset.py`** | 35 GB |
+| `dataset/` | **the processed 2-D dataset** | `README.md` + `multi_subtype_80mm/{config.json, metadata.csv, train.csv, val.csv, test.csv, images/}` | 979 MB |
+| `src/` | **all the code** | see 16.2 | 900 KB |
+| `deployment/` | **the running system** | see 16.3 | 76 MB |
+| `results/` | every run that was kept | `classifier/` (phase 1) and `federated/` (phases 2–3) — see 16.3 | 1.0 GB |
+| `docs/` | all documentation and every figure | 15 Markdown documents + `images/` | 22 MB |
+| `notebooks/` | the pipeline as notebooks | `01_dataset_analysis` · `02_build_dataset` · `03_train_centralized` · `04_evaluate_run` · `05_compare_experiments` | 4.9 MB |
+| `unused/` | everything archived, nothing deleted | see 16.4 — **gitignored** | 38 GB |
+
+**Where the authors' code went.** `BreastDCEDL/` is no longer at the root; the clone is
+archived at `unused/reference_implementations/BreastDCEDL_authors_repo/`. The naming
+trap it used to create is gone: the only `BreastDCEDL` name in the active tree is
+`raw_dataset_BreastDCEDL/`, which is the **data** release.
+
+**What git ignores, and why** (`.gitignore`): `unused/` (not part of the deliverable);
+`raw_dataset_BreastDCEDL/*` **by content**, with `!README.md` and
+`!download_dataset.py` named back in, because git does not descend into an ignored
+directory and the downloader would otherwise vanish with the imaging; `dataset/*/images/`
+(the 16,378 PNGs are regenerable, the manifests that define them are tracked);
+`deployment/workspace/` (**PKI startup kits hold private keys**); `*.pt`/`*.pth`;
+and the hardlinked per-hospital image trees. **⚠ `.gitignore` still carries rules for
+the pre-reorganisation layout** (`/federated_breast_flare/…`,
+`/federated_breast_classification/…`) which now match nothing — harmless, but confusing
+to read, and the stale duplicate repository is **not** ignored.
+
+### 16.2 `src/` — all the code
+
 | PATH | PURPOSE | CONTENT |
 |---|---|---|
-| `README.md` | project entry point | 5.5 KB overview |
-| `BreastDCEDL/` | **the AUTHORS' cloned repository** (2.7 GB, has its own `.git`) | 16 notebooks, `utils/data_utils.py`, `BreastDCEDL_metadata{,_min_crop}.csv`, `df_pcr_pred_test_article.csv`, `transformer_models/`, `images/`, `DUKE/ ISPY1/ ISPY2/` metadata + samples |
-| `raw_dataset_BreastDCEDL/` | **the ZENODO RELEASE — the raw imaging** (35 GB) | `BreastDCEDL_{DUKE,ISPY1,ISPY2}_min_crop/` + tarballs, `BreastDCEDL_metadata_min_crop.csv`, `BreastDCEDL_models.tar.gz` (the released ViT weights), `BreastDCEDL_dataset.pdf`, `BreastDCEDL_demo_data/` |
-| `src/` | **THE CLASSIFIER** (1.3 GB) | see 16.2 |
-| `federated/` | **THE FEDERATION** (561 MB) | see 16.3 |
-| `docs/` | project-level documentation | `PROJECT_CONTEXT.md` (this file), `PROJECT_HISTORY.md`, `BREASTDCEDL_REPRODUCIBILITY_REPORT.md` |
-| `unused/` | everything archived, nothing deleted (34 GB) | see 16.4 |
-
-**⚠ Naming trap:** `BreastDCEDL/` is the **code** repository and `raw_dataset_BreastDCEDL/`
-is the **data** release. Earlier documentation called the data folder `BreastDCEDL/` and
-the code folder `git_BreastDCEDL/`. **The names are now the other way round.**
-
-### 16.2 `src/` — the classifier
-
-| PATH | PURPOSE | CONTENT |
-|---|---|---|
-| `config.py` | the single configuration object | `Config`, `COHORT_DIRS` (**stale path — see §17.14**) |
+| `dataset_config.py` | the single configuration object for the classifier phase | `Config`, `TASKS`, `PIPELINE`/`TASK`/`MODEL`, `RAW_DIR`, `COHORT_DIRS`, `DATA_DIR`, `RESULTS_DIR`. **Renamed from `config.py`** so it cannot shadow `src/federated/config/`. `COHORT_DIRS` now points at `raw_dataset_BreastDCEDL/` — the long-standing stale path is **fixed** |
 | `core/models.py` | model factory | `build_model`, `_new_head`, `_retune_dropout_before`, 13 architectures |
 | `core/data.py` | dataset + augmentation | `AugmentConfig`, `PROFILES`, `apply_augment`, patient-aware sampler |
 | `core/dataset_builder.py` | **the builder** | the `Record` dataclass (the 35 CSV columns), the whole PNG-generation loop |
-| `core/training.py` | the trainer | `get_device()` (CUDA > CPU; **MPS opt-in only**), the epoch loop |
+| `core/training.py` | **the shared trainer** | `get_device()` (CUDA → MPS → CPU cascade), `describe_device()`, `train_one_epoch(..., progress=)`, `run(cfg, ..., progress=)` |
 | `core/evaluation.py` | patient-level metrics | aggregation, macro-AUC, trivial baseline |
 | `core/reporting.py` | auto-reporting | 24 files per run |
 | `core/experiment.py` | run orchestration | |
-| `src/pipelines/reference/preprocessing.py` | **their rules**, each citing its source | 4 slices, 224 px, per-slice min-max |
-| `src/pipelines/thesis/preprocessing.py` | **my rules**, each citing its measurement | 8 slices, 80 mm, per-volume min-max |
-| `notebooks/` | 01, 03, 05, 06, 07 | dataset analysis · build mine · train mine · evaluate one run · compare all runs. **They contain no logic** — they call `core/` and `pipelines/` |
-| `src_notebooks/` | the notebooks as readable Python | edit here and regenerate |
-| `scripts/build_dataset_report_figures.py` | **regenerates every report figure** | all of §5 |
-| `docs/DATASET_REPORT.md` | **the scientific dataset+preprocessing report** | 31 KB, `[PAPER]/[OURS]/[MEASURED]/[UNCONFIRMED]` markers |
-| `docs/report_figures/` | 12 figures × 2 formats | §5 |
-| `data/multi_subtype_80mm/` | **THE ACTIVE DATASET** | `config.json`, `metadata.csv`, `train/val/test.csv`, `images/<PID>/slice_XXX.png` |
-| `results/all_runs_pod.csv` | **the 21-run classifier table** | §10.3 |
-| `results/checkpoints/` | 7 checkpoints (44–94 MB each) | `FREEZE_R18_s{1,42}`, `R18_s{1,42}`, `R50_s1`, `SPY2_R18_s{1,42}` |
-| `results/_from_pod/multi/<run>/` | per-run raw output | `results.json`, `history.csv`, `config.json`, `train.log`, `stdout.log`, `internal_test_patient_predictions.csv`, `val_patient_predictions.csv` |
-| `results/_from_pod/queue{,2,3}.log` | the GPU job-queue logs | |
+| `pipelines/reference/preprocessing.py` | **the authors' rules**, each citing its source | 4 slices, 224 px, per-slice min-max |
+| `pipelines/thesis/preprocessing.py` | **this thesis's rules**, each citing its measurement | 8 slices, 80 mm, per-volume min-max |
+| `federated/config/experiments.py` | **THE SINGLE SOURCE OF TRUTH** | `TrainingConfig`, `FederationConfig`, 6 `PARTITIONS`, 13 `EXPERIMENTS`, path constants |
+| `federated/config/federation.py` | provisioning-level settings | participants, ports, organisations |
+| `federated/common/{models,data,training,evaluation}.py` | the client-side layer | thin delegations to `core/`, plus the architecture fingerprint and the non-finite-update guard |
+| `federated/common/thesis.py` | the import bridge to `core/` | resolves the sibling package |
+| `federated/federation/client.py` | the NVFLARE client | local train → validate → send; refuses to transmit a non-finite update |
+| `federated/federation/recipes.py` | FedAvg / FedProx / FedOpt recipe construction | |
+| `scripts/run_centralized.py` | the centralised baseline (not an NVFLARE job) | |
+| `scripts/partition_data.py` | patient-level splitting | `--by-cohort`, `--stratify none`, `--only`, `--hardlink` |
+| `scripts/prepare_data.py` | builds the global test/val split | hardlinks, never copies |
+| `scripts/generate_jobs.py` | generates all 13 jobs from `experiments.py` | `--check` mode |
+| `scripts/run_experiment.py` · `run_all_experiments.py` | submit and monitor via the admin API | |
+| `scripts/collect_results.py` | pulls each global model, scores it on the global test set | `model_provenance()` reads `meta_props.current_round` |
+| `scripts/build_final_summary.py` | **the aggregated deliverable** | `--no-client-eval` skips per-hospital scoring (§10.2) |
+| `scripts/verify_production.py` | **219 pre-flight checks**, writes nothing | re-run 2026-08-05: **all 219 pass** |
+| `scripts/verify_data.py` · `audit_dataset.py` | split and dataset integrity | |
+| `scripts/build_dataset_report_figures.py` | regenerates `docs/images/report_figures/` | |
+| `scripts/build_preprocessing_walkthrough.py` | regenerates `docs/images/preprocessing_figures/` | |
+| `scripts/build_distribution_report.py` · `snapshot_config.py` | distribution figures · config snapshot | |
 
-### 16.3 `federated/` — the federation
-
-Full tree in §13.1. The results map specifically:
+### 16.3 `deployment/` and `results/` — the running system and its output
 
 | PATH | PURPOSE | CONTENT |
 |---|---|---|
-| `production/results/test01_centralized/seed_42/` | the centralised baseline | `best_model.pt`, `results.json`, `rounds.csv` (30 epochs), `predictions_test.csv`, `report_test.txt` |
-| `production/results/test0N_*/` (02–09) | each federated run | `job.json`, `global_model.pt` (43 MB), `test_metrics.json`, `predictions_test.csv`, `sites/rounds.csv`, `sites/train.log` |
-| `production/results/test10_fedopt_2h/` | the partial FedOpt run | `job.json`, `sites/rounds.csv` (20 of 30 rounds), `sites/train.log` |
-| `production/results/_ablations/` | freezing ablation | `freeze_layer3_seed_42/`, `freeze_none_seed_42/` |
-| **`production/results/final_summary/`** | **THE AGGREGATED DELIVERABLE** | see below |
-| `production/results/final_summary/summary.{csv,xlsx,json,md,pdf}` | the whole campaign in five formats | main results + all comparisons + protocol |
-| `.../final_summary/comparisons/` | 8 CSVs | `centralized_vs_fedavg`, `centralized_vs_fedprox`, `fedavg_vs_fedprox`, `fedavg_vs_fedprox_paired`, `2_hospitals`, `3_hospitals`, `4_hospitals_balanced`, `4_hospitals_skewed` |
+| `deployment/project.yml` | **the NVFLARE provisioning file** | server (`fed_learn_port: 8002`, `admin_port: 8003`), `hospital_1..4` with orgs `h1..h4`, `admin@ips.pt` as `project_admin` |
+| `deployment/workspace/breast_fl_project/` | the PKI startup kits | **private keys — gitignored** |
+| `deployment/jobs/testNN_*/` | 13 generated jobs | generated from `experiments.py`; never hand-edited |
+| `deployment/data/global/{test,val}.csv + images/` | **the official global test set** | 268 + 268 patients |
+| `deployment/data/partitions/<partition>/hospital_N/{train,val}.csv + images/` | per-hospital data | 6 partitions; images are **hardlinks** to `dataset/multi_subtype_80mm/images/` |
+| `deployment/datasets/` | split manifests and provenance | `all_distributions.{csv,json}`, `global_splits.csv`, `dataset_audit.json`, 13 × `testNN_*_distribution.csv` |
+| `deployment/logs/testNN/` | per-participant logs | `server.log`, `hospital_N.log`, `admin.log`, `timeline.log`, `pids` |
+| `deployment/figures/` | one distribution figure per experiment | 13/13 present, asserted by `verify_production.py` |
+| `deployment/config/resolved_config.{json,md}` | a configuration **snapshot** | generated 2026-08-05T14:01; nothing reads it back |
+| `deployment/scripts/` | operator entry points | `provision.sh`, `start.sh`, `run.sh`, `stop.sh`, `collect.sh`, `summary.sh`, `verify.sh`, `distributions.sh` — all delegate to `src/scripts/` |
+| `results/classifier/all_runs_pod.csv` | **the 21-run classifier table** | §10.3 |
+| `results/classifier/checkpoints/` | 7 checkpoints | `FREEZE_R18_s{1,42}`, `R18_s{1,42}`, `R50_s1`, `SPY2_R18_s{1,42}` |
+| `results/classifier/_from_pod/multi/<run>/` | per-run raw output | `results.json`, `history.csv`, `config.json`, `train.log`, `stdout.log`, prediction CSVs |
+| `results/federated/test01_centralized/seed_42/` | the centralised baseline | `best_model.pt`, `results.json`, `rounds.csv` (30 epochs), `predictions_test.csv`, `report_test.txt`. **The `seed_42/` level exists only here** |
+| `results/federated/testNN_*/` (02–13) | each federated run | `job.json`, `global_model.pt` (44,789,067 B), `test_metrics.json`, `predictions_test.csv`, `sites/rounds.csv`, `sites/train.log` |
+| `results/federated/_ablations/` | the production freezing ablation | `freeze_layer3_seed_42/`, `freeze_none_seed_42/` |
+| `results/federated/all_experiments.csv` | 13 rows, one per experiment | the compact results table |
+| **`results/federated/final_summary/`** | **THE AGGREGATED DELIVERABLE** | see below |
+| `.../final_summary/summary.{csv,xlsx,json,md,pdf}` | the whole campaign in five formats | 13 rows; regenerated 2026-08-05T11:03 |
+| `.../final_summary/comparisons/` | 8 CSVs | `centralized_vs_fedavg`, `centralized_vs_fedprox`, `fedavg_vs_fedprox`, `fedavg_vs_fedprox_paired`, `2_hospitals`, `3_hospitals`, `4_hospitals_balanced`, `4_hospitals_skewed`. **No `3_hospitals_cohort` comparison file exists** — the RQ2 pair is not yet a generated table |
 | `.../final_summary/tables/` | 9 LaTeX tables | `main_results.tex` + one per comparison |
-| `.../final_summary/experiments/<name>/` | per-experiment detail | `metrics.json`, `confusion_global.csv`, `curves.json`, `predictions_test.csv`, `predictions_hospital_N_val.csv`, `figures/{confusion,roc,pr}_{global,hospital_N}.{pdf,png}` |
-| `.../final_summary/figures/` | cross-experiment figures | `bar_metrics_all`, `roc_all_experiments`, `metric_comparison_heatmap`, `training_evolution`, `federated_round_evolution` (each `.pdf` + `.png`) |
-| `.../final_summary/cohort/` | dataset context | `partitions.csv`, `per_client_data.csv`, `class_distribution.{pdf,png}` |
-| `.../final_summary/per_client_metrics.csv` | **per-hospital metrics** | §10.2 |
-| `.../final_summary/manifest.json` | what was generated and when | |
-| `production/logs/testNN/` | per-participant logs | `server.log`, `hospital_N.log`, `admin.log`, `timeline.log`, `pids` |
-| `production/logs/run_all.log` | the whole campaign | |
-| `production/logs/fedopt_overnight.log` | tests 10–13 | includes the full 198-check verification output |
-| `production/datasets/` | split manifests and provenance | `all_distributions.{csv,json}`, `global_splits.csv`, `dataset_audit.json`, 13 × `testNN_*_distribution.csv` |
-| `production/docs/DATASET.md` | the dataset spec as the federation sees it | regenerated by `audit_dataset.py` |
-| `production/config/resolved_config.{json,md}` | a configuration **snapshot** | nothing reads it back |
-| `deployment/data/global/{test,val}.csv + images/` | **the official test set** | 268 + 268 patients |
-| `deployment/data/partitions/<partition>/hospital_N/{train,val}.csv + images/` | per-hospital data | hardlinked |
+| `.../final_summary/experiments/<name>/` | per-experiment detail | 13 folders, `metrics.json`, `confusion_global.csv`, `curves.json`, predictions, `figures/` |
+| `.../final_summary/figures/` | 5 cross-experiment figures × 2 formats | `bar_metrics_all`, `roc_all_experiments`, `metric_comparison_heatmap`, `training_evolution`, `federated_round_evolution` |
+| `.../final_summary/cohort/` | dataset context | `partitions.csv` (6 partitions), `per_client_data.csv`, `class_distribution.{pdf,png}` |
+| `.../final_summary/per_client_metrics.csv` | per-hospital metrics | **stale and incomplete — §10.2** |
+| `.../final_summary/manifest.json` | what was generated and when | `n_complete: 13`, `incomplete: {}` |
 
 **One log-per-participant, never a shared file**, because two participants appending to
 one log interleave mid-line under load and the result cannot be reconstructed.
@@ -2334,7 +2759,7 @@ participants is recoverable.
 Every one of these is documented so it is not reintroduced. **Note the recurring
 signature: "the run completes and the numbers look plausible."** That is why the project
 now uses an architecture fingerprint, `strict=True` on every checkpoint load, a
-declarative experiment table, and a 198-check pre-flight.
+declarative experiment table, and a 219-check pre-flight.
 
 ### 17.1 The dropout regression — a fix that removed the wrong thing
 
@@ -2498,21 +2923,64 @@ class FederatedClassifier(nn.Module):
 Adapted from the user's legacy `ClassifierNet`, adding the attribute storage the legacy
 version lacked. **VALIDATION.** All nine jobs submitted and completed.
 
-### 17.12 Apple MPS corrupts weights ⚠ affects historical local runs
+### 17.12 Apple MPS corrupts weights — ★ ROOT-CAUSED AND FIXED, 2026-08-05
 
-**PROBLEM.** Training on Apple MPS produces **NaN loss** and
+This entry previously ended "root cause: NOT VERIFIED — the failure was contained, not
+explained." It is now explained, and the explanation is worth reading because the
+diagnostic method is reusable.
+
+**PROBLEM.** Training on Apple MPS produced **NaN loss** and
 `isfinite(parameters) == False` partway through the first epoch, with `train_acc` stuck
-around 0.90. Non-deterministic: the same seed gave 0.6312 and 0.6832.
-**INVESTIGATION.** A standalone probe passed a full epoch. Every element was bisected —
-weights, gradient clipping, AMP scaler — and all passed 508 steps. Adding
-`torch.mps.synchronize()` per step made it deterministic but **not finite**. The known
-`addcmul_`/`addcdiv_` MPS bug is fixed in torch ≥ 2.4 and we run 2.12, so that is not it.
-The identical code on CPU gives loss 1.1097 with everything finite; on CUDA it trains
-normally.
-**SOLUTION.** `core.training.get_device()` prefers **CUDA, then CPU**; MPS is **opt-in
-only**. A finite-weight guard was added in `federation/client.py`.
-**CONSEQUENCE.** Anything trained locally on the Mac in earlier phases is suspect.
-**Root cause: NOT VERIFIED** — the failure was contained, not explained.
+around 0.90 — an impossible accuracy for epoch 1 on this task, which was the tell.
+Non-deterministic: the same seed gave 0.6312 and 0.6832.
+
+**CAUSE — `x.to(device, non_blocking=True)` from unpinned memory.** The training loop
+issued asynchronous host-to-device copies. `non_blocking=True` is only safe when the
+*source* is pinned, and this project pins only on CUDA
+(`pin_memory=torch.cuda.is_available()`). On MPS the copy therefore returned before it
+had finished while the DataLoader was free to reuse the source buffer, so the network
+trained on **partially overwritten batches**. Nothing raises; the weights simply drift
+to NaN a few hundred steps in.
+
+**DETECTION — bisection between a passing and a failing path.** Two earlier attempts
+declared MPS fixed and were wrong: the first because the probe ran 61 steps of a
+508-step epoch, the second because a `GradScaler` change was accepted without re-running
+`run()`. What worked was holding everything else identical and comparing a path that
+passed against a path that failed, one difference at a time, over a **full** epoch.
+
+**SOLUTION** — three files, `src/core/training.py`, `src/core/evaluation.py`,
+`src/federated/common/training.py`:
+```python
+non_blocking = device.type == "cuda"
+x = x.to(device, non_blocking=non_blocking)
+y = y.to(device, non_blocking=non_blocking)
+```
+Asynchronous where it is safe and helps, synchronous everywhere else. Alongside it:
+`get_device()` became a CUDA → MPS → CPU cascade with `PYTORCH_ENABLE_MPS_FALLBACK=1`
+set before use; the AMP scaler is gated on `scaler.is_enabled()` so the non-CUDA path
+takes a plain `backward()`; and `apply_mps_workaround()` — which had been dead code,
+defined but never called by `run()` — was wired in.
+
+**VALIDATION**, one full epoch, same seed and data:
+
+| device | loss | train_acc | time |
+|---|---:|---:|---:|
+| MPS, `non_blocking=True` | **nan** | 0.9425 | — |
+| MPS, blocking copies | **1.1539** | 0.4372 | 231 s |
+| CPU, same code | 1.1502 | 0.4237 | 589 s |
+
+MPS is now finite, 2.5× faster than CPU, and agrees with CPU to 0.004 loss.
+
+**CONSEQUENCE, unchanged:** anything trained locally on the Mac *before* this fix is
+suspect. It does not touch any reported result — the whole campaign ran on CUDA.
+
+**⚠ TWO PLACES STILL CARRY THE OLD DIAGNOSIS AND SHOULD BE CORRECTED.**
+`src/federated/common/models.py::get_device` still defaults to `allow_mps=False` and its
+docstring still says MPS "is BROKEN here"; `requirements.txt` still says "Apple MPS
+corrupts this network's weights to NaN … so src/models.py falls back to CPU there". The
+federated arm banning MPS is harmless (it runs on CUDA) but the stated reason is now
+wrong. The non-finite-update guard in `federation/client.py` should stay regardless —
+it defends against any diverged client, not just this one cause.
 
 ### 17.13 Cohort leakage / the Duke bounding-box limitation
 
@@ -2536,22 +3004,57 @@ patients with `n_xy == 256`. Physics check that the Duke crops actually contain 
 a 4–11× upsample and the blur itself becomes a cohort cue — solved by the 80 mm physical
 window.
 
-### 17.14 Preprocessing / configuration inconsistencies still open
+### 17.14 Preprocessing / configuration inconsistencies
 
 | problem | status |
 |---|---|
-| `config.py::COHORT_DIRS` points at `BreastDCEDL/`, which holds the metadata CSV but **not** the imaging volumes (those are under `raw_dataset_BreastDCEDL/`) | **OPEN.** The dataset was built when the volumes were reachable at the configured path. `scripts/build_dataset_report_figures.py` resolves both locations so figures regenerate, but **the builder's configured path is stale and would fail today.** Recorded rather than silently patched: a path that no longer resolves is a reproducibility defect |
-| `test01` and `_ablations` record `"cohorts": ["spy2"]` while training on the pooled dataset | **OPEN.** The field is inert when a prepared dataset path is given (logs confirm 1,527 pooled patients) but the record is misleading |
+| `config.py::COHORT_DIRS` pointed at the authors' code clone, which holds the metadata CSV but **not** the imaging volumes | **FIXED 2026-08-05.** The file is now `src/dataset_config.py` (renamed so it cannot shadow `src/federated/config/`), `RAW_DIR = REPO_ROOT / "raw_dataset_BreastDCEDL"`, and the fallback resolver that was hiding the breakage is gone. The builder would run today |
+| `test01` and `_ablations` record `"cohorts": ["spy2"]` while training on the pooled dataset | **OPEN.** The field is inert when a prepared dataset path is given (`results.json` records `source: …/multi_subtype_80mm` and the logs confirm 1,527 pooled patients) but the record is misleading and should be corrected before the results chapter cites it |
 | `authors_subtype` exists and is trained, but `Config` refuses the combination | **OPEN.** Needs an explicit `allow_cross_pipeline` flag |
+| `notebooks/04_evaluate_run.ipynb` and `05_compare_experiments.ipynb` still open with the headings `# 06 — …` and `# 07 — …` | **OPEN, cosmetic.** The files were renumbered 01–05; two internal titles were not. Confusing when a reader matches a heading to a filename |
+| `.gitignore` still holds rules for the pre-reorganisation layout (`/federated_breast_flare/…`, `/federated_breast_classification/…`) | **OPEN, harmless.** They match nothing. The stale duplicate repository (§0) is **not** ignored and is not inside this tree, so git does not see it either way |
+
+### 17.14b The per-client metrics file went stale across the renumbering ⚠ OPEN
+
+**PROBLEM.** `final_summary/per_client_metrics.csv` holds twelve rows under the
+**pre-renumbering ids `test14`–`test17`** and no rows at all for tests 02–09.
+**CAUSE.** The last rebuild ran `build_final_summary.py --no-client-eval`, which
+regenerates `summary.csv` but leaves the per-client file untouched — so it kept both the
+old ids and the old, narrower experiment set.
+**DETECTION.** Reading the file while writing this document; the ids do not exist in
+`experiments.py`.
+**SOLUTION (not yet applied).** Re-run `build_final_summary.py` **without**
+`--no-client-eval`. Every input still exists — each `global_model.pt` and each
+hospital's `val.csv` — so all 39 rows regenerate under the correct ids.
+**Until then, §10.2 is the only surviving record of the tests 02–09 per-hospital
+numbers.**
+
+### 17.14c The notebook epoch display read as an off-by-one ⚠ FIXED, cosmetic
+
+**PROBLEM.** During training the progress bar showed `epoch 003/…` while the last
+printed summary line still read `epoch 002/…`, which looks like the bar is an epoch
+ahead.
+**CAUSE.** It is not: the bar labels the epoch being *trained*, the summary line is
+printed only once that epoch has *finished*, so during epoch 3 the newest completed line
+is necessarily epoch 2. An earlier genuine off-by-one (`epoch + 1` in the bar label) had
+already been fixed; this was the display remaining ambiguous.
+**SOLUTION.** The bar now reads `epoch 003/030 training` and the summary line
+`epoch 002/030 done`, with identical zero-padding on both sides of the slash.
+**VALIDATION.** `src/core/training.py` parses; no tooling reads that log line.
 
 ### 17.15 Federated class weights computed locally ⚠ OPEN, and it is RQ4 material
 
 **PROBLEM.** `class_weight_scope = "local"` — each hospital computes class weights from
 its **own** rows. Clients therefore optimise slightly different objectives, and FedAvg
 averages models trained on different losses.
-**STATUS.** Harmless in the current stratified partitions (the weights agree to three
-decimals) but **becomes real the moment a cohort-based partition is built** — Duke 64.8%
-HR+/HER2− against I-SPY2's 38.8%.
+**STATUS — this stopped being hypothetical on 2026-08-05.** Harmless in the stratified
+partitions (the weights agree to three decimals), but tests 10 and 11 **ran on the
+cohort partition with `class_weight_scope = "local"`**, where hospital_1 sees 66.4%
+HR+/HER2− and hospital_3 sees 38.9%. Those two runs therefore averaged models trained on
+**measurably different objectives**, and that is a confound inside the RQ2 result: part
+of what tests 10/11 measure as "the cost of heterogeneity" may be the cost of
+*optimising three different losses*, not of the data being heterogeneous as such.
+Running the same pair with `scope = "global"` separates the two and is item 2 of §21.
 **BOTH OPTIONS ARE IMPLEMENTED.** `partition_data.py` writes `global_class_weights` into
 every site manifest, computed once from the pooled training split, so no site has to see
 another site's data to use them. `local` = realistic, divergent objectives; `global` =
@@ -2609,12 +3112,34 @@ including the entire architecture benchmark.
 
 ### POSITIVE RESULTS
 
-1. **A real NVFLARE federation was deployed and ran the full matrix.** Nine experiments,
-   PKI, separate processes, admin API, zero failures, 47.9 minutes. Not the simulator.
-   This satisfies OBJ3 outright.
-2. **Federated training produces models in the same range as centralised training on this
-   task.** Macro-AUC 0.5598–0.6527 federated against 0.6068 centralised. This is the
-   strongest claim the current data supports for RQ1.
+1. **A real NVFLARE federation was deployed and ran the full matrix.** Thirteen
+   experiments across two campaigns, PKI, separate processes, admin API, **zero
+   failures** — 47.9 minutes for tests 01–09 and ~34 minutes for 10–13. Not the
+   simulator. This satisfies OBJ3 outright.
+2. **RQ1 answered as an equivalence claim.** Centralised 0.6068 against a federated mean
+   of 0.5927 over twelve runs — a gap of **0.0141, 4.8× smaller than the 0.067
+   equivalence margin**, with every federated run inside the margin. Stated positively:
+   *the cost of federation on this task is smaller than the cost of re-running the
+   centralised configuration with a different seed.* Single-seed caveat stands (§1.5).
+2b. **RQ2 has a real answer for the first time, from a matched pair.** With site sizes,
+   client count, rounds, seed and algorithm held identical and only cohort-nativeness
+   varying, cohort-native sites cost **−0.041 (FedAvg)** and **−0.020 (FedProx)** macro-AUC.
+   Neither difference clears the noise floor alone; what makes it a finding is that
+   **two independent comparisons agree in direction**, where the quantity-skew pairs
+   disagreed in sign. And the aggregate hides the real damage: **HER2+ recall collapses
+   0.321 → 0.113** and its AUC falls to 0.4728, below chance (§14.1).
+2c. **RQ3 has a strong communication result.** Averaged across sites, the global model's
+   validation AUC after **one** communication round is already 94–98% of its best value
+   on the stratified partitions; 30 rounds were used and four would have sufficed. At
+   44.8 MB per client per round per direction, **~87% of the traffic bought nothing
+   measurable**. Under genuine heterogeneity convergence is visibly slower — test10
+   reaches only 90.9% of its best at round 1 and needs 5 rounds to reach 95%, against 1
+   round for most stratified runs — which is itself a heterogeneity signature.
+2d. **FedProx behaves as designed, but only where there is drift to correct.** +0.025
+   macro-AUC on the cohort partition against +0.005 on its size-matched control — five
+   times larger where the sites genuinely differ, and it partially restores the collapsed
+   HER2+ recall (0.113 → 0.283). On the stratified partitions its effect flipped sign
+   across all four configurations, which is what "nothing to correct" looks like.
 3. **The MinCrop geometry of BreastDCEDL was reverse-engineered and verified to the
    voxel** — 767/767 exact matches. This made Duke usable for the first time and grew the
    dataset from 982 to 2,063 patients.
@@ -2629,17 +3154,33 @@ including the entire architecture benchmark.
 7. **BreastDCEDL's published results are verifiable** from their own prediction file —
    every number recomputes exactly (0.7201 / 0.7801 / 0.6793 / 0.5398).
 8. **The full tooling chain is reproducible**: one declarative experiment table, generated
-   jobs, 198 pre-flight checks, hardlink-verified data, and a one-command summary
-   generator producing csv/xlsx/json/md/pdf plus LaTeX tables and all figures.
+   jobs, **219 pre-flight checks (all passing, re-run 2026-08-05)**, hardlink-verified
+   data, and a one-command summary generator producing csv/xlsx/json/md/pdf plus LaTeX
+   tables and all figures.
+9. **The Apple-MPS failure was root-caused**, after twice being declared fixed and not
+   being: asynchronous host-to-device copies from unpinned memory. MPS now trains finite
+   and 2.5× faster than CPU (§17.12). Not a scientific result, but it is the reason the
+   notebooks can be run on the author's own machine.
 
 ### NEGATIVE RESULTS — none of these are hidden, and several are the contribution
 
 1. **The ceiling is 0.55–0.63 macro-AUC for 3-class subtype, and NOTHING moves it.**
    Twenty-one runs, five data configurations, thirteen architectures. Not preprocessing,
    not architecture, not normalisation, not augmentation, not freezing, not field of view.
-2. **Every federated run scored BELOW the trivial accuracy baseline** of 0.5112. The
-   models rank patients better than chance but decide worse than a constant rule.
-3. **HER2+ is at chance.** Per-class AUC 0.5079 in the centralised run, recall 0.1887.
+2. **Every one of the twelve federated runs scored BELOW the trivial accuracy baseline**
+   of 0.5112 (0.4030–0.4888). The models rank patients better than chance but decide
+   worse than a constant rule.
+3. **HER2+ is at chance, and worse under heterogeneity.** Per-class AUC 0.5079 in the
+   centralised run (recall 0.1887) and **0.4728 in test10** — below chance — with recall
+   0.1132. This is the single most clinically pointed negative result in the project.
+3b. **The RQ2 effect size is not established.** Both cohort-vs-control differences
+   (−0.041, −0.020) sit inside the noise floor. Direction is supported by agreement
+   across two algorithms; magnitude is not supported at all, and the document should
+   never quote one without the other.
+3c. **Tests 08/09 do not measure heterogeneity.** Their partitions are stratified to
+   within 0.43 pp, so what they vary is quantity. Reporting them as a non-IID result
+   would be an over-claim, and this is stated in `experiments.py` at the definition
+   itself so it cannot drift out of the documentation.
 4. **Halving augmentation tripled overfitting** — train acc 0.57 → 0.99, gap 0.135 →
    0.512, AUC −0.040.
 5. **`chanclip` lost by 0.025** despite being the winning normalisation in the dataset
@@ -2694,19 +3235,30 @@ including the entire architecture benchmark.
 1. **Is the 0.15–0.19 deficit against the authors entirely training hyperparameters?**
    The decisive test — their released weights through our preprocessing — has never been
    run and costs minutes.
-2. **Does federation cost anything on the current dataset?** The binary campaign said
-   0.068–0.110; the current campaign has four federated runs *above* the baseline. One
-   seed per job cannot resolve it.
-3. **Does freezing genuinely reduce overfitting?** Two seeds moved the gap in opposite
+2. **Does federation cost anything on the current dataset?** The equivalence claim says
+   the cost is below the margin; the binary campaign said 0.068–0.110, *outside* it.
+   Same infrastructure, different task, half the data. One seed per job cannot resolve
+   which regime this task is in, and the most likely explanation — that it depends on
+   having enough patients per site — is a hypothesis, not a measurement.
+3. **How much of the RQ2 effect is heterogeneity and how much is the local class-weight
+   scope?** Tests 10/11 varied both at once, because `class_weight_scope = "local"` on a
+   27.45 pp prior spread means the three sites optimised different losses. **This is the
+   most important open question about the newest result**, and §21 item 2 answers it.
+4. **Is the RQ2 effect label skew or feature skew?** The cohort partition changes class
+   priors, tumour size and scanner population simultaneously. `--stratify none` would
+   separate the first from the other two; it is implemented and has never been run.
+5. **Does freezing genuinely reduce overfitting?** Two seeds moved the gap in opposite
    directions. And `layer4` (25% of parameters) has never been tested — only `layer3`
    (6.1%).
-4. **Would a cohort-based partition change RQ2's answer?** Implemented, never run.
-5. **Local vs global class weights under heterogeneity** — RQ4, both implemented, never
-   compared.
-6. **Why does MPS corrupt weights?** Contained, not explained.
-7. **Would ComBat or adversarial de-biasing reduce the source signature without
-   destroying the signal?** Never attempted.
-8. **Do the 918 Duke metadata rows vs 916 in the paper matter?** Unresolved.
+6. **Would ComBat or adversarial de-biasing reduce the source signature without
+   destroying the signal?** Never attempted. The probe result (0.9978 vs 0.6078) means
+   the absolute height of every pooled number in this project is unquantifiably
+   optimistic.
+7. **Do the 918 Duke metadata rows vs 916 in the paper matter?** Unresolved.
+
+**Resolved since the previous version:** *"Would a cohort-based partition change RQ2's
+answer?"* — yes, it gave RQ2 its first consistent answer (§14.1). *"Why does MPS corrupt
+weights?"* — asynchronous copies from unpinned memory (§17.12).
 
 ---
 
@@ -2765,25 +3317,30 @@ where a claim could not be sourced it is marked UNCONFIRMED in the relevant sect
 
 * **The classifier phase.** 21 runs, five data configurations, thirteen architectures.
   Characterised and closed.
-* **The dataset.** `multi_subtype_80mm` built, audited, documented (`DATASET_REPORT.md`)
-  and figured (12 figures).
+* **The dataset.** `multi_subtype_80mm` built, audited, documented (`DATASET_REPORT.md`,
+  `DATASET_DOCUMENTATION.md`, `DATASET_SPEC.md`) and figured.
 * **The source probe.** 0.9978. Run and reported.
 * **The 2×2 ablation.** Complete, with two seeds per cell.
 * **The BreastDCEDL reproducibility audit.** Complete, every claim verified against files.
-* **The NVFLARE production infrastructure.** `project.yml`, PKI workspace (`prod_00`),
-  13 generated jobs, 4 partitions, distribution figures, 198-check verification,
-  local multi-process deployment, per-participant logging, results organisation, a
-  25 KB README documenting 22 points.
-* **The nine dissertation experiments.** All ran to completion on 2026-08-04, zero
-  failures, 47.9 minutes.
-* **The final summary.** `results/final_summary/` — 8 comparison tables, 9 LaTeX tables,
-  per-experiment confusion/ROC/PR figures, 5 cross-experiment figures, per-hospital
-  metrics, and `summary.{csv,xlsx,json,md,pdf}`.
+* **The NVFLARE production infrastructure.** `project.yml`, PKI workspace, 13 generated
+  jobs, **6 partitions**, distribution figures, **219-check verification**, local
+  multi-process deployment, per-participant logging, results organisation.
+* **All thirteen dissertation experiments.** Tests 01–09 on 2026-08-04 (47.9 min) and
+  tests 10–13 on 2026-08-05 (26 min). **Zero failures in either campaign.**
+* **The final summary.** `results/federated/final_summary/` — 8 comparison tables,
+  9 LaTeX tables, per-experiment confusion/ROC/PR figures, 5 cross-experiment figures,
+  and `summary.{csv,xlsx,json,md,pdf}` covering all 13.
+* **The repository reorganisation and its documentation.** `src/`, `docs/`,
+  `deployment/`, `results/`, `notebooks/`, per-folder READMEs, a standalone dataset
+  document, and a stdlib-only Zenodo downloader with a manual-instructions fallback on
+  every failure path.
+* **The MPS root cause** (§17.12), which makes the notebooks runnable on the author's
+  own machine.
 
 ### WHAT IS CURRENTLY RUNNING
 
-**Nothing.** No process is running, no job is queued, no GPU is rented. The RunPod host
-was released after the results were pulled back.
+**Nothing.** No process is running, no job is queued, no GPU is rented. Both RunPod
+hosts were released after their results were pulled back.
 
 ### WHAT HAS BEEN VERIFIED
 
@@ -2794,38 +3351,50 @@ was released after the results were pulled back.
 | patients with `n_xy > 256` were cropped, not resized | **228/228** |
 | Duke crops contain tumour (enhancement physics) | 96% centre > periphery, 4.69× ratio |
 | federated data are the **same inodes** as the source PNGs | **136/136** by inode |
-| partitions reconcile to the full dataset | **2,063 patients / 16,378 images in all four** |
+| partitions reconcile to the full dataset | **2,063 patients / 16,378 images**, all six partitions |
 | per-hospital share vs requested share | within one patient, all partitions |
 | budget equality (30×1 = 30 epochs) | asserted by `verify_production.py` |
-| pre-flight checks | **198 pass** |
+| pre-flight checks | **all 219 pass** — re-run 2026-08-05 for this document |
 | all seven checkpoints load `strict=True` | pass, 11,187,671 params+buffers |
 | architecture fingerprint at server and clients | `2d3031acc2075813`, stable |
 | pipeline integrity (old audit) | 7 checks, **0 divergences in 20,028 rows**, zero train/val patient overlap |
-| every dataset count in this document | recomputed from `metadata.csv` on 2026-08-04 |
+| every dataset count in this document | **recomputed from `dataset/multi_subtype_80mm/metadata.csv` on 2026-08-05** |
+| patient-level splitting | **0 patients in more than one split; 0 patients with more than one label** — recomputed 2026-08-05 |
+| class spreads quoted for the RQ2 pair | **recomputed** from `per_client_data.csv`: 27.45 pp cohort, 0.32 pp control, 0.43 pp skewed |
+| the RQ3 convergence table | **recomputed** from every `sites/rounds.csv`; reproduces `RESULTS.md` exactly (round-1 fractions 0.944–0.983, tests 02–09) |
+| MPS vs CPU agreement after the fix | loss 1.1539 vs 1.1502 over a full epoch |
 
 ### WHAT STILL NEEDS TO BE DONE
 
 **Immediate / cheap / high value**
-1. **Run the authors' released ViT weights through our preprocessing.** Inference only,
-   minutes. The single highest-value pending item.
-2. **Fix the stale `COHORT_DIRS` path** so the dataset could be rebuilt today.
-3. **Fix the misleading `"cohorts": ["spy2"]` field** in the centralised results.
-4. **Put the repository under version control.** 73 GB is not the problem — the code is
-   a few MB and is currently unprotected.
-5. **Finish `fig2_tumour_size_by_cohort`** — raised three times and never completed: Duke
-   is absent from the right panel with no explanation in the legend, the left panel has no
-   legend, the median labels (14.7 / 2.8 / 15.2) collide with the boxes, the title
-   contains literal backticks, and the text needs to be larger.
+1. **Regenerate `per_client_metrics.csv` without `--no-client-eval`** (§17.14b). One
+   command; restores 39 correctly-named rows. Do this before writing the results chapter.
+2. **Run the authors' released ViT weights through our preprocessing.** Inference only,
+   minutes. Still the highest-value pending scientific item.
+3. **Correct the two stale MPS statements** in `src/federated/common/models.py` and
+   `requirements.txt` (§17.12).
+4. **Fix the misleading `"cohorts": ["spy2"]` field** in the centralised results.
+5. **Decide what to do with the 76 GB stale duplicate repository** at
+   `.../federated-breast-classification` (§0). It is not a backup — it is a trap.
+6. **Commit the working tree.** The repository is under git but the notebooks are
+   modified and uncommitted, and the history is two commits made outside the sessions.
+7. **Fix the two notebook headings** that still say `# 06` and `# 07`.
+8. **Finish `fig2_tumour_size_by_cohort`** — status of the cosmetic fixes is
+   **NOT VERIFIED**; the figure was regenerated 2026-08-05T13:16 but the specific
+   complaints (Duke absent from the right panel without explanation, no legend on the
+   left panel, colliding median labels, literal backticks in the title) were not
+   re-checked for this document.
 
 **Scientific**
-6. **More seeds.** Every current federated number is one run. With a 0.067 noise floor,
-   the campaign supports "same range" and nothing sharper.
-7. **The cohort-based partition** (`--by-cohort`) — the strongest available upgrade to RQ2.
-8. **`--freeze-until layer4`** — the honest freezing test (25% of parameters vs 6%).
-9. **Ensemble the existing runs** — free, and the literature reports +0.10.
-10. **Local vs global class weights** under a cohort partition — RQ4.
-11. **Complete or formally drop FedOpt** (tests 10–13), stating the last-round selection
-    caveat either way.
+9. **More seeds.** Every federated number is one run. With a 0.067 noise floor, the
+   campaign supports the equivalence claim and the *direction* of the RQ2 effect, and
+   nothing sharper.
+10. **Local vs global class weights under the cohort partition** — now doubly motivated,
+    because tests 10/11 ran with `local` scope on genuinely divergent priors (§17.15).
+11. **`--freeze-until layer4`** — the honest freezing test (25% of parameters vs 6%).
+12. **Ensemble the existing runs** — free, and the literature reports +0.10.
+13. **`--stratify none`** — label skew *without* cohort identity, the missing middle
+    rung between quantity skew and the cohort partition.
 
 ### WHAT EXPERIMENTS ARE NEXT
 
@@ -2834,15 +3403,66 @@ See §21, in priority order.
 ### WHAT QUESTIONS REMAIN OPEN
 
 See §18, "UNRESOLVED QUESTIONS". The four that matter most for the dissertation:
-**(a)** does federation cost anything here, with enough seeds to tell; **(b)** does real
-cohort heterogeneity change RQ2; **(c)** is the deficit against the authors training or
-data; **(d)** local vs global class weights under heterogeneity.
+**(a)** does federation cost anything here, with enough seeds to tell; **(b)** how much
+of the measured cohort-heterogeneity cost is heterogeneity and how much is the local
+class-weight scope; **(c)** is the deficit against the authors training or data;
+**(d)** how much of the absolute performance level is the cohort shortcut.
+
+### THE STATE OF THE DISSERTATION DOCUMENT ITSELF
+
+**NOT VERIFIED from this repository** — the LaTeX source is not in this tree and was not
+inspected. From the working sessions rather than from files: the methodology sections on
+preprocessing, slice selection, the deep-learning model, the development environment and
+the experimental scenarios have been drafted; the results chapter is the immediate next
+writing task; the breast-cancer and classification background chapter has a topic outline
+but no prose. Treat this paragraph as a note to be replaced by whoever has the `.tex`.
 
 ---
 
 ## 21. FUTURE EXPERIMENTS, IN PRIORITY ORDER
 
-### 1. Authors' released weights through our preprocessing
+**Reordered 2026-08-05.** What used to be item 3 — the cohort partition — has been run
+and is now tests 10–13; FedOpt has been dropped rather than completed. Seed repetition
+moves to **item 1**, and the reason is worth stating: the project now has two claims
+that *depend* on the noise floor rather than merely being limited by it. RQ1 is an
+equivalence claim, which is only as strong as the interval around the point estimate;
+RQ2 rests on two differences that are both *inside* the noise floor and are believed
+because they agree in direction. Three seeds converts both from "consistent with" to
+"bounded by", and no other pending experiment improves the dissertation as much per hour
+of GPU time.
+
+### 1. Repeat the campaign with three seeds
+
+* **Hypothesis:** the equivalence claim survives interval estimation, and the RQ2
+  direction survives replication.
+* **Changes:** seeds 42, 1, 2 for every one of the thirteen experiments. **Nothing else.**
+* **Fixed:** dataset, model, partitions, protocol, evaluation.
+* **Expected interpretation:** a mean ± sd per configuration. For RQ1, whether the
+  centralised−federated confidence interval falls inside ±0.067 — the strong form of the
+  equivalence test. For RQ2, whether the cohort-vs-control gap keeps its sign in all
+  three seeds; if it does, the direction is established even though the magnitude may
+  still be inside the noise floor. Anything that does not survive is not reportable.
+* **Supports:** **RQ1 and RQ2**, and it is what makes the whole results chapter
+  defensible. ~3.5 h on a rented GPU for all 39 runs.
+
+### 2. Local vs global class weights on the cohort partition
+
+* **Hypothesis:** with a 27.45 pp spread in class priors, local weights make the three
+  sites optimise measurably different objectives and FedAvg averages models trained on
+  different losses; global weights fix that at the cost of leaking one vector of class
+  counts to the server.
+* **Changes:** `class_weight_scope` `local` → `global`, on `3_clients_cohort` only.
+  Both options are already implemented; `partition_data.py` writes
+  `global_class_weights` into every site manifest.
+* **Fixed:** everything else, including seed and rounds.
+* **Expected interpretation:** this is a **measured privacy-versus-performance
+  trade-off**, which is exactly the shape RQ4 asks for and the only one the project can
+  currently offer. It also **disambiguates the RQ2 result**: if global weights recover a
+  substantial part of the −0.041, then part of what tests 10/12 measured was the
+  objective mismatch rather than heterogeneity itself. A nil difference is equally clean.
+* **Supports:** **RQ4**, and it strengthens **RQ2** either way. ~30 min.
+
+### 3. Authors' released weights through our preprocessing
 
 * **Hypothesis:** our pixels are correct and the 0.15–0.19 deficit is entirely training
   hyperparameters.
@@ -2856,41 +3476,18 @@ data; **(d)** local vs global class weights under heterogeneity.
   every number in §10.3.
 * **Cost:** minutes.
 
-### 2. Repeat the nine experiments with three seeds
+### 4. `--stratify none` — label skew without cohort identity
 
-* **Hypothesis:** the current ordering is noise; with three seeds the centralised-federated
-  gap either appears or is bounded.
-* **Changes:** seeds 42, 1, 2 for every job. **Nothing else.**
-* **Fixed:** everything — dataset, model, partitions, protocol.
-* **Expected interpretation:** a mean ± sd per configuration. Any conclusion about RQ1
-  that survives 3 seeds is reportable; anything that does not, is not.
-* **Supports:** **RQ1** and **RQ3** — and it is what makes the whole results chapter
-  defensible. ~2.5 h on a rented GPU.
-
-### 3. The cohort-based partition — genuine non-IID
-
-* **Hypothesis:** real heterogeneity (different class priors, different tumour sizes,
-  different scanners) degrades federated performance where quantity skew did not.
-* **Changes:** `partition_data.py --by-cohort` → hospital_1 = Duke (64.8% HR+/HER2−,
-  tumours 5× smaller), hospital_2 = I-SPY2 (38.8%), hospital_3 = I-SPY1. Run FedAvg and
-  FedProx.
-* **Fixed:** model, hyperparameters, rounds, seed, global test set.
-* **Expected interpretation:** if the gap to centralised widens relative to the stratified
-  4-hospital case, RQ2 has a real answer for the first time. **The source probe must be
-  reported beside it** — a model trained across those sites has "identify the cohort, then
-  use that cohort's prior" available.
-* **Supports:** **RQ2**, and it converts the project's central confound into an experiment.
-
-### 4. Local vs global class weights under the cohort partition
-
-* **Hypothesis:** with divergent class priors, local weights make sites optimise different
-  objectives and FedAvg averages models trained on different losses; global weights fix it
-  at the cost of leaking one vector of class counts.
-* **Changes:** `class_weight_scope` `local` → `global`, on the cohort partition only.
-* **Fixed:** everything else.
-* **Expected interpretation:** a measured privacy-vs-performance trade-off — exactly the
-  shape RQ4 asks for. If the difference is nil, that is also a clean answer.
-* **Supports:** **RQ4**.
+* **Hypothesis:** the missing middle rung. Tests 10–13 change class priors *and* tumour
+  size *and* scanner population at once; this changes only the class priors.
+* **Changes:** `partition_data.py --stratify none` on three sites; FedAvg and FedProx.
+  The partitioner exists and has never been run.
+* **Fixed:** site sizes, cohort mixture, everything else.
+* **Expected interpretation:** if label skew alone reproduces most of the −0.041, the
+  RQ2 result is a *label-prior* effect and the source-signature confound is not doing the
+  work; if it reproduces little of it, feature skew (scanner, tumour size) is the larger
+  term. Either answer sharpens the RQ2 chapter considerably.
+* **Supports:** **RQ2**. ~30 min.
 
 ### 5. `--freeze-until layer4`
 
@@ -2911,17 +3508,22 @@ data; **(d)** local vs global class weights under heterogeneity.
 * **Expected interpretation:** a cheap upper bound on what this data supports.
 * **Supports:** the ceiling argument (contribution 4).
 
-### 7. Complete FedOpt (tests 10–13)
+### 7. FedOpt on the cohort partition — *if* it is revived at all
 
+* **Status:** dropped from the campaign (§10.7). Listed here only because the code still
+  exists and the question is legitimate.
 * **Hypothesis:** server momentum helps under heterogeneity, where a plain weighted mean
-  does not.
-* **Changes:** the server's update rule only (lr 1.0, momentum 0.6, client mu = 0).
-* **Fixed:** partitions, clients, seed, rounds.
-* **Expected interpretation:** a third aggregation rule against tests 02/04/06/08.
-  **Must be reported with the caveat that FedOpt keeps the LAST round** because
-  `FedOptRecipe` rejects `key_metric` — the comparison is not like-for-like on model
-  selection.
-* **Supports:** **RQ3**, and **RQ4** for test13.
+  does not — which is a **different and more interesting** hypothesis than the one the
+  cancelled runs tested, since those used the stratified partitions where there was
+  nothing to help with.
+* **Changes:** the server's update rule only (lr 1.0, momentum 0.6, client mu = 0), on
+  `3_clients_cohort` against test10.
+* **Blocker to solve first:** `FedOptRecipe` rejects `key_metric`, so FedOpt keeps the
+  **last** round while FedAvg and FedProx keep the best of thirty. Either find the
+  supported selection mechanism in NVFLARE 2.8, or re-score every arm at its last round
+  so the comparison is like-for-like. **Reporting a FedOpt number without resolving this
+  would be a methodological error, not a caveat.**
+* **Supports:** **RQ3/RQ4** — but behind items 1–4 in every respect.
 
 ### 8. Reacquire MAMA-MIA
 
@@ -3012,11 +3614,14 @@ molecular-subtype classification from DCE-MRI is the vehicle, not the contributi
 
 **Where it stands.** The classifier phase is **complete and characterised**: 3-class
 subtype sits at **0.55–0.63 patient-level macro-AUC** against chance 0.50, and nothing
-moves that ceiling. The federated phase is **complete on the current dataset**: nine
-experiments, real NVFLARE, 47.9 minutes, zero failures, macro-AUC 0.5598–0.6527 federated
-against 0.6068 centralised — but with **one seed per job and a spread (0.093) barely above
-the noise floor (0.067)**, so the honest statement is *"federated training produces models
-in the same range as centralised training"* and no finer comparison is attributable.
+moves that ceiling. The federated phase is **complete**: **thirteen** experiments, real
+NVFLARE, two campaigns, zero failures. Centralised **0.6068** against a federated mean of
+**0.5927** — a gap of **0.0141 against a measured 0.067 equivalence margin**, which is
+the positive form of RQ1's answer. Tests 10–13 added the matched cohort pair that finally
+gives RQ2 an answer: cohort-native sites cost **−0.041 (FedAvg)** and **−0.020
+(FedProx)**, consistent in direction across both algorithms, with **HER2+ recall
+collapsing 0.321 → 0.113**. Every number is **one seed**, which is the binding
+limitation on all of it.
 
 **The five biggest discoveries.**
 1. **The dataset-source shortcut.** A model trained on pooled cohorts answers "which
@@ -3039,17 +3644,21 @@ in the same range as centralised training"* and no finer comparison is attributa
    configurations differing only in seed. This invalidates most single-run comparisons
    made earlier in the project and is now enforced in the reporting code.
 5. **Every federated run scored below the trivial accuracy baseline** (0.5112) while
-   ranking patients better than chance (AUC 0.56–0.65), and HER2+ per-class AUC was
-   **0.5079 — chance**. The models rank but do not decide.
+   ranking patients better than chance (AUC 0.54–0.65), and HER2+ per-class AUC was
+   **0.5079 centralised and 0.4728 under cohort heterogeneity — at and below chance**.
+   The models rank but do not decide, and the minority class is where federation hurts.
 
-**The four remaining challenges.** (a) Only one seed per federated job. (b) No genuinely
-non-IID partition has ever been run, though one is implemented. (c) The 0.15–0.19 deficit
-against the authors is unexplained and the decisive test costs minutes. (d) Federated
-class weights are computed per client, which is harmless today and material under a cohort
-partition — and squarely RQ4.
+**The four remaining challenges.** (a) Only one seed per federated job — which now limits
+two claims rather than one, since RQ1's equivalence and RQ2's direction both rest on it.
+(b) Tests 10/11 ran with **local** class-weight scope on genuinely divergent priors, so
+part of the measured heterogeneity cost may be an objective mismatch rather than
+heterogeneity itself. (c) The 0.15–0.19 deficit against the authors is unexplained and
+the decisive test costs minutes. (d) The absolute level of every pooled number is
+inflated by the cohort shortcut, and no harmonisation has been attempted.
 
-**Next steps, in order.** 1) Authors' weights through our preprocessing. 2) Three seeds
-on the nine experiments. 3) The cohort-based partition. 4) Local vs global class weights.
+**Next steps, in order.** 1) Three seeds on all thirteen experiments. 2) Global vs local
+class weights on the cohort partition. 3) Authors' weights through our preprocessing.
+4) `--stratify none`, the missing rung between quantity skew and cohort identity.
 5) `layer4` freezing. Full detail in §21.
 
 

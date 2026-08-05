@@ -4,9 +4,14 @@ Companion to `docs/PROJECT_CONTEXT.md`. That document describes **what the proje
 now**; this one describes **how it got there, in order**, including everything that was
 tried and abandoned.
 
-**Written 2026-08-04** from the actual repository. Dates come from file timestamps,
-`results.json` `finished` fields, `job.json` submission times and log headers. Where a
-date could not be established it is marked **DATE NOT VERIFIED**.
+**Written 2026-08-04, extended 2026-08-05** from the actual repository. Dates come from
+file timestamps, `results.json` `finished` fields, `job.json` submission times and log
+headers. Where a date could not be established it is marked **DATE NOT VERIFIED**.
+
+**The 2026-08-05 additions**, in the order they happened: the RQ2 campaign (tests 10–13,
+§11.5), the removal of FedOpt from the experiment table (§11.4), the repository
+reorganisation (§13, item 5), and the Apple-MPS root cause (§12, bug 16, which this
+document previously recorded as never established).
 
 **Why this document exists.** Several of this project's most valuable results are
 failures, and a failure is only useful if you can say what preceded it. A dissertation
@@ -582,9 +587,10 @@ Delivered:
   all six participants.
 * **13 job folders** (test01–test13), each a generated `job.py` plus a README.
 * Four partitions, built 2026-08-03T23:03:03–23:03:33 UTC, seed 42, patient-level,
-  **hardlinked** (verified by inode, 136/136).
+  **hardlinked** (verified by inode, 136/136). *(Six today — the two RQ2 partitions were
+  added 2026-08-05; see §11.5.)*
 * Distribution figures — 3 overviews + 13 per-test, `.pdf` and `.png`.
-* `verify_production.py` — **198 pre-flight checks**.
+* `verify_production.py` — **198 pre-flight checks** *(219 today; §13 item 4)*.
 * `start_federation.sh` — server first, then poll the admin port, then the hospitals, each
   a separate OS process with `OMP_NUM_THREADS=1`.
 * Per-participant logging (`server.log`, `hospital_N.log`, `admin.log`, `timeline.log`).
@@ -678,7 +684,7 @@ fell from 48.6% to 27–40% in eight of nine configurations).
 Test 6 initially **failed** at collection after 5,826 s (`collect_results.py` had
 `resnet18` hard-coded) and was re-run.
 
-### 11.3 Campaign C — 2026-08-04, THE CURRENT CAMPAIGN
+### 11.3 Campaign C — 2026-08-04, tests 01–09
 
 **NVIDIA RTX 4000 Ada (20 GB), RunPod, CUDA 12.8, torch 2.8.0, NVFLARE 2.8.0.**
 **47.9 minutes for the whole matrix. Zero failures. One run per job, seed 42.**
@@ -690,21 +696,27 @@ was submitted `2026-08-04T00:35:44Z` and finished `00:41:01Z`; test09 was submit
 | test | algorithm | hosp | best round | time (s) | accuracy | bal acc | macro F1 | **macro AUC** |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
 | test01 | centralized | 1 | — (epoch 4) | 268 | **0.5299** | 0.4503 | 0.4523 | **0.6068** |
-| test02 | fedavg | 2 | 25 | 313 | 0.4067 | 0.3766 | 0.3769 | 0.5598 |
-| test03 | fedprox | 2 | 29 | 351 | 0.4328 | 0.4025 | 0.4001 | 0.5923 |
-| test04 | fedavg | 3 | 27 | 313 | 0.4888 | 0.4222 | 0.4253 | 0.5990 |
-| test05 | fedprox | 3 | 28 | 333 | 0.4627 | 0.4151 | 0.4140 | 0.5957 |
-| test06 | fedavg | 4 | 0 | 317 | 0.4776 | 0.4522 | 0.4378 | **0.6527** |
-| test07 | fedprox | 4 | 0 | 335 | 0.4813 | 0.4442 | 0.4416 | 0.6078 |
-| test08 | fedavg | 4 skew | 21 | 323 | 0.4888 | 0.4259 | 0.4292 | 0.5985 |
-| test09 | fedprox | 4 skew | 2 | 387 | 0.4515 | 0.4210 | 0.4197 | 0.6248 |
+| test02 | fedavg | 2 | 25 | 313 | 0.4030 | 0.3742 | 0.3744 | 0.5594 |
+| test03 | fedprox | 2 | 29 | 351 | 0.4328 | 0.4025 | 0.4001 | 0.5917 |
+| test04 | fedavg | 3 | 27 | 313 | 0.4851 | 0.4198 | 0.4231 | 0.5990 |
+| test05 | fedprox | 3 | 28 | 333 | 0.4590 | 0.4127 | 0.4116 | 0.5958 |
+| test06 | fedavg | 4 | 0 | 317 | 0.4776 | 0.4522 | 0.4378 | **0.6531** |
+| test07 | fedprox | 4 | 0 | 335 | 0.4739 | 0.4393 | 0.4362 | 0.6075 |
+| test08 | fedavg | 4 skew | 21 | 323 | 0.4888 | 0.4259 | 0.4292 | 0.5982 |
+| test09 | fedprox | 4 skew | 2 | 387 | 0.4515 | 0.4210 | 0.4197 | 0.6250 |
+
+*(These are the values in `final_summary/summary.csv` as regenerated 2026-08-05. The
+2026-08-04 build of the same table differed by ≤0.0005 macro-AUC because the test-set
+evaluation was re-run locally afterwards; see `PROJECT_CONTEXT.md` §10.1.)*
 
 **The honest reading, and it is the one that must be carried forward:**
-* **No comparison in this table is attributable.** Noise floor 0.067; full spread 0.093.
-* **Four federated runs scored ABOVE the centralised baseline** — the signature of noise
-  dominating, not of federation outperforming pooled training.
+* **No comparison in this table is attributable.** Noise floor 0.067; spread 0.094.
+* **Three federated runs scored ABOVE the centralised baseline** (test06, test07,
+  test09; test04 is 0.008 below) — the signature of noise dominating, not of federation
+  outperforming pooled training.
 * **What it supports:** federated training produces models in the **same range** as
-  centralised training on this task.
+  centralised training on this task. (Reframed later as an equivalence claim once all 13
+  runs existed — see §11.5 and `PROJECT_CONTEXT.md` §1.5.)
 * **Accuracy is the real finding.** Every federated run lands **below** the trivial
   baseline of 0.5112; only the centralised run clears it. The models rank patients better
   than chance (AUC 0.56–0.65) but **decide** worse than a constant rule.
@@ -713,14 +725,19 @@ was submitted `2026-08-04T00:35:44Z` and finished `00:41:01Z`; test09 was submit
   scored *higher*, not lower; and FedAvg vs FedProx **flips sign** across configurations.
 
 **Note the disagreement with Campaign B:** on the binary task federation cost 0.068–0.110;
-here four federated runs beat the baseline. **This is an open question, not a resolved
+here three federated runs beat the baseline. **This is an open question, not a resolved
 one**, and the resolution is more seeds.
 
-### 11.4 FedOpt — tests 10–13, cancelled
+**What this campaign could not answer.** All four partitions were stratified, so the
+class-share spread between hospitals never exceeded 0.43 pp. Tests 08/09 therefore varied
+*quantity* and nothing else, and RQ2 had no defensible answer at the close of Campaign C.
+That gap is what Campaign D was built to fill.
 
-Added after 01–09 completed, at the user's request, to run **on the MacBook CPU**. Same
-partitions, clients, seed and rounds; only the server's update rule differs
-(SGD lr 1.0, momentum 0.6, client mu = 0).
+### 11.4 FedOpt — cancelled 2026-08-04, removed from the table 2026-08-05
+
+Added after 01–09 completed, at the user's request, to run **on the MacBook CPU**, and
+numbered test10–test13. Same partitions, clients, seed and rounds; only the server's
+update rule differed (SGD lr 1.0, momentum 0.6, client mu = 0).
 
 * **test12 and test13 failed immediately** — `TypeError: FedOptRecipe.__init__() got an
   unexpected keyword argument 'key_metric'`. Fixed with `common.pop("key_metric", None)`.
@@ -729,7 +746,78 @@ partitions, clients, seed and rounds; only the server's update rule differs
 * **test10 ran on CPU** — job `7e92f496-290f-4db2-aaf1-84e36347e3f8`, submitted
   2026-08-04T10:36:55Z, reached **round 19 of 30**.
 * The user then said *"poide cancelar os teste4s"*. **Cancelled.** Partial output is
-  preserved; nothing was deleted.
+  preserved at `unused/reference_implementations/fedopt_cancelled_2026-08-04/`; nothing
+  was deleted.
+
+**On 2026-08-05 the four rows were deleted from `experiments.py` entirely**, at the
+user's instruction (*"conseguru ignorar 10 ao 13 e remonear 14-17"*), and the ids were
+reused by the RQ2 campaign. The reasoning is written into the source at the point where
+the rows used to be: nothing completed, so nothing can be reported, and four permanently
+blank rows in a results table invite the same question in every chapter. **No FedOpt
+number appears anywhere in the reported campaign** — verified against
+`all_experiments.csv`, `summary.csv` and `manifest.json`, each of which lists exactly 13
+experiments.
+
+⚠ **Anything written between 2026-08-04 and 2026-08-05 that says "test10 = FedOpt" is
+from that window.** The ids now mean the cohort pair.
+
+### 11.5 Campaign D — 2026-08-05, tests 10–13, THE RQ2 PAIR
+
+**A second rented RunPod host, same image: RTX 4000 Ada, CUDA 12.8, torch 2.8.0,
+NVFLARE 2.8.0. Four sequential jobs finishing 01:16:51, 01:25:10, 01:33:40 and
+01:42:13 — ~8 minutes each, ~34 minutes end to end, zero failures, seed 42.**
+
+**Why it exists.** RQ2 asks what non-IID heterogeneity costs, and Campaign C could not
+answer it: its partitions were stratified to within 0.43 pp, so what tests 08/09 varied
+was quantity. The user proposed the fix directly — *"se eu fizesse um teste com 3
+hospitais um só com duke outro só cada set e ver como fica"* — and then, crucially,
+asked for the control in the same breath: the same three site sizes with the datasets
+mixed. That second half is what turns a demonstration into a measurement.
+
+**The design.** Two partitions holding identical site sizes (642 / 101 / 784 patients),
+identical client count, rounds, local epochs, seed, model and evaluation. In
+`3_clients_cohort` each site *is* one real cohort (DUKE / I-SPY1 / I-SPY2, assigned in
+sorted order); in `3_clients_sizematched` the same three sites hold a stratified draw
+from all three. Measured class-share spread: **27.45 pp against 0.32 pp**. Each partition
+ran once with FedAvg and once with FedProx.
+
+**The renumbering.** The four runs were first numbered test14–test17, in the order
+cohort-FedAvg, sizematched-FedAvg, cohort-FedProx, sizematched-FedProx. After FedOpt was
+dropped they were renumbered into the freed 10–13, and then reordered again so each
+*partition* owns a consecutive FedAvg/FedProx pair (10/11 cohort, 12/13 control), which
+is how 02–09 are numbered. Result folders, `experiments.py`, `all_experiments.csv`,
+`summary.csv` and the job definitions were all renamed together;
+**`per_client_metrics.csv` was not**, and still carries the test14–17 ids (see §12,
+bug 29).
+
+| test | partition | algorithm | best round | time (s) | accuracy | bal acc | **macro AUC** |
+|---|---|---|---:|---:|---:|---:|---:|
+| test10 | one cohort each | fedavg | 7 | 469 | 0.4291 | 0.3582 | **0.5426** |
+| test11 | one cohort each | fedprox | 16 | 482 | 0.4590 | 0.4105 | 0.5678 |
+| test12 | size-matched | fedavg | 17 | 471 | 0.4478 | 0.4183 | 0.5836 |
+| test13 | size-matched | fedprox | 27 | 485 | 0.4664 | 0.3885 | 0.5882 |
+
+**What it produced.**
+
+1. **The first consistent RQ2 answer.** Cohort-native costs **−0.041** under FedAvg and
+   **−0.020** under FedProx. Neither clears the noise floor alone; both point the same
+   way, where the quantity-skew pairs had disagreed in sign (−0.055 and +0.018).
+2. **The minority class collapses.** HER2+ recall 0.321 → 0.113 and its AUC to 0.4728,
+   below chance. Not visible in any aggregate metric.
+3. **FedProx finally has something to correct** — +0.025 on the cohort partition against
+   +0.005 on the control, and it restores HER2+ recall to 0.283. On the stratified
+   partitions its effect had flipped sign four times out of four.
+4. **Convergence slows under heterogeneity.** Test10 reaches 90.9% of its best aggregated
+   validation AUC at round 1 and needs five rounds to reach 95%, where most stratified
+   runs need one. An independent signature of the same effect, read off the round curves.
+5. **A confound that was created by the same run.** `class_weight_scope` is `"local"`, so
+   on a 27.45 pp prior spread the three sites optimised measurably different objectives.
+   Part of the measured cost may be that mismatch rather than heterogeneity as such —
+   which is now the highest-value follow-up (`PROJECT_CONTEXT.md` §21 item 2).
+
+**The user's judgement on the design, recorded because it was right:** the matched
+control was their idea, not an addition made afterwards, and it is the reason the result
+is quotable at all.
 
 ---
 
@@ -766,8 +854,9 @@ Full PROBLEM/CAUSE/DETECTION/SOLUTION/VALIDATION write-ups are in
     regularised differently from the baseline they were compared against.
 15. **`pkill -f 'pattern'` matched the ssh command running it** and killed its own shell.
 16. **Apple MPS corrupts weights to NaN** — non-deterministic, same seed gave 0.6312 and
-    0.6832; `torch.mps.synchronize()` made it deterministic but not finite. Root cause
-    **never established**.
+    0.6832; `torch.mps.synchronize()` made it deterministic but not finite. Recorded here
+    for a long time as **root cause never established**. ★ **Root-caused 2026-08-05** —
+    see bug 30.
 17. **`nc` absent from the RunPod container** — `start_federation.sh` polled the admin port
     with it, the check failed **silently**, and hospitals never started.
 18. **NVFLARE could not JSON-serialise a torchvision ResNet** — `self._norm_layer` is a
@@ -791,24 +880,72 @@ Full PROBLEM/CAUSE/DETECTION/SOLUTION/VALIDATION write-ups are in
 28. **A false claim in a docstring** — it said workers caused a SIGKILL, when
     `effective_num_workers` already returns 0 on macOS. Corrected.
 
-**Still open:** the stale `COHORT_DIRS` path; the misleading `"cohorts": ["spy2"]` field in
-the centralised results; `authors_subtype` blocked by `Config`; federated class weights
-computed locally; `fig2_tumour_size_by_cohort` unfinished; and the repository not being
-under version control.
+**Found on 2026-08-05:**
+
+29. **`per_client_metrics.csv` went stale across the renumbering.** It still carries the
+    pre-renumbering ids `test14`–`test17` and holds no rows for tests 02–09. **Cause:**
+    the last summary rebuild ran with `--no-client-eval`, which regenerates `summary.csv`
+    but leaves the per-client file untouched. **Detected** by reading the file against
+    `experiments.py`, where those ids do not exist. **Fix (not yet applied):** re-run
+    `build_final_summary.py` without the flag; every input still exists. **Consequence
+    until then:** `PROJECT_CONTEXT.md` §10.2 is the only surviving record of the tests
+    02–09 per-hospital numbers.
+30. ★ **The Apple-MPS NaN, root-caused after two false fixes.** **Cause:**
+    `x.to(device, non_blocking=True)` — an asynchronous host-to-device copy, which is only
+    safe when the source is pinned, and this project pins only on CUDA. On MPS the copy
+    returned before finishing while the DataLoader reused the buffer, so the network
+    trained on partially overwritten batches. **Detection:** bisection between a passing
+    and a failing path over a **full** epoch. Two earlier attempts declared it fixed and
+    were wrong — the first tested 61 steps of a 508-step epoch, the second changed the
+    `GradScaler` and never re-ran `run()`. The user's *"isso voce nao pesquisou direito
+    como resolver"* was correct both times. **Fix:** `non_blocking = device.type ==
+    "cuda"` in `src/core/training.py`, `src/core/evaluation.py` and
+    `src/federated/common/training.py`; `get_device()` rebuilt as a CUDA → MPS → CPU
+    cascade; the AMP scaler gated on `is_enabled()`; `apply_mps_workaround()` — dead code,
+    defined but never called — wired into `run()`. **Validation:** one full epoch, MPS
+    loss 1.1539 / acc 0.4372 in 231 s against CPU 1.1502 / 0.4237 in 589 s.
+31. **Two files still carry the old MPS diagnosis.**
+    `src/federated/common/models.py::get_device` defaults to `allow_mps=False` with a
+    docstring saying MPS "is BROKEN here", and `requirements.txt` repeats it. Harmless in
+    effect — the campaign ran on CUDA — but the stated reason is now wrong. **OPEN.**
+32. **A 76 GB stale duplicate of the whole repository** exists at
+    `.../federated-breast-classification`, created when a `mv` moved the project into an
+    existing folder of that name. It looks complete and is not: its notebook 03 is the old
+    12-cell version and it predates the MPS fix and Campaign D. Left in place by the
+    user's choice. **OPEN, and it is a trap rather than a backup.**
+33. **Two notebook headings were not renumbered.** `04_evaluate_run.ipynb` opens with
+    `# 06 —` and `05_compare_experiments.ipynb` with `# 07 —`. Cosmetic. **OPEN.**
+34. **The notebook epoch display read as an off-by-one.** The progress bar showed
+    `epoch 003` while the newest completed line said `epoch 002` — correct behaviour
+    (the bar labels the epoch being trained, the line the one that finished) displayed
+    ambiguously. **Fixed 2026-08-05:** the bar now says `training` and the summary line
+    `done`, with matching zero-padding. A genuine `epoch + 1` off-by-one in the bar label
+    had been fixed earlier.
+
+**Still open:** the misleading `"cohorts": ["spy2"]` field in the centralised results;
+`authors_subtype` blocked by `Config`; federated class weights computed locally (**now
+material — tests 10/11 ran that way on divergent priors**); `fig2_tumour_size_by_cohort`
+(status of the cosmetic fixes **NOT VERIFIED**); `per_client_metrics.csv` (bug 29); the
+two stale MPS statements (bug 31); the duplicate repository (bug 32); and an uncommitted
+working tree. **Closed since the previous version:** the stale `COHORT_DIRS` path (fixed
+in the reorganisation) and version control (the repository is now under git, though its
+history is two commits made outside the working sessions).
 
 ---
 
 ## 13. FIXES — the structural ones, not the one-liners
 
 The individual fixes are listed with their bugs. What matters for the history is the
-**four structural changes** that made whole classes of bug inexpressible:
+**five structural changes** that made whole classes of bug inexpressible:
 
-1. **One declarative experiment table.** `config/experiments.py` holds the thirteen
-   experiments, four partitions, `TrainingConfig` and `FederationConfig`. Jobs are
-   **generated** from it (`generate_jobs.py`, with a `--check` mode); `production/config/`
-   is a snapshot nothing reads back; `production/scripts/` are wrappers. Bugs 11, 13 and 14
+1. **One declarative experiment table.** `src/federated/config/experiments.py` holds the
+   thirteen experiments, six partitions, `TrainingConfig` and `FederationConfig`. Jobs are
+   **generated** from it (`generate_jobs.py`, with a `--check` mode); `deployment/config/`
+   is a snapshot nothing reads back; `deployment/scripts/` are wrappers. Bugs 11, 13 and 14
    all had one cause — two copies of a setting drifting apart — and that cause is now
-   removed.
+   removed. **This is also what made Campaign D cheap:** adding two partitions and four
+   experiments was an edit to one file, and the renumbering that followed touched that
+   file plus generated artefacts rather than thirteen hand-written configs.
 2. **An architecture fingerprint (`2d3031acc2075813`) checked at the server and every
    client**, plus `strict=True` on every checkpoint load. Bug 5 taught that a parameter
    count proves nothing (`Dropout` has no parameters — both builds total 11,187,671) and
@@ -818,10 +955,24 @@ The individual fixes are listed with their bugs. What matters for the history is
    final `Linear` is only ever replaced in place; a backbone that already ships a `Dropout`
    has it **retuned**, not stacked. At `dropout = 0` the key layout is exactly
    torchvision's. Verified: all seven checkpoints load `strict=True`.
-4. **198 pre-flight checks** (`verify_production.py`) that write nothing and must pass
+4. **219 pre-flight checks** (`verify_production.py`) that write nothing and must pass
    before any federation starts — structure, `project.yml` against `federation.py`, PKI,
    partitions against requested shares, budget equality, FedProx mu per job, unique result
-   names, and job **export**, not merely build.
+   names, and job **export**, not merely build. It grew from 198 to 219 with Campaign D,
+   and one check had to be **taught about non-stratified partitions**: the stratification
+   assertion now reads `Partition.stratified` and, for a partition declared
+   non-stratified, asserts the class spread is **at least** 0.05 — so a cohort partition
+   that silently came out stratified would fail rather than pass.
+5. **The repository reorganisation, 2026-08-05.** Seven folders, one purpose each
+   (`raw_dataset_BreastDCEDL/`, `dataset/`, `src/`, `deployment/`, `results/`, `docs/`,
+   `notebooks/`), a README in every one, and a root that holds only `README.md` and
+   `requirements.txt`. Three things it fixed structurally rather than cosmetically: the
+   root `config.py` was renamed `src/dataset_config.py` so it can no longer shadow
+   `src/federated/config/`; `RAW_DIR` now points at the imaging release rather than at the
+   authors' code clone, and the fallback resolver that had been hiding that breakage was
+   deleted; and the raw dataset became reproducible from a `download_dataset.py` that
+   reads the Zenodo file list at run time and prints manual instructions on **every**
+   failure path.
 
 Plus the standing rules: patient-level splitting enforced by a verification step; accuracy
 never quoted without the trivial baseline computed from the split; 0.067 treated as the
@@ -830,39 +981,43 @@ participant; hardlinked data verified by inode; and **move, never delete**.
 
 ---
 
-## 14. CURRENT STATUS — 2026-08-04
+## 14. CURRENT STATUS — 2026-08-05
 
 **Finished:** the classifier phase (21 runs, 13 architectures, 5 data configurations); the
 dataset (`multi_subtype_80mm`, built, audited, documented, figured); the source probe; the
 2×2 ablation; the BreastDCEDL reproducibility audit; the NVFLARE production infrastructure;
-**the nine dissertation experiments**; and the aggregated final summary.
+**all thirteen dissertation experiments across two campaigns**; the aggregated final
+summary; the repository reorganisation and its documentation; and the MPS root cause.
 
-**Running:** nothing. No process, no job, no rented GPU.
+**Running:** nothing. No process, no job, no rented GPU. Both hosts were released.
 
 **Verified:** MinCrop geometry 767/767 · Duke depth 12/12 · cropped-not-resized 228/228 ·
 Duke tumour presence by enhancement physics (96%, 4.69×) · hardlinks 136/136 by inode ·
-partitions reconcile to 2,063 patients / 16,378 images in all four · budget equality ·
-198 pre-flight checks · all seven checkpoints load `strict=True` · pipeline integrity
-(0 divergences in 20,028 rows) · every dataset count in these documents recomputed from
-`metadata.csv`.
+partitions reconcile to 2,063 patients / 16,378 images across all six · budget equality ·
+**all 219 pre-flight checks pass, re-run 2026-08-05** · all seven checkpoints load
+`strict=True` · pipeline integrity (0 divergences in 20,028 rows) · **every dataset count,
+every class spread and the whole RQ3 convergence table recomputed from the files on
+2026-08-05** · zero patients in more than one split and zero with more than one label.
 
-**Immediately outstanding:** the authors' released weights through our preprocessing; the
-stale `COHORT_DIRS` path; the misleading `"cohorts"` field; **putting the repository under
-version control** (it is not, today); and `fig2_tumour_size_by_cohort`, which was raised
-three times and never finished.
+**Immediately outstanding:** regenerate `per_client_metrics.csv` without
+`--no-client-eval`; the authors' released weights through our preprocessing; the two
+stale MPS statements; the misleading `"cohorts"` field; a decision about the 76 GB
+duplicate repository; committing the working tree; and `fig2_tumour_size_by_cohort`,
+whose cosmetic fixes are **NOT VERIFIED**.
 
 **The state of each research question:**
 
 | | current answer | confidence |
 |---|---|---|
-| **RQ1** | Federated produces models in the same range as centralised (0.5598–0.6527 vs 0.6068) | **Low** — one seed per job, spread 0.093 vs noise floor 0.067. Campaign B on the binary task said federation costs 0.068–0.110. **Unresolved.** |
-| **RQ2** | No detectable effect of the skew (0.5985/0.6248 skewed vs 0.6527/0.6078 balanced) | **Low, and the design limits it** — the partitions are stratified, so this is quantity skew only. A genuine non-IID partition is implemented and has never been run. |
-| **RQ3** | FedProx flips sign across configurations here (+0.033, −0.003, −0.045, +0.026); it won 4/4 on the binary task | **Low** — every difference is inside the noise floor. |
-| **RQ4** | FedProx under skew scored 0.6248 against FedAvg's 0.5985 | **Low.** The class-weight-scope experiment, which is the real RQ4 material, has never been run. |
+| **RQ1** | **Yes, by equivalence.** Centralised 0.6068 against a federated mean of 0.5927 over twelve runs — gap 0.0141, **4.8× smaller** than the measured 0.067 margin, every run inside it | **Moderate, and it is a positive claim.** What limits it is that the margin is applied to point estimates rather than intervals; three seeds would give the strong form. Campaign B's binary task disagreed (federation cost 0.068–0.110) and that disagreement is unresolved. |
+| **RQ2** | **Real heterogeneity costs performance**: −0.041 (FedAvg) and −0.020 (FedProx) between cohort-native sites and a size-matched control, and **HER2+ recall collapses 0.321 → 0.113** | **Moderate in direction, none in magnitude.** Both differences are inside the noise floor; what supports the claim is that two independent comparisons agree (p = 0.25 under the null). Confounded by `class_weight_scope = "local"` on divergent priors. The earlier quantity-skew answer ("no detectable effect") stands and is now correctly labelled as a statement about quantity skew. |
+| **RQ3** | **Communication: ~87% of a 30-round schedule is wasted** — the global model is at 94–98% of its best after one round on stratified partitions, and visibly slower under heterogeneity. **FedProx: +0.025 where sites genuinely differ against +0.005 on the matched control** | **Moderate for communication** (a large, consistent effect across eight runs). **Low for FedProx** — the gain is inside the noise floor, but the mechanism and the measurement agree, which the stratified partitions never did. |
+| **RQ4** | FedProx under genuine heterogeneity is the one mitigation where mechanism and measurement agree, and it partially restores HER2+ recall (0.113 → 0.283). The security measures are implemented and verified by 219 checks | **Low.** The class-weight-scope experiment — the direct privacy-versus-performance measurement — has still never been run, and is now doubly motivated. |
 
 **The single sentence a reader should take away:** the infrastructure objective (OBJ3) is
-fully met and demonstrated; the measurement objectives (OBJ4, OBJ5) have a complete,
-reproducible experimental apparatus and **not enough seeds** to give sharp answers.
+fully met and demonstrated; RQ1 and RQ2 now have defensible answers of the right shape —
+an equivalence claim and a consistent direction — and both are **single-seed**, which is
+the one limitation that governs the entire results chapter.
 
 ---
 
@@ -871,20 +1026,30 @@ reproducible experimental apparatus and **not enough seeds** to give sharp answe
 Detail, with hypothesis and expected interpretation for each, is in
 `PROJECT_CONTEXT.md` §21.
 
-1. **Authors' released ViT weights through our preprocessing.** Inference only, minutes.
+**Reordered 2026-08-05.** Item 3 of the previous list — the cohort partition — was run
+and is now Campaign D. FedOpt was formally dropped rather than completed. Seed repetition
+moves to first, because the project now has **two** claims that rest on the noise floor
+rather than merely being limited by it: RQ1's equivalence and RQ2's direction.
+
+1. **Three seeds on all thirteen experiments.** ~3.5 h on a rented GPU. Converts RQ1 from
+   "the points fall inside the margin" to "the interval falls inside the margin", and
+   tests whether the RQ2 direction replicates. Nothing else improves the results chapter
+   as much per GPU-hour.
+2. **Local vs global class weights on the cohort partition.** The real RQ4 experiment — a
+   measured privacy-versus-performance trade-off — and it now also **disambiguates RQ2**,
+   because tests 10/11 ran with local scope on a 27.45 pp prior spread. ~30 min.
+3. **Authors' released ViT weights through our preprocessing.** Inference only, minutes.
    Separates "our pixels are wrong" from "the deficit is all training".
-2. **Three seeds on the nine experiments.** ~2.5 h on a rented GPU. This is what makes the
-   results chapter defensible.
-3. **The cohort-based partition** (`--by-cohort`) — Duke vs I-SPY2 vs I-SPY1 as three
-   hospitals. Genuine non-IID; the strongest available upgrade to RQ2. Report the source
-   probe beside it.
-4. **Local vs global class weights** under that partition — the real RQ4 experiment, a
-   measured privacy-vs-performance trade-off.
+4. **`--stratify none`** — label skew without cohort identity, the missing rung between
+   quantity skew and the cohort partition. Tells you whether the RQ2 effect is priors or
+   scanner. Implemented, never run. ~30 min.
 5. **`--freeze-until layer4`** — the honest freezing test, 25% of parameters instead of
    6.1%.
 6. **Ensemble the existing runs** — free.
-7. **Complete or formally drop FedOpt**, stating the last-round-selection caveat either
-   way.
+7. **FedOpt on the cohort partition, only if the model-selection asymmetry is solved
+   first.** `FedOptRecipe` rejects `key_metric`, so FedOpt keeps the last round while the
+   others keep the best of thirty; reporting a number without resolving that would be a
+   methodological error rather than a caveat.
 8. **Reacquire MAMA-MIA** for its 22 real hospital IDs inside I-SPY2 — federated learning
    across real sites, within one cohort, which removes the source confound *and* keeps
    heterogeneity. This would be the strongest version of the whole thesis.
@@ -921,3 +1086,10 @@ claiming any improvement from a single run.
 | **2026-08-04 10:33–11:00** | FedOpt attempt on CPU. test12/13 fail on `key_metric`; test10 reaches round 19 of 30; **cancelled by the user**. |
 | **2026-08-04 18:00–19:32** | Scientific dataset & preprocessing report written (`DATASET_REPORT.md`); 12 report figures generated and refined. |
 | **2026-08-04** | These two documents written from a full inspection of the repository. |
+| **2026-08-04 → 08-05** | Preprocessing walkthrough figures and flowchart built for the methodology chapter; the normalisation figure rewritten after the first version was found to compare two identical histograms. NVFLARE configuration and training-parameter reports written and verified against source rather than prose (which caught an omitted gradient-clipping step and a wrong early-stopping claim). |
+| **2026-08-05 00:52** | The two RQ2 partitions built — `3_clients_cohort` and `3_clients_sizematched`, 642/101/784 patients each, class spread 27.45 pp against 0.32 pp. |
+| **2026-08-05 ~01:09–01:42** | **Campaign D — tests 10–13 on a second rented RTX 4000 Ada. Four sequential jobs, ~34 minutes end to end, zero failures.** First consistent RQ2 answer; HER2+ recall collapses 0.321 → 0.113. |
+| **2026-08-05 02:43–11:04** | Results pulled back, FedOpt removed from `experiments.py`, tests renumbered 14–17 → 10–13 and then reordered so each partition owns a consecutive FedAvg/FedProx pair. `final_summary` rebuilt — **with `--no-client-eval`, which is how `per_client_metrics.csv` went stale**. |
+| **2026-08-05 12:00–17:42** | **The repository reorganisation:** seven folders, per-folder READMEs, `src/dataset_config.py`, `RAW_DIR` fixed, `download_dataset.py` written, `.gitignore` rewritten, notebooks renumbered 01–05 and rebuilt to expose every configuration option. Full verification pass over links, DOIs, paths and imports — which found a wrong DOI (HydraMix-Net cited for Bussola's data-leakage paper) and a preprint title used for a published article. |
+| **2026-08-05 18:00–19:00** | **The Apple-MPS root cause** — `non_blocking=True` from unpinned memory — found by bisection after two premature "fixed" claims. MPS now trains finite and 2.5× faster than CPU. |
+| **2026-08-05** | These two documents re-verified against the files and extended. Every count, spread and convergence figure quoted here was recomputed on this date. |

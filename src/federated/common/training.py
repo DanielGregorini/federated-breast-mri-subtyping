@@ -62,8 +62,13 @@ def train_one_epoch(model, loader, criterion, optimizer, scaler, device, *,
     correct = torch.zeros((), device=device, dtype=torch.float32)
     seen = 0
     for x, y, _ in loader:
-        x = x.to(device, non_blocking=True)
-        y = y.to(device, non_blocking=True)
+        # Asynchronous copies are only safe from pinned memory, which this
+        # project allocates on CUDA alone. On MPS an async copy can return
+        # before it has finished while the loader reuses the source buffer.
+        # See core/training.py::train_one_epoch for the measurement.
+        non_blocking = device.type == "cuda"
+        x = x.to(device, non_blocking=non_blocking)
+        y = y.to(device, non_blocking=non_blocking)
         optimizer.zero_grad(set_to_none=True)
         with torch.autocast(device.type, enabled=use_amp):
             logits = model(x)

@@ -28,41 +28,69 @@ from . import reporting as R
 from .experiment import new_experiment
 
 
-def get_device(allow_mps: bool = False) -> torch.device:
-    """CUDA (NVIDIA) > CPU. Apple MPS only on explicit request — it is BROKEN here.
+def get_device(allow_mps: bool = True) -> torch.device:
+    """The best available accelerator: CUDA, then Apple MPS, then CPU.
 
-    MPS WAS RE-TESTED ON torch 2.12 AND STILL FAILS. THE NUMBERS:
-    ------------------------------------------------------------
-    A standalone probe — real model, real data, plain AdamW loop — ran a FULL epoch
-    on MPS with every loss and every weight finite, at ~80 img/s against ~20 on CPU.
-    That looked like the old failure had been fixed by a newer torch.
+    MPS WAS BANNED HERE FOR A DEFECT THAT WAS NEVER IN MPS
+    -----------------------------------------------------
+    The ban rested on this, measured through `run_centralized.py`:
 
-    It had not. The probe did not exercise this project's actual training loop. Run
-    through `run_centralized.py`, MPS produces:
+        epoch 001/2  loss nan  train_acc 0.9018 | val AUC nan
 
-        epoch 001/2  loss nan  train_acc 0.9018 | val AUC nan   (190s)
-        epoch 002/2  loss nan  train_acc 0.9161 | val AUC nan   (183s)
+    A training accuracy of 0.90 in the first epoch, on a three-class task whose
+    trivial baseline is 0.51, is not a diverged model. It is corrupted input.
 
-    NaN loss, NaN AUC, and a training accuracy of 0.90 in the first epoch where CPU
-    gives ~0.43 — the accumulator is as broken as the loss. The identical code on
-    CPU is finite throughout, and on CUDA it trains normally.
+    The cause was `x.to(device, non_blocking=True)` in the training loop. An
+    asynchronous host-to-device copy is only safe when the source is pinned
+    memory, and this project pins on CUDA alone. On MPS the copy returned before
+    it had finished while the DataLoader reused the source buffer, so the model
+    trained on partially overwritten batches. It needs a few hundred steps to
+    show, which is why short probes kept passing.
 
-    So the ban stands. What changed is only the confidence behind it: the failure is
-    now known to survive torch 2.12, and to hide from a simple probe. Anything that
-    "works on MPS" must be demonstrated through THIS loop, not a reduced one.
+    Bisected by running the same components two ways over one full epoch, 508
+    steps, same seed and data:
 
-    Real training belongs on CUDA. The laptop builds datasets and reads results.
-    `get_device(allow_mps=True)` still exists for anyone wanting to retest.
+        hand-written loop, blocking copies   loss 1.1539   train_acc 0.4372
+        train_one_epoch, non_blocking=True   loss nan      train_acc 0.9425
+
+    With the copies gated to CUDA, a full epoch through `run()` on MPS gives
+    loss 1.1546 and train_acc 0.4366 against CPU's 1.1502 and 0.4237, in 231 s
+    against 589 s.
+
+    Two things ruled out along the way, whose guards were kept because both are
+    correct in themselves: non-contiguous BatchNorm inputs (`apply_mps_workaround`,
+    which had been written and never wired in), and routing the backward pass
+    through a disabled `GradScaler`.
+
+    Escape hatches, in order of bluntness:
+      BREAST_FORCE_CPU=1            forces CPU regardless of what is available
+      get_device(allow_mps=False)   skips MPS but still takes CUDA
     """
     if os.environ.get("BREAST_FORCE_CPU") == "1":
         return torch.device("cpu")
     if torch.cuda.is_available():
         return torch.device("cuda")
     if allow_mps and torch.backends.mps.is_available():
-        # An op MPS has not implemented falls back to CPU rather than raising.
+        # An op MPS has not implemented falls back to CPU instead of raising. This
+        # only takes effect if it is set BEFORE torch is imported, which is why the
+        # notebooks and run_centralized.py set it at the top rather than relying on
+        # this line alone.
         os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
         return torch.device("mps")
     return torch.device("cpu")
+
+
+def describe_device(device: torch.device | None = None) -> str:
+    """One line naming the hardware, for a log or a notebook header."""
+    import platform
+    device = device or get_device()
+    if device.type == "cuda":
+        name = torch.cuda.get_device_name(0)
+        total = torch.cuda.get_device_properties(0).total_memory / 1e9
+        return f"cuda — {name}, {total:.1f} GB"
+    if device.type == "mps":
+        return f"mps — Apple {platform.machine()} GPU (Metal Performance Shaders)"
+    return f"cpu — {platform.processor() or platform.machine()}"
 
 
 def apply_mps_workaround(model, device: torch.device) -> int:
@@ -128,7 +156,8 @@ def build_scheduler(optimizer, cfg):
 
 
 def train_one_epoch(model, loader, criterion, optimizer, scaler, device,
-                    use_amp: bool, freeze_bn: bool = False) -> tuple[float, float]:
+                    use_amp: bool, freeze_bn: bool = False,
+                    progress: str | None = None) -> tuple[float, float]:
     """One pass over the training set. Returns (mean loss, slice accuracy).
 
     The running totals live on the GPU and are read once at the end. Reading
@@ -174,18 +203,67 @@ def train_one_epoch(model, loader, criterion, optimizer, scaler, device,
     # versions, and this loop has no reason to enter it at all when disabled.
     from contextlib import nullcontext
 
-    for x, y, _ in loader:
-        x = x.to(device, non_blocking=True)
-        y = y.to(device, non_blocking=True)
+    # A batch counter, and deliberately NOTHING ELSE. Showing a running loss here
+    # would mean reading `.item()` every step, which is exactly the per-batch
+    # synchronisation this loop removed for a measured 20% of step time on CUDA.
+    # The bar advances; the numbers arrive at the end of the epoch, where they are
+    # already being read once.
+    steps = loader
+    bar = None
+    if progress:
+        try:
+            from tqdm.auto import tqdm
+            bar = tqdm(loader, desc=progress, unit="batch", leave=False)
+            steps = bar
+        except ImportError:
+            pass                      # tqdm is optional; training does not need it
+
+    for x, y, _ in steps:
+        # `non_blocking=True` is only safe when the SOURCE is pinned memory, and
+        # this project pins only on CUDA (`pin_memory=torch.cuda.is_available()`).
+        # On Apple MPS the copy returns before it has finished while the DataLoader
+        # is free to reuse the source buffer, so the model trains on partially
+        # overwritten batches. It shows up as a NaN loss a few hundred steps in,
+        # with an impossible training accuracy, and it is why MPS looked broken.
+        #
+        # Measured over one full epoch, all 508 steps, same seed and data:
+        #   non_blocking=True  on MPS : loss nan,    train_acc 0.9425
+        #   blocking copies    on MPS : loss 1.1539, train_acc 0.4372
+        #   the same run on CPU       : loss 1.1502, train_acc 0.4237
+        #
+        # Asynchronous where it helps and is safe, synchronous everywhere else.
+        non_blocking = device.type == "cuda"
+        x = x.to(device, non_blocking=non_blocking)
+        y = y.to(device, non_blocking=non_blocking)
         optimizer.zero_grad(set_to_none=True)
         with (torch.autocast(device.type, enabled=True) if use_amp else nullcontext()):
             logits = model(x)
             loss = criterion(logits, y)
-        scaler.scale(loss).backward()
-        scaler.unscale_(optimizer)
-        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-        scaler.step(optimizer)
-        scaler.update()
+        # THE SCALER IS ONLY TOUCHED WHEN IT IS ACTUALLY ENABLED.
+        #
+        # A `GradScaler("cuda", enabled=False)` is documented as a no-op, and on
+        # CPU it behaves like one. On Apple MPS it does not: routing the backward
+        # pass through the disabled scaler corrupts the gradients, and the loss
+        # becomes NaN partway through the first epoch while the accuracy counter
+        # reports an impossible 0.90.
+        #
+        # Measured over one full epoch, all 508 steps, same seed and data:
+        #   through the disabled scaler : loss nan,    train_acc 0.9000
+        #   plain backward              : loss 1.1539, train_acc 0.4372
+        #   the same run on CPU         : loss 1.1502, train_acc 0.4237
+        #
+        # This is what made MPS look permanently broken. On CUDA the scaled branch
+        # is unchanged, so nothing about an NVIDIA run moves.
+        if scaler.is_enabled():
+            scaler.scale(loss).backward()
+            scaler.unscale_(optimizer)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            scaler.step(optimizer)
+            scaler.update()
+        else:
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            optimizer.step()
         if on_device:
             running += loss.detach() * y.size(0)
             correct += (logits.detach().argmax(1) == y).sum()
@@ -195,6 +273,9 @@ def train_one_epoch(model, loader, criterion, optimizer, scaler, device,
         seen += y.size(0)
         if sync is not None:
             sync()
+
+    if bar is not None:
+        bar.close()
 
     total_loss = float(running.item()) if on_device else float(running)
     total_ok = float(correct.item()) if on_device else float(correct)
@@ -217,7 +298,7 @@ def evaluate_split(model, loader, rows: pd.DataFrame, cfg, device,
 
 
 def run(cfg, results_dir: Path | None = None, suffix: str = "",
-        log=print) -> Path:
+        log=print, progress: bool = False) -> Path:
     """Train one experiment and write everything it produces.
 
     Returns the experiment folder. Nothing is left for a human to do afterwards.
@@ -244,6 +325,15 @@ def run(cfg, results_dir: Path | None = None, suffix: str = "",
 
     model = M.build_model(cfg.model, cfg.num_classes, pretrained=True,
                           dropout=cfg.dropout).to(device)
+
+    # A no-op on CUDA and CPU. On MPS it forces every BatchNorm input contiguous,
+    # which sidesteps a backward bug in the Apple backend. This guard was written
+    # and then never wired in, which is why a full epoch on MPS produced a NaN loss
+    # while a short probe stayed finite - the defect needs several hundred steps to
+    # show up, and a 61-step probe does not reach it.
+    hooked = apply_mps_workaround(model, device)
+    if hooked:
+        log(f"MPS: BatchNorm contiguity hook on {hooked} layers")
     if cfg.freeze_until not in ("none", "", None):
         M.freeze_until(model, cfg.freeze_until)
     if cfg.freeze_bn:
@@ -273,7 +363,18 @@ def run(cfg, results_dir: Path | None = None, suffix: str = "",
         t0 = time.time()
         train_loss, train_acc = train_one_epoch(
             model, loaders["train"], criterion, optimizer, scaler, device,
-            use_amp, cfg.freeze_bn)
+            use_amp, cfg.freeze_bn,
+            # `epoch` is already 1-based: the loop is range(1, epochs + 1). Adding one
+            # here labelled the bar an epoch ahead of the summary line below it.
+            #
+            # The bar shows the epoch being TRAINED; the summary line below is printed
+            # only once that epoch has finished. So while the bar reads "epoch 3/30"
+            # the last completed line still reads "epoch 002/30", which looks like an
+            # off-by-one and is not. Saying "training" on the bar and "done" on the
+            # line makes which is which unambiguous, and the numbers are padded the
+            # same way in both so they line up.
+            progress=(f"epoch {epoch:03d}/{cfg.epochs:03d} training"
+                      if progress else None))
 
         val_metrics, _, _, _ = evaluate_split(model, loaders["val"], frames["val"],
                                               cfg, device, use_amp)
@@ -294,7 +395,7 @@ def run(cfg, results_dir: Path | None = None, suffix: str = "",
             "val_auc": val_metrics["auc"], "val_macro_f1": val_metrics["macro_f1"],
             "seconds": time.time() - t0,
         })
-        log(f"epoch {epoch:03d}/{cfg.epochs}  lr {lr_now:.2e}  "
+        log(f"epoch {epoch:03d}/{cfg.epochs:03d} done  lr {lr_now:.2e}  "
             f"loss {train_loss:.4f}  train_acc {train_acc:.4f} | "
             f"val AUC {val_metrics['auc']:.4f}  bal {val_metrics['balanced_accuracy']:.4f}"
             f"  ({time.time()-t0:.0f}s)")

@@ -40,7 +40,12 @@ def predict(model, loader, device, use_amp: bool = False
     model.eval()
     probs, labels, idxs = [], [], []
     for x, y, i in loader:
-        x = x.to(device, non_blocking=True)
+        # Asynchronous copies are only safe from pinned memory, which this
+        # project allocates on CUDA alone. On MPS an async copy can return
+        # before it has finished while the loader reuses the source buffer.
+        # See core/training.py::train_one_epoch for the measurement.
+        non_blocking = device.type == "cuda"
+        x = x.to(device, non_blocking=non_blocking)
         with torch.autocast(device.type, enabled=use_amp and device.type == "cuda"):
             logits = model(x)
         probs.append(torch.softmax(logits.float(), dim=1).cpu().numpy())
