@@ -254,3 +254,14 @@ federated/data/**/images/
 data/global/images/
 data/partitions/**/images/
 **/hospital_[0-9]/images/
+
+# Superseded experiment output, kept on disk but never committed.
+# See old_runs/README.md for what each folder was.
+old_runs/
+
+# Rented-pod runs from the 2026-08-06/07 re-run campaign. None is reported in the
+# dissertation; the thirteen reported results live in results/federated/.
+# See unused_old_run_pod_07-08/README.md for what each folder holds.
+unused_old_run_pod_07-08/
+docs/PROJECT_CONTEXT.md
+docs/PROJECT_HISTORY.md

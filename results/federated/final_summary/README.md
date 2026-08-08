@@ -1,7 +1,7 @@
 # `results/final_summary/`
 
 Everything the dissertation's results chapter needs, generated in one pass by
-[`src/scripts/build_final_summary.py`](../../../src/scripts/build_final_summary.py).
+[`scripts/build_final_summary.py`](../../scripts/build_final_summary.py).
 
 Regenerate at any time — it is a pure function of `results/`, `data/` and
 `config/experiments.py`, and it overwrites this folder:
@@ -140,6 +140,6 @@ Metrics are recomputed from stored per-patient predictions rather than copied fr
 stored metric dict. That is what makes the confusion matrix, the ROC curve and the
 accuracy in the table mutually consistent by construction: they come from one array.
 
-The predictions themselves are written by `src/scripts/collect_results.py`, which scores
+The predictions themselves are written by `scripts/collect_results.py`, which scores
 every experiment through one code path on one test set. **Run that first** — this
 script reads its output.

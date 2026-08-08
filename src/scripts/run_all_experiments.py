@@ -53,7 +53,8 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from config import experiments as EX  # noqa: E402
 
-SCRIPTS = PROJECT_ROOT / "scripts"
+# Beside this file, not under federated/ — see the note in run_experiment.py.
+SCRIPTS = Path(__file__).resolve().parent
 
 
 def run(cmd: list[str], label: str) -> bool:

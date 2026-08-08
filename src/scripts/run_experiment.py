@@ -31,6 +31,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent / "federated"
+# The sibling scripts live beside this file, NOT under federated/. Deriving them
+# from PROJECT_ROOT points at a directory that does not exist, and the subprocess
+# then fails with "file not found" — which this script reports as a data
+# verification failure, a long way from its real cause.
+SCRIPTS_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from config import experiments as EX   # noqa: E402
@@ -92,7 +97,7 @@ def preflight(experiment) -> None:
         raise SystemExit("no global test set — run: python scripts/prepare_data.py")
 
     check = subprocess.run(
-        [sys.executable, str(PROJECT_ROOT / "scripts" / "verify_data.py"),
+        [sys.executable, str(SCRIPTS_DIR / "verify_data.py"),
          "--only", partition.name],
         capture_output=True, text=True)
     if check.returncode != 0:

@@ -6,7 +6,7 @@
 experiment & name & algorithm & n_hospitals & partition & data_split & accuracy & macro_precision & macro_recall & macro_f1 & macro_auc & best_epoch & best_round & training_time_s & reference & reference_macro_auc & delta_macro_auc & within_noise_floor \\
 \midrule
 test01 & test01_centralized & centralized & 1 & - & all data pooled & 0.5299 & 0.4606 & 0.4503 & 0.4523 & 0.6068 & 4.0000 & -- & 267.6000 & centralized (test01) & 0.6068 & 0.0000 & True \\
-test06 & test06_fedavg_4h & fedavg & 4 & 4_clients_balanced & 4 hospitals, balanced (25 each)  ->  25.0% / 25.0% / 25.0% / 25.0% & 0.4776 & 0.4646 & 0.4522 & 0.4378 & 0.6531 & -- & 0.0000 & 317.0000 & centralized (test01) & 0.6068 & 0.0463 & True \\
+test06 & test06_fedavg_4h & fedavg & 4 & 4_clients_balanced & 4 hospitals, balanced (25 each)  ->  25.0% / 25.0% / 25.0% / 25.0% & 0.4925 & 0.4574 & 0.4327 & 0.4338 & 0.6077 & -- & 0.0000 & 779.0000 & centralized (test01) & 0.6068 & 0.0009 & True \\
 test07 & test07_fedprox_4h & fedprox & 4 & 4_clients_balanced & 4 hospitals, balanced (25 each)  ->  25.0% / 25.0% / 25.0% / 25.0% & 0.4739 & 0.4389 & 0.4393 & 0.4362 & 0.6075 & -- & 0.0000 & 335.0000 & centralized (test01) & 0.6068 & 0.0007 & True \\
 \bottomrule
 \end{tabular}

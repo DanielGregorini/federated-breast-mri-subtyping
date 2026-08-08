@@ -52,19 +52,21 @@ if ! [[ "$TEST_ID" =~ ^(test[0-9]{2}|_scratch)$ ]]; then
 fi
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$HERE")"
+PROJECT_ROOT="$(dirname "$HERE")"           # src/ — holds dataset_config.py and core/
+FEDERATED_ROOT="$PROJECT_ROOT/federated"    # holds config/experiments.py
+REPO_ROOT="$(dirname "$PROJECT_ROOT")"      # holds deployment/
 
 # The one place that resolves prod_NN, so this script and the Python that submits
 # jobs can never disagree about which provisioning run they are using.
-WORKSPACE="$(cd "$PROJECT_ROOT" && python3 -c \
+WORKSPACE="$(cd "$FEDERATED_ROOT" && python3 -c \
     'from config.federation import workspace_dir; print(workspace_dir())')"
-ADMIN_PORT="$(cd "$PROJECT_ROOT" && python3 -c \
+ADMIN_PORT="$(cd "$FEDERATED_ROOT" && python3 -c \
     'from config.federation import ADMIN_PORT; print(ADMIN_PORT)')"
 
 # One folder per test, one file per participant — see production/README.md section
 # "Where logs are stored". Never a shared file: two participants appending to one log
 # interleave mid-line under load and the result cannot be reconstructed.
-LOG_DIR="$PROJECT_ROOT/production/logs/$TEST_ID"
+LOG_DIR="$REPO_ROOT/deployment/logs/$TEST_ID"
 mkdir -p "$LOG_DIR"
 
 # Every line the federation emits is also timestamped into one ordered file, so the
@@ -83,7 +85,7 @@ echo "======================================================================"
 
 # Each site's trainer needs to find this project and the classifier phase it shares
 # a model with. Exported here so every child process inherits them.
-export FEDBREAST_ROOT="$PROJECT_ROOT"
+export FEDBREAST_ROOT="$FEDERATED_ROOT"
 export BREAST_CORE_ROOT="$PROJECT_ROOT"
 # Without this, torch opens one thread pool per process and 5 processes on one
 # machine spend most of their time context switching. Measured on this project:

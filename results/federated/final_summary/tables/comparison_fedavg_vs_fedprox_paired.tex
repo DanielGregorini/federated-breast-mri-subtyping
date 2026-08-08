@@ -5,12 +5,12 @@
 \toprule
 data_split & n_hospitals & fedavg & fedprox & fedavg_accuracy & fedprox_accuracy & delta_accuracy & fedavg_macro_precision & fedprox_macro_precision & fedavg_macro_recall & fedprox_macro_recall & fedavg_macro_f1 & fedprox_macro_f1 & delta_macro_f1 & fedavg_macro_auc & fedprox_macro_auc & delta_macro_auc & fedavg_best_round & fedprox_best_round & fedavg_training_time_s & fedprox_training_time_s & within_noise_floor & favours \\
 \midrule
-2 hospitals, balanced (50/50)  ->  50.0% / 50.0% & 2 & test02 & test03 & 0.4030 & 0.4328 & 0.0298 & 0.3915 & 0.4028 & 0.3742 & 0.4025 & 0.3744 & 0.4001 & 0.0257 & 0.5594 & 0.5917 & 0.0323 & 25.0000 & 29.0000 & 313.0000 & 351.0000 & True & — \\
+2 hospitals, balanced (50/50)  ->  50.0% / 50.0% & 2 & test02 & test03 & 0.4328 & 0.4328 & 0.0000 & 0.3939 & 0.4028 & 0.3949 & 0.4025 & 0.3931 & 0.4001 & 0.0070 & 0.5816 & 0.5917 & 0.0101 & 29.0000 & 29.0000 & 622.0000 & 351.0000 & True & — \\
 3 hospitals, balanced (33.3 each)  ->  33.3% / 33.3% / 33.3% & 3 & test04 & test05 & 0.4851 & 0.4590 & -0.0261 & 0.4333 & 0.4208 & 0.4198 & 0.4127 & 0.4231 & 0.4116 & -0.0115 & 0.5990 & 0.5958 & -0.0032 & 27.0000 & 28.0000 & 313.0000 & 333.0000 & True & — \\
 3 hospitals, cohorts mixed, sizes matched to 3_clients_cohort  ->  42.0% / 6.6% / 51.3% & 3 & test12 & test13 & 0.4478 & 0.4664 & 0.0186 & 0.4187 & 0.3925 & 0.4183 & 0.3885 & 0.4153 & 0.3884 & -0.0269 & 0.5836 & 0.5882 & 0.0046 & 17.0000 & 27.0000 & 471.0000 & 485.0000 & True & — \\
 3 hospitals, one cohort each (DUKE | I-SPY1 | I-SPY2)  ->  42.0% / 6.6% / 51.3% & 3 & test10 & test11 & 0.4291 & 0.4590 & 0.0299 & 0.3523 & 0.4302 & 0.3582 & 0.4105 & 0.3536 & 0.4144 & 0.0608 & 0.5426 & 0.5678 & 0.0252 & 7.0000 & 16.0000 & 469.0000 & 482.0000 & True & — \\
-4 hospitals, balanced (25 each)  ->  25.0% / 25.0% / 25.0% / 25.0% & 4 & test06 & test07 & 0.4776 & 0.4739 & -0.0037 & 0.4646 & 0.4389 & 0.4522 & 0.4393 & 0.4378 & 0.4362 & -0.0016 & 0.6531 & 0.6075 & -0.0456 & 0.0000 & 0.0000 & 317.0000 & 335.0000 & True & — \\
-4 hospitals, skewed 5:2:1:1 (dissertation: 50/20/10/10)  ->  55.6% / 22.2% / 11.1% / 11.1% & 4 & test08 & test09 & 0.4888 & 0.4515 & -0.0373 & 0.4374 & 0.4365 & 0.4259 & 0.4210 & 0.4292 & 0.4197 & -0.0095 & 0.5982 & 0.6250 & 0.0268 & 21.0000 & 2.0000 & 323.0000 & 387.0000 & True & — \\
+4 hospitals, balanced (25 each)  ->  25.0% / 25.0% / 25.0% / 25.0% & 4 & test06 & test07 & 0.4925 & 0.4739 & -0.0186 & 0.4574 & 0.4389 & 0.4327 & 0.4393 & 0.4338 & 0.4362 & 0.0024 & 0.6077 & 0.6075 & -0.0002 & 0.0000 & 0.0000 & 779.0000 & 335.0000 & True & — \\
+4 hospitals, skewed 5:2:1:1 (dissertation: 50/20/10/10)  ->  55.6% / 22.2% / 11.1% / 11.1% & 4 & test08 & test09 & 0.4888 & 0.4776 & -0.0112 & 0.4374 & 0.4449 & 0.4259 & 0.4285 & 0.4292 & 0.4301 & 0.0009 & 0.5982 & 0.6152 & 0.0170 & 21.0000 & 21.0000 & 323.0000 & 849.0000 & True & — \\
 \bottomrule
 \end{tabular}
 \end{table}

@@ -22,10 +22,11 @@
 set -uo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$HERE")"
+PROJECT_ROOT="$(dirname "$HERE")"           # src/
+FEDERATED_ROOT="$PROJECT_ROOT/federated"    # holds config/experiments.py
 SELF_PID=$$
 
-WORKSPACE="$(cd "$PROJECT_ROOT" && python3 -c \
+WORKSPACE="$(cd "$FEDERATED_ROOT" && python3 -c \
     'from config.federation import workspace_dir; print(workspace_dir())' 2>/dev/null || true)"
 
 echo "======================================================================"
@@ -72,7 +73,7 @@ if [[ -n "$WORKSPACE" ]]; then
     kill_matching "$WORKSPACE" "workspace processes"
 fi
 # The client trainer, anchored to this project's own script path.
-kill_matching "$PROJECT_ROOT/federation/client.py" "client trainers"
+kill_matching "$FEDERATED_ROOT/federation/client.py" "client trainers"
 
 echo
 LEFT="$(pgrep -fl "${WORKSPACE:-__nothing__}" 2>/dev/null | grep -v "^${SELF_PID} " || true)"

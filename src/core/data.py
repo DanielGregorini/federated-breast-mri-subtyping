@@ -10,6 +10,7 @@ makes them comparable.
 
 from __future__ import annotations
 
+import os
 import random
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -133,24 +134,62 @@ def apply_augment(img: torch.Tensor, aug: AugmentConfig) -> torch.Tensor:
 # Dataset                                                                      #
 # --------------------------------------------------------------------------- #
 class SliceDataset(Dataset):
-    """One PNG per item. The patient id is kept for patient-level aggregation."""
+    """One PNG per item. The patient id is kept for patient-level aggregation.
+
+    OPTIONAL IN-MEMORY CACHE
+    ------------------------
+    With `cache=True` every image is decoded once, at construction, into one
+    contiguous uint8 array. The whole dataset is 16,378 images of 224x224x3, i.e.
+    2.5 GB, so it fits in RAM on any machine that can train on it.
+
+    This is a THROUGHPUT change and cannot alter a result: the cached array is
+    exactly what `np.asarray(img)` returned, and `__getitem__` performs the same
+    float conversion, augmentation and normalisation on it as before. It exists
+    because PNG decoding dominates the step on Apple silicon, where the GPU is
+    fast enough to finish a batch before the next one has been decoded — measured
+    at 12% GPU utilisation against 167% CPU before caching.
+
+    The cache is built with threads rather than processes: PIL releases the GIL
+    during decode, so threads parallelise it, and the result stays in one address
+    space that DataLoader workers inherit through `fork` without copying it.
+    """
 
     def __init__(self, rows: pd.DataFrame, images_dir: Path, image_size: int,
-                 augment: AugmentConfig | None = None) -> None:
+                 augment: AugmentConfig | None = None, cache: bool = False) -> None:
         self.rows = rows.reset_index(drop=True)
         self.images_dir = Path(images_dir)
         self.image_size = image_size
         self.augment = augment
+        self._cache = self._build_cache() if cache else None
+
+    def _load_uint8(self, filename: str) -> np.ndarray:
+        img = Image.open(self.images_dir / filename).convert("RGB")
+        if img.size != (self.image_size, self.image_size):
+            img = img.resize((self.image_size, self.image_size), Image.BILINEAR)
+        return np.asarray(img, dtype=np.uint8)
+
+    def _build_cache(self) -> np.ndarray:
+        from concurrent.futures import ThreadPoolExecutor
+        n, s = len(self.rows), self.image_size
+        buf = np.empty((n, s, s, 3), dtype=np.uint8)
+        names = self.rows.filename.tolist()
+
+        def fill(i: int) -> None:
+            buf[i] = self._load_uint8(names[i])
+
+        with ThreadPoolExecutor(max_workers=min(16, (os.cpu_count() or 4) * 2)) as ex:
+            list(ex.map(fill, range(n)))
+        print(f"  cached {n:,} images in RAM ({buf.nbytes / 1e9:.2f} GB)", flush=True)
+        return buf
 
     def __len__(self) -> int:
         return len(self.rows)
 
     def __getitem__(self, i: int) -> tuple[torch.Tensor, int, int]:
         r = self.rows.iloc[i]
-        img = Image.open(self.images_dir / r.filename).convert("RGB")
-        if img.size != (self.image_size, self.image_size):
-            img = img.resize((self.image_size, self.image_size), Image.BILINEAR)
-        x = torch.from_numpy(np.asarray(img, dtype=np.float32) / 255.0).permute(2, 0, 1)
+        arr = (self._cache[i] if self._cache is not None
+               else self._load_uint8(r.filename))
+        x = torch.from_numpy(arr.astype(np.float32) / 255.0).permute(2, 0, 1)
         if self.augment is not None and self.augment.enabled:
             x = apply_augment(x, self.augment)
         # ImageNet normalisation LAST, after augmentation: brightness and noise
@@ -224,10 +263,23 @@ class PatientBatchSampler(Sampler):
 # Loaders                                                                      #
 # --------------------------------------------------------------------------- #
 def effective_num_workers(requested: int) -> int:
-    """Zero on macOS: DataLoader workers use `spawn` there and reliably hang when
-    the parent holds an MPS context. Costs little — data loading is ~10% of a
-    step. Throughput only; cannot change a result."""
+    """Workers to give the DataLoader. Throughput only; cannot change a result.
+
+    On macOS this defaulted to zero, because DataLoader workers use `spawn` there
+    and reliably hang when the parent holds an MPS context. The claim that came
+    with that decision — "data loading is ~10% of a step" — held on CUDA, where
+    the step is slow. It does not hold on Apple silicon: measured on this project,
+    a cacheless run sat at 12% GPU utilisation against 167% CPU, i.e. the GPU was
+    idle waiting for images.
+
+    Set $BREAST_DATALOADER_WORKERS to override. Use it together with an in-RAM
+    image cache: workers then only run augmentation on arrays they inherit
+    through `fork`, and never touch the MPS context that made `spawn` hang.
+    """
     import platform
+    override = os.environ.get("BREAST_DATALOADER_WORKERS")
+    if override is not None:
+        return max(0, int(override))
     return 0 if platform.system() == "Darwin" else requested
 
 
@@ -241,6 +293,18 @@ def make_loaders(dataset_dir: Path, cfg) -> tuple[dict[str, DataLoader], dict[st
     images = Path(dataset_dir) / "images"
     workers = effective_num_workers(cfg.num_workers)
     aug = augment_for(cfg.augmentation)
+    # Decode every image once into RAM. Throughput only — see SliceDataset.
+    cache = os.environ.get("BREAST_CACHE_IMAGES") == "1"
+
+    # `fork` rather than the macOS default `spawn`: workers then inherit the image
+    # cache instead of re-pickling 2.5 GB per worker, and they never rebuild the
+    # MPS context whose re-creation under `spawn` is what used to hang.
+    if workers > 0:
+        import multiprocessing as mp
+        try:
+            mp.set_start_method("fork", force=True)
+        except RuntimeError:
+            pass
 
     loaders: dict[str, DataLoader] = {}
     frames: dict[str, pd.DataFrame] = {}
@@ -251,7 +315,7 @@ def make_loaders(dataset_dir: Path, cfg) -> tuple[dict[str, DataLoader], dict[st
         rows = pd.read_csv(csv)
         frames[split] = rows
         ds = SliceDataset(rows, images, cfg.image_size,
-                          aug if split == "train" else None)
+                          aug if split == "train" else None, cache=cache)
         common = dict(num_workers=workers, pin_memory=torch.cuda.is_available(),
                       persistent_workers=workers > 0)
         if split == "train":

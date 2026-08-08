@@ -1,7 +1,7 @@
 partition,label,n_clients,ratio,fractions,stratified,total_patients,built,seed
-2_clients_balanced,"2 hospitals, balanced (50/50)",2,1 : 1,50.0% / 50.0%,True,1527,2026-08-03T23:03:03+00:00,42
-3_clients_balanced,"3 hospitals, balanced (33.3 each)",3,1 : 1 : 1,33.3% / 33.3% / 33.3%,True,1527,2026-08-03T23:03:11+00:00,42
-4_clients_balanced,"4 hospitals, balanced (25 each)",4,1 : 1 : 1 : 1,25.0% / 25.0% / 25.0% / 25.0%,True,1527,2026-08-03T23:03:22+00:00,42
-4_clients_skewed,"4 hospitals, skewed 5:2:1:1 (dissertation: 50/20/10/10)",4,5 : 2 : 1 : 1,55.6% / 22.2% / 11.1% / 11.1%,True,1527,2026-08-03T23:03:33+00:00,42
-3_clients_cohort,"3 hospitals, one cohort each (DUKE | I-SPY1 | I-SPY2)",3,642 : 101 : 784,42.0% / 6.6% / 51.3%,False,1527,2026-08-05T00:52:03+00:00,42
-3_clients_sizematched,"3 hospitals, cohorts mixed, sizes matched to 3_clients_cohort",3,642 : 101 : 784,42.0% / 6.6% / 51.3%,True,1527,2026-08-05T00:52:19+00:00,42
+2_clients_balanced,"2 hospitals, balanced (50/50)",2,1 : 1,50.0% / 50.0%,True,1527,2026-08-05T14:00:05+00:00,42
+3_clients_balanced,"3 hospitals, balanced (33.3 each)",3,1 : 1 : 1,33.3% / 33.3% / 33.3%,True,1527,2026-08-05T14:00:11+00:00,42
+4_clients_balanced,"4 hospitals, balanced (25 each)",4,1 : 1 : 1 : 1,25.0% / 25.0% / 25.0% / 25.0%,True,1527,2026-08-05T14:00:17+00:00,42
+4_clients_skewed,"4 hospitals, skewed 5:2:1:1 (dissertation: 50/20/10/10)",4,5 : 2 : 1 : 1,55.6% / 22.2% / 11.1% / 11.1%,True,1527,2026-08-05T14:00:23+00:00,42
+3_clients_cohort,"3 hospitals, one cohort each (DUKE | I-SPY1 | I-SPY2)",3,642 : 101 : 784,42.0% / 6.6% / 51.3%,False,1527,2026-08-05T14:00:35+00:00,42
+3_clients_sizematched,"3 hospitals, cohorts mixed, sizes matched to 3_clients_cohort",3,642 : 101 : 784,42.0% / 6.6% / 51.3%,True,1527,2026-08-05T14:00:29+00:00,42

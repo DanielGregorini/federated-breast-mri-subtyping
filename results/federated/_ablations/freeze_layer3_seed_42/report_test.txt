@@ -1,9 +1,0 @@
-              precision    recall  f1-score   support
-
-HRposHER2neg     0.5828    0.6423    0.6111       137
-   TripleNeg     0.5469    0.4487    0.4930        78
-     HER2pos     0.2264    0.2264    0.2264        53
-
-    accuracy                         0.5037       268
-   macro avg     0.4520    0.4392    0.4435       268
-weighted avg     0.5019    0.5037    0.5006       268

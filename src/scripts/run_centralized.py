@@ -84,6 +84,11 @@ def main() -> None:
     p.add_argument("--freeze-until", default=EX.TRAINING.freeze_until,
                    help="override TrainingConfig.freeze_until for this run only "
                         f"(default: {EX.TRAINING.freeze_until})")
+    # The same knob for batch size. Changing it alters the number of optimiser
+    # steps per epoch, so a run using it is an ablation and must carry a --tag.
+    p.add_argument("--batch-size", type=int, default=EX.TRAINING.batch_size,
+                   help="override TrainingConfig.batch_size for this run only "
+                        f"(default: {EX.TRAINING.batch_size})")
     p.add_argument("--tag", default=None,
                    help="label for the output folder, so an ablation cannot "
                         "overwrite a real result")
@@ -121,11 +126,17 @@ def main() -> None:
     print("=" * 74)
 
     training = EX.TRAINING
+    overrides = {}
     if args.freeze_until != EX.TRAINING.freeze_until:
+        overrides["freeze_until"] = args.freeze_until
+    if args.batch_size != EX.TRAINING.batch_size:
+        overrides["batch_size"] = args.batch_size
+    if overrides:
         from dataclasses import replace
-        training = replace(EX.TRAINING, freeze_until=args.freeze_until)
-        print(f"  ABLATION: freeze_until {EX.TRAINING.freeze_until!r} -> "
-              f"{args.freeze_until!r} for this run only")
+        training = replace(EX.TRAINING, **overrides)
+        for field, value in overrides.items():
+            print(f"  ABLATION: {field} {getattr(EX.TRAINING, field)!r} -> "
+                  f"{value!r} for this run only")
     D.set_seed(args.seed)
     device = M.get_device()
     use_amp = T.use_amp_on(device, training.mixed_precision)

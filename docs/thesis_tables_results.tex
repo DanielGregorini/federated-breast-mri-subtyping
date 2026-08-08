@@ -1,0 +1,419 @@
+% =====================================================================
+% TABELAS DE RESULTADOS -- dissertacao
+% GERADO por src/scripts/build_thesis_tables.py. Nao editar a mao.
+%
+% PREAMBULO NECESSARIO:
+%   \usepackage{booktabs}
+%   \usepackage{siunitx}
+%   \usepackage{rotating}
+%   \usepackage{graphicx}
+%   \sisetup{table-number-alignment=center, detect-weight=true, detect-all}
+%
+% CONVENCOES EM TODAS AS TABELAS:
+%   - Todas as metricas sao ao nivel do DOENTE: as probabilidades das slices sao
+%     promediadas por doente antes de calcular qualquer metrica.
+%   - Tabelas 1 a 3: test set global partilhado, 268 doentes / 2115 imagens.
+%   - Baseline trivial (prever sempre HR+/HER2-) = 0.5112.
+%   - Uma unica corrida por experiencia, seed 42. Nao ha desvios-padrao.
+%   - Noise floor medido = 0.067 macro-AUC. Diferencas abaixo disso NAO sao
+%     atribuiveis, por isso nenhum macro-AUC esta a negrito.
+%   - Coluna "Aggregation": Centralised = sem agregacao (referencia);
+%     FedAvg = media ponderada pelo numero de amostras; FedProx = mesma
+%     agregacao mais um termo proximal no cliente, controlado por mu.
+% =====================================================================
+
+% ---------------------------------------------------------------------
+% TABELA 1 -- RESULTADOS PRINCIPAIS, todas as experiencias.
+% O QUE E: uma linha por experiencia com a configuracao (algoritmo de agregacao,
+% numero de hospitais, particao, mu, ronda/epoca selecionada, tempo) e as
+% metricas agregadas no test set global.
+% ONDE USAR: seccao dos resultados no test set global.
+% AVISO: o tempo do Test 01 e a soma do compute por epoca; nos restantes e o
+% wall clock do job incluindo orquestracao. NAO SAO A MESMA GRANDEZA.
+% ---------------------------------------------------------------------
+\begin{sidewaystable}[p]
+  \centering
+  \caption[Main results]{Main results on the shared global test set
+    (268 patients, 2115 slices). All metrics are patient-level. Accuracy must be
+    read against the trivial baseline in the final row. The measured run-to-run noise
+    floor is 0.067 macro-AUC and the spread across these runs is 0.1105, so no
+    comparison between rows is statistically attributable; each row is a single run at
+    seed 42. Training time is not the same quantity in the two arms and must
+    not be compared.}
+  \label{tab:main_results}
+  \sisetup{table-format=1.4}
+  \resizebox{\textheight}{!}{%
+  \begin{tabular}{ll r l S[table-format=1.2] c S[table-format=4.0] S S S S S S}
+    \toprule
+    & & & & & & &
+    \multicolumn{6}{c}{Patient-level metrics on the global test set} \\
+    \cmidrule(l){8-13}
+    Test & Aggregation & {Hosp.} & Partition & {$\mu$} & Selected & {Time (s)} &
+    {Acc.} & {Bal.\ acc.} & {Macro P} & {Macro R} & {Macro F1} & {Macro AUC} \\
+    \midrule
+    Test 01 & Centralised & 1 & -- & {--} & ep.\ 4 & 268 & \bfseries 0.5299 & 0.4503 & 0.4606 & 0.4503 & 0.4523 & 0.6068 \\
+    Test 02 & FedAvg & 2 & 2C balanced & 0.00 & r.\ 25 & 313 & 0.4030 & 0.3742 & 0.3915 & 0.3742 & 0.3744 & 0.5594 \\
+    Test 03 & FedProx & 2 & 2C balanced & 0.01 & r.\ 29 & 351 & 0.4328 & 0.4025 & 0.4028 & 0.4025 & 0.4001 & 0.5917 \\
+    Test 04 & FedAvg & 3 & 3C balanced & 0.00 & r.\ 27 & 313 & 0.4851 & 0.4198 & 0.4333 & 0.4198 & 0.4231 & 0.5990 \\
+    Test 05 & FedProx & 3 & 3C balanced & 0.01 & r.\ 28 & 333 & 0.4590 & 0.4127 & 0.4208 & 0.4127 & 0.4116 & 0.5958 \\
+    Test 06 & FedAvg & 4 & 4C balanced & 0.00 & r.\ 0 & 317 & 0.4776 & 0.4522 & 0.4646 & 0.4522 & 0.4378 & 0.6531 \\
+    Test 07 & FedProx & 4 & 4C balanced & 0.01 & r.\ 0 & 335 & 0.4739 & 0.4393 & 0.4389 & 0.4393 & 0.4362 & 0.6075 \\
+    Test 08 & FedAvg & 4 & 4C skewed & 0.00 & r.\ 21 & 323 & 0.4888 & 0.4259 & 0.4374 & 0.4259 & 0.4292 & 0.5982 \\
+    Test 09 & FedProx & 4 & 4C skewed & 0.01 & r.\ 21 & 849 & 0.4776 & 0.4285 & 0.4449 & 0.4285 & 0.4301 & 0.6152 \\
+    Test 10 & FedAvg & 3 & 3C cohort & 0.00 & r.\ 7 & 469 & 0.4291 & 0.3582 & 0.3523 & 0.3582 & 0.3536 & 0.5426 \\
+    Test 11 & FedProx & 3 & 3C cohort & 0.01 & r.\ 16 & 482 & 0.4590 & 0.4105 & 0.4302 & 0.4105 & 0.4144 & 0.5678 \\
+    Test 12 & FedAvg & 3 & 3C size-matched & 0.00 & r.\ 17 & 471 & 0.4478 & 0.4183 & 0.4187 & 0.4183 & 0.4153 & 0.5836 \\
+    Test 13 & FedProx & 3 & 3C size-matched & 0.01 & r.\ 27 & 485 & 0.4664 & 0.3885 & 0.3925 & 0.3885 & 0.3884 & 0.5882 \\
+    \midrule
+    \multicolumn{7}{l}{\emph{Trivial baseline} (always predict HR+/HER2$-$)} &
+    0.5112 & {--} & {--} & {--} & {--} & {--} \\
+    \bottomrule
+  \end{tabular}}
+\end{sidewaystable}
+
+% ---------------------------------------------------------------------
+% TABELA 2 -- RESULTADOS POR CLASSE.
+% O QUE E: AUC one-vs-rest, recall e F1 para cada uma das tres classes.
+% PORQUE IMPORTA: a coluna a ler primeiro e o AUC de HER2+, que no baseline
+% centralizado esta ao nivel do acaso. AUC e livre de limiar; recall e F1 sao ao
+% limiar fixo de 0.5, nunca ajustado na validacao.
+% ---------------------------------------------------------------------
+\begin{table}[htbp]
+  \centering
+  \caption[Per-class results]{Per-class results on the global test set, in the class
+    order HR+/HER2$-$ (n=137), TripleNeg (n=78), HER2+ (n=53). One-vs-rest AUC is
+    threshold-free; recall and F1 are taken at a fixed 0.5 decision rule. No value is
+    emphasised: the 0.067 macro-AUC noise floor applies here as well and each row
+    is a single run. The centralised baseline scores 0.5079 on HER2+, which is
+    indistinguishable from chance.}
+  \label{tab:per_class_results}
+  \sisetup{table-format=1.4}
+  \small
+  \begin{tabular}{ll SSS SSS SSS}
+    \toprule
+    & & \multicolumn{3}{c}{One-vs-rest AUC} & \multicolumn{3}{c}{Recall} &
+    \multicolumn{3}{c}{F1} \\
+    \cmidrule(lr){3-5}\cmidrule(lr){6-8}\cmidrule(l){9-11}
+    Test & Aggregation & {HR+} & {TN} & {HER2+} & {HR+} & {TN} & {HER2+} &
+    {HR+} & {TN} & {HER2+} \\
+    \midrule
+    Test 01 & Centralised & 0.6238 & 0.6886 & 0.5079 & 0.7007 & 0.4615 & 0.1887 & 0.6486 & 0.5000 & 0.2083 \\
+    Test 02 & FedAvg & 0.5569 & 0.6285 & 0.4928 & 0.4745 & 0.3462 & 0.3019 & 0.5179 & 0.3830 & 0.2222 \\
+    Test 03 & FedProx & 0.6091 & 0.6461 & 0.5199 & 0.4818 & 0.4615 & 0.2642 & 0.5197 & 0.4528 & 0.2276 \\
+    Test 04 & FedAvg & 0.6191 & 0.6468 & 0.5311 & 0.6423 & 0.3718 & 0.2453 & 0.6197 & 0.4234 & 0.2261 \\
+    Test 05 & FedProx & 0.6030 & 0.6355 & 0.5488 & 0.5839 & 0.3333 & 0.3208 & 0.6038 & 0.3714 & 0.2595 \\
+    Test 06 & FedAvg & 0.6667 & 0.6845 & 0.6082 & 0.5839 & 0.2821 & 0.4906 & 0.6015 & 0.3607 & 0.3514 \\
+    Test 07 & FedProx & 0.6066 & 0.6588 & 0.5572 & 0.5620 & 0.3974 & 0.3585 & 0.5833 & 0.4189 & 0.3065 \\
+    Test 08 & FedAvg & 0.6139 & 0.6580 & 0.5227 & 0.6350 & 0.3974 & 0.2453 & 0.6127 & 0.4429 & 0.2321 \\
+    Test 09 & FedProx & 0.6091 & 0.7043 & 0.5322 & 0.6058 & 0.3590 & 0.3208 & 0.5993 & 0.4211 & 0.2698 \\
+    Test 10 & FedAvg & 0.5473 & 0.6078 & 0.4728 & 0.5766 & 0.3846 & 0.1132 & 0.5563 & 0.3727 & 0.1319 \\
+    Test 11 & FedProx & 0.5723 & 0.6323 & 0.4988 & 0.5766 & 0.3718 & 0.2830 & 0.5704 & 0.4328 & 0.2400 \\
+    Test 12 & FedAvg & 0.5923 & 0.6567 & 0.5019 & 0.5109 & 0.4231 & 0.3208 & 0.5447 & 0.4314 & 0.2698 \\
+    Test 13 & FedProx & 0.6196 & 0.6488 & 0.4963 & 0.6496 & 0.3462 & 0.1698 & 0.6075 & 0.3776 & 0.1800 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------
+% TABELA 3 -- MATRIZES DE CONFUSAO.
+% O QUE E: cada bloco de tres colunas e uma LINHA da matriz, isto e, as
+% previsoes feitas para uma classe verdadeira. As somas por bloco sao as
+% contagens do test set: 137 / 78 / 53.
+% PORQUE IMPORTA: mostra PARA ONDE o modelo erra, nao so quanto erra.
+% ---------------------------------------------------------------------
+\begin{table}[htbp]
+  \centering
+  \caption[Confusion matrices]{Patient-level confusion matrices on the global test
+    set. Each group of three columns is one row of the confusion matrix, i.e.\ the
+    predictions made for one true class; group sums are the test-set class counts
+    (137 / 78 / 53).}
+  \label{tab:confusion_all}
+  \small
+  \begin{tabular}{ll ccc c ccc c ccc}
+    \toprule
+    & & \multicolumn{3}{c}{True HR+/HER2$-$} & & \multicolumn{3}{c}{True TripleNeg} &
+    & \multicolumn{3}{c}{True HER2+} \\
+    \cmidrule(lr){3-5}\cmidrule(lr){7-9}\cmidrule(l){11-13}
+    Test & Aggregation & HR+ & TN & HER2+ & & HR+ & TN & HER2+ & & HR+ & TN & HER2+ \\
+    \midrule
+    Test 01 & Centralised & 96 & 20 & 21 & & 30 & 36 & 12 & & 33 & 10 & 10 \\
+    Test 02 & FedAvg & 65 & 26 & 46 & & 22 & 27 & 29 & & 27 & 10 & 16 \\
+    Test 03 & FedProx & 66 & 34 & 37 & & 23 & 36 & 19 & & 28 & 11 & 14 \\
+    Test 04 & FedAvg & 88 & 20 & 29 & & 29 & 29 & 20 & & 30 & 10 & 13 \\
+    Test 05 & FedProx & 80 & 24 & 33 & & 24 & 26 & 28 & & 24 & 12 & 17 \\
+    Test 06 & FedAvg & 80 & 14 & 43 & & 30 & 22 & 26 & & 19 & 8 & 26 \\
+    Test 07 & FedProx & 77 & 29 & 31 & & 26 & 31 & 21 & & 24 & 10 & 19 \\
+    Test 08 & FedAvg & 87 & 19 & 31 & & 32 & 31 & 15 & & 28 & 12 & 13 \\
+    Test 09 & FedProx & 83 & 20 & 34 & & 28 & 28 & 22 & & 29 & 7 & 17 \\
+    Test 10 & FedAvg & 79 & 39 & 19 & & 35 & 30 & 13 & & 33 & 14 & 6 \\
+    Test 11 & FedProx & 79 & 20 & 38 & & 30 & 29 & 19 & & 31 & 7 & 15 \\
+    Test 12 & FedAvg & 70 & 30 & 37 & & 26 & 33 & 19 & & 24 & 12 & 17 \\
+    Test 13 & FedProx & 89 & 25 & 23 & & 36 & 27 & 15 & & 31 & 13 & 9 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% =====================================================================
+% TABELAS 4.x -- METRICAS POR HOSPITAL, uma tabela por particao.
+% O QUE SAO: o modelo global JA AGREGADO avaliado na validacao LOCAL de cada
+% hospital, com FedAvg e FedProx lado a lado para a comparacao emparelhada.
+% TRES AVISOS QUE TEM DE CONSTAR NO TEXTO:
+%   1. NAO sao o test set global. Sao doentes diferentes em cada linha, logo NAO
+%      sao comparaveis entre experiencias nem com a Tabela 1.
+%   2. Os splits vao de 19 a 170 doentes; a dispersao entre hospitais e dominada
+%      pelo tamanho do split, nao pela particao nem pelo algoritmo.
+%   3. CIRCULARIDADE: e nestes mesmos splits que o servidor SELECIONA o modelo
+%      global (key_metric = val_balanced_accuracy). Nao sao uma avaliacao
+%      independente e nao podem ser lidos como evidencia de qualidade.
+% "Base." e o baseline trivial do proprio split daquele hospital.
+% =====================================================================
+
+% --- 2 hospitals, balanced 1:1
+\begin{table}[htbp]
+  \centering
+  \caption[Per-hospital metrics, 2 hospitals, balanced 1:1]{Per-hospital performance of the final
+    aggregated global model on each hospital's own local validation patients, for the
+    \texttt{2\_clients\_balanced} partition (2 hospitals, balanced 1:1; ratio 1 : 1,
+    50.0\% / 50.0\%). The split is stratified. FedAvg and FedProx are shown
+    together so the pair can be read directly. \textbf{These are local validation
+    splits, not the global test set, and are not comparable across experiments; they
+    are also the splits the server selected the model on.} Single run at seed
+    42; the 0.067 macro-AUC noise floor applies, so no value is
+    emphasised.}
+  \label{tab:per_client_2C}
+  \sisetup{table-format=1.4}
+  \small
+  \resizebox{\textwidth}{!}{%
+  \begin{tabular}{lll rrr S SSSSSS SSS}
+    \toprule
+    & & & \multicolumn{3}{c}{Local data} & &
+    \multicolumn{6}{c}{Aggregate metrics} & \multicolumn{3}{c}{One-vs-rest AUC} \\
+    \cmidrule(lr){4-6}\cmidrule(lr){8-13}\cmidrule(l){14-16}
+    Test & Aggregation & Site & {Train p.} & {Train im.} & {Val p.} &
+    {Base.} & {Acc.} & {Bal.} & {M.\ P} & {M.\ R} & {M.\ F1} & {M.\ AUC} &
+    {HR+} & {TN} & {HER2+} \\
+    \midrule
+    Test 02 & FedAvg & H1 & 612 & 4870 & 152 & 0.5066 & 0.4803 & 0.4497 & 0.4618 & 0.4497 & 0.4475 & 0.6291 & 0.6558 & 0.6651 & 0.5663 \\
+    Test 02 & FedAvg & H2 & 611 & 4849 & 152 & 0.5066 & 0.4605 & 0.4405 & 0.4362 & 0.4405 & 0.4342 & 0.6120 & 0.6701 & 0.5770 & 0.5887 \\
+    \midrule
+    Test 03 & FedProx & H1 & 612 & 4870 & 152 & 0.5066 & 0.4868 & 0.4583 & 0.4577 & 0.4583 & 0.4545 & 0.6498 & 0.6644 & 0.6950 & 0.5900 \\
+    Test 03 & FedProx & H2 & 611 & 4849 & 152 & 0.5066 & 0.4539 & 0.4126 & 0.4125 & 0.4126 & 0.4117 & 0.5746 & 0.6386 & 0.5489 & 0.5364 \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
+% --- 3 hospitals, balanced 1:1:1
+\begin{table}[htbp]
+  \centering
+  \caption[Per-hospital metrics, 3 hospitals, balanced 1:1:1]{Per-hospital performance of the final
+    aggregated global model on each hospital's own local validation patients, for the
+    \texttt{3\_clients\_balanced} partition (3 hospitals, balanced 1:1:1; ratio 1 : 1 : 1,
+    33.3\% / 33.3\% / 33.3\%). The split is stratified. FedAvg and FedProx are shown
+    together so the pair can be read directly. \textbf{These are local validation
+    splits, not the global test set, and are not comparable across experiments; they
+    are also the splits the server selected the model on.} Single run at seed
+    42; the 0.067 macro-AUC noise floor applies, so no value is
+    emphasised.}
+  \label{tab:per_client_3C}
+  \sisetup{table-format=1.4}
+  \small
+  \resizebox{\textwidth}{!}{%
+  \begin{tabular}{lll rrr S SSSSSS SSS}
+    \toprule
+    & & & \multicolumn{3}{c}{Local data} & &
+    \multicolumn{6}{c}{Aggregate metrics} & \multicolumn{3}{c}{One-vs-rest AUC} \\
+    \cmidrule(lr){4-6}\cmidrule(lr){8-13}\cmidrule(l){14-16}
+    Test & Aggregation & Site & {Train p.} & {Train im.} & {Val p.} &
+    {Base.} & {Acc.} & {Bal.} & {M.\ P} & {M.\ R} & {M.\ F1} & {M.\ AUC} &
+    {HR+} & {TN} & {HER2+} \\
+    \midrule
+    Test 04 & FedAvg & H1 & 408 & 3245 & 102 & 0.5098 & 0.4510 & 0.4108 & 0.4096 & 0.4108 & 0.4100 & 0.6307 & 0.6204 & 0.6311 & 0.6406 \\
+    Test 04 & FedAvg & H2 & 408 & 3249 & 102 & 0.5098 & 0.4510 & 0.4286 & 0.4210 & 0.4286 & 0.4231 & 0.6381 & 0.6158 & 0.6558 & 0.6428 \\
+    Test 04 & FedAvg & H3 & 406 & 3206 & 101 & 0.5050 & 0.5347 & 0.4762 & 0.4874 & 0.4762 & 0.4761 & 0.5986 & 0.6231 & 0.5886 & 0.5842 \\
+    \midrule
+    Test 05 & FedProx & H1 & 408 & 3245 & 102 & 0.5098 & 0.4608 & 0.4377 & 0.4275 & 0.4377 & 0.4295 & 0.6529 & 0.6362 & 0.6430 & 0.6797 \\
+    Test 05 & FedProx & H2 & 408 & 3249 & 102 & 0.5098 & 0.4510 & 0.4308 & 0.4378 & 0.4308 & 0.4296 & 0.6189 & 0.6400 & 0.6459 & 0.5707 \\
+    Test 05 & FedProx & H3 & 406 & 3206 & 101 & 0.5050 & 0.5149 & 0.4573 & 0.4616 & 0.4573 & 0.4575 & 0.6307 & 0.6471 & 0.6446 & 0.6003 \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
+% --- 4 hospitals, balanced 1:1:1:1
+\begin{table}[htbp]
+  \centering
+  \caption[Per-hospital metrics, 4 hospitals, balanced 1:1:1:1]{Per-hospital performance of the final
+    aggregated global model on each hospital's own local validation patients, for the
+    \texttt{4\_clients\_balanced} partition (4 hospitals, balanced 1:1:1:1; ratio 1 : 1 : 1 : 1,
+    25.0\% / 25.0\% / 25.0\% / 25.0\%). The split is stratified. FedAvg and FedProx are shown
+    together so the pair can be read directly. \textbf{These are local validation
+    splits, not the global test set, and are not comparable across experiments; they
+    are also the splits the server selected the model on.} Single run at seed
+    42; the 0.067 macro-AUC noise floor applies, so no value is
+    emphasised.}
+  \label{tab:per_client_4C}
+  \sisetup{table-format=1.4}
+  \small
+  \resizebox{\textwidth}{!}{%
+  \begin{tabular}{lll rrr S SSSSSS SSS}
+    \toprule
+    & & & \multicolumn{3}{c}{Local data} & &
+    \multicolumn{6}{c}{Aggregate metrics} & \multicolumn{3}{c}{One-vs-rest AUC} \\
+    \cmidrule(lr){4-6}\cmidrule(lr){8-13}\cmidrule(l){14-16}
+    Test & Aggregation & Site & {Train p.} & {Train im.} & {Val p.} &
+    {Base.} & {Acc.} & {Bal.} & {M.\ P} & {M.\ R} & {M.\ F1} & {M.\ AUC} &
+    {HR+} & {TN} & {HER2+} \\
+    \midrule
+    Test 06 & FedAvg & H1 & 306 & 2439 & 77 & 0.5065 & 0.4805 & 0.4375 & 0.4423 & 0.4375 & 0.4385 & 0.6473 & 0.6970 & 0.7253 & 0.5196 \\
+    Test 06 & FedAvg & H2 & 305 & 2423 & 77 & 0.5065 & 0.4675 & 0.4327 & 0.4338 & 0.4327 & 0.4316 & 0.6376 & 0.6201 & 0.6760 & 0.6167 \\
+    Test 06 & FedAvg & H3 & 305 & 2426 & 76 & 0.5132 & 0.5395 & 0.4766 & 0.4793 & 0.4766 & 0.4760 & 0.6474 & 0.7062 & 0.6170 & 0.6191 \\
+    Test 06 & FedAvg & H4 & 305 & 2399 & 76 & 0.5132 & 0.4211 & 0.3746 & 0.3834 & 0.3746 & 0.3777 & 0.5709 & 0.5648 & 0.7071 & 0.4407 \\
+    \midrule
+    Test 07 & FedProx & H1 & 306 & 2439 & 77 & 0.5065 & 0.4805 & 0.4412 & 0.4415 & 0.4412 & 0.4398 & 0.6433 & 0.6242 & 0.7185 & 0.5873 \\
+    Test 07 & FedProx & H2 & 305 & 2423 & 77 & 0.5065 & 0.4416 & 0.3972 & 0.3977 & 0.3972 & 0.3971 & 0.5838 & 0.6181 & 0.5587 & 0.5745 \\
+    Test 07 & FedProx & H3 & 305 & 2426 & 76 & 0.5132 & 0.4737 & 0.3837 & 0.3641 & 0.3837 & 0.3726 & 0.6338 & 0.6625 & 0.6348 & 0.6042 \\
+    Test 07 & FedProx & H4 & 305 & 2399 & 76 & 0.5132 & 0.4211 & 0.3967 & 0.3965 & 0.3967 & 0.3943 & 0.5785 & 0.5184 & 0.6437 & 0.5733 \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
+% --- 4 hospitals, quantity-skewed 5:2:1:1
+\begin{table}[htbp]
+  \centering
+  \caption[Per-hospital metrics, 4 hospitals, quantity-skewed 5:2:1:1]{Per-hospital performance of the final
+    aggregated global model on each hospital's own local validation patients, for the
+    \texttt{4\_clients\_skewed} partition (4 hospitals, quantity-skewed 5:2:1:1; ratio 5 : 2 : 1 : 1,
+    55.6\% / 22.2\% / 11.1\% / 11.1\%). The split is stratified. FedAvg and FedProx are shown
+    together so the pair can be read directly. \textbf{These are local validation
+    splits, not the global test set, and are not comparable across experiments; they
+    are also the splits the server selected the model on.} Single run at seed
+    42; the 0.067 macro-AUC noise floor applies, so no value is
+    emphasised.}
+  \label{tab:per_client_4Cskew}
+  \sisetup{table-format=1.4}
+  \small
+  \resizebox{\textwidth}{!}{%
+  \begin{tabular}{lll rrr S SSSSSS SSS}
+    \toprule
+    & & & \multicolumn{3}{c}{Local data} & &
+    \multicolumn{6}{c}{Aggregate metrics} & \multicolumn{3}{c}{One-vs-rest AUC} \\
+    \cmidrule(lr){4-6}\cmidrule(lr){8-13}\cmidrule(l){14-16}
+    Test & Aggregation & Site & {Train p.} & {Train im.} & {Val p.} &
+    {Base.} & {Acc.} & {Bal.} & {M.\ P} & {M.\ R} & {M.\ F1} & {M.\ AUC} &
+    {HR+} & {TN} & {HER2+} \\
+    \midrule
+    Test 08 & FedAvg & H1 & 678 & 5395 & 170 & 0.5059 & 0.5118 & 0.4720 & 0.4674 & 0.4720 & 0.4682 & 0.6383 & 0.6525 & 0.6602 & 0.6021 \\
+    Test 08 & FedAvg & H2 & 273 & 2171 & 67 & 0.5075 & 0.5373 & 0.5196 & 0.5066 & 0.5196 & 0.5062 & 0.7527 & 0.7077 & 0.7619 & 0.7885 \\
+    Test 08 & FedAvg & H3 & 136 & 1073 & 34 & 0.5000 & 0.4412 & 0.4126 & 0.4327 & 0.4126 & 0.4159 & 0.5225 & 0.5640 & 0.4267 & 0.5769 \\
+    Test 08 & FedAvg & H4 & 135 & 1066 & 34 & 0.5000 & 0.5882 & 0.5583 & 0.5443 & 0.5583 & 0.5502 & 0.6698 & 0.6713 & 0.8044 & 0.5337 \\
+    \midrule
+    Test 09 & FedProx & H1 & 678 & 5395 & 170 & 0.5059 & 0.5118 & 0.4569 & 0.4561 & 0.4569 & 0.4564 & 0.6333 & 0.6521 & 0.6662 & 0.5815 \\
+    Test 09 & FedProx & H2 & 273 & 2171 & 67 & 0.5075 & 0.5970 & 0.5588 & 0.5496 & 0.5588 & 0.5514 & 0.7496 & 0.7380 & 0.7789 & 0.7321 \\
+    Test 09 & FedProx & H3 & 136 & 1073 & 34 & 0.5000 & 0.4706 & 0.4276 & 0.4306 & 0.4276 & 0.4242 & 0.5643 & 0.5813 & 0.5156 & 0.5962 \\
+    Test 09 & FedProx & H4 & 135 & 1066 & 34 & 0.5000 & 0.5000 & 0.4600 & 0.4500 & 0.4600 & 0.4542 & 0.6252 & 0.6055 & 0.8133 & 0.4567 \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
+% --- 3 hospitals, one real cohort each
+\begin{table}[htbp]
+  \centering
+  \caption[Per-hospital metrics, 3 hospitals, one real cohort each]{Per-hospital performance of the final
+    aggregated global model on each hospital's own local validation patients, for the
+    \texttt{3\_clients\_cohort} partition (3 hospitals, one real cohort each; ratio 642 : 101 : 784,
+    42.0\% / 6.6\% / 51.3\%). The split is \textbf{not stratified}. FedAvg and FedProx are shown
+    together so the pair can be read directly. \textbf{These are local validation
+    splits, not the global test set, and are not comparable across experiments; they
+    are also the splits the server selected the model on.} Single run at seed
+    42; the 0.067 macro-AUC noise floor applies, so no value is
+    emphasised.}
+  \label{tab:per_client_3Ccoh}
+  \sisetup{table-format=1.4}
+  \small
+  \resizebox{\textwidth}{!}{%
+  \begin{tabular}{lll l rrr S SSSSSS SSS}
+    \toprule
+    & & & & \multicolumn{3}{c}{Local data} & &
+    \multicolumn{6}{c}{Aggregate metrics} & \multicolumn{3}{c}{One-vs-rest AUC} \\
+    \cmidrule(lr){5-7}\cmidrule(lr){9-14}\cmidrule(l){15-17}
+    Test & Aggregation & Site & Cohort & {Train p.} & {Train im.} & {Val p.} &
+    {Base.} & {Acc.} & {Bal.} & {M.\ P} & {M.\ R} & {M.\ F1} & {M.\ AUC} &
+    {HR+} & {TN} & {HER2+} \\
+    \midrule
+    Test 10 & FedAvg & H1 & Duke & 514 & 4067 & 128 & 0.6641 & 0.4531 & 0.4183 & 0.4283 & 0.4183 & 0.3875 & 0.6168 & 0.6120 & 0.5593 & 0.6791 \\
+    Test 10 & FedAvg & H2 & I-SPY1 & 82 & 652 & 19 & 0.4211 & 0.3684 & 0.3167 & 0.2205 & 0.3167 & 0.2571 & 0.4837 & 0.6250 & 0.4286 & 0.3974 \\
+    Test 10 & FedAvg & H3 & I-SPY2 & 627 & 5005 & 157 & 0.3885 & 0.4522 & 0.4255 & 0.4444 & 0.4255 & 0.4214 & 0.5802 & 0.5458 & 0.6054 & 0.5895 \\
+    \midrule
+    Test 11 & FedProx & H1 & Duke & 514 & 4067 & 128 & 0.6641 & 0.4375 & 0.3890 & 0.3769 & 0.3890 & 0.3637 & 0.6051 & 0.6140 & 0.5574 & 0.6439 \\
+    Test 11 & FedProx & H2 & I-SPY1 & 82 & 652 & 19 & 0.4211 & 0.5263 & 0.4972 & 0.4868 & 0.4972 & 0.4845 & 0.6274 & 0.7386 & 0.4000 & 0.7436 \\
+    Test 11 & FedProx & H3 & I-SPY2 & 627 & 5005 & 157 & 0.3885 & 0.4076 & 0.3834 & 0.3904 & 0.3834 & 0.3728 & 0.5841 & 0.5540 & 0.6160 & 0.5823 \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
+% --- 3 hospitals, cohorts mixed, sizes matched
+\begin{table}[htbp]
+  \centering
+  \caption[Per-hospital metrics, 3 hospitals, cohorts mixed, sizes matched]{Per-hospital performance of the final
+    aggregated global model on each hospital's own local validation patients, for the
+    \texttt{3\_clients\_sizematched} partition (3 hospitals, cohorts mixed, sizes matched; ratio 642 : 101 : 784,
+    42.0\% / 6.6\% / 51.3\%). The split is stratified. FedAvg and FedProx are shown
+    together so the pair can be read directly. \textbf{These are local validation
+    splits, not the global test set, and are not comparable across experiments; they
+    are also the splits the server selected the model on.} Single run at seed
+    42; the 0.067 macro-AUC noise floor applies, so no value is
+    emphasised.}
+  \label{tab:per_client_3Csize}
+  \sisetup{table-format=1.4}
+  \small
+  \resizebox{\textwidth}{!}{%
+  \begin{tabular}{lll rrr S SSSSSS SSS}
+    \toprule
+    & & & \multicolumn{3}{c}{Local data} & &
+    \multicolumn{6}{c}{Aggregate metrics} & \multicolumn{3}{c}{One-vs-rest AUC} \\
+    \cmidrule(lr){4-6}\cmidrule(lr){8-13}\cmidrule(l){14-16}
+    Test & Aggregation & Site & {Train p.} & {Train im.} & {Val p.} &
+    {Base.} & {Acc.} & {Bal.} & {M.\ P} & {M.\ R} & {M.\ F1} & {M.\ AUC} &
+    {HR+} & {TN} & {HER2+} \\
+    \midrule
+    Test 12 & FedAvg & H1 & 514 & 4096 & 128 & 0.5078 & 0.4297 & 0.3955 & 0.3982 & 0.3955 & 0.3938 & 0.6343 & 0.6911 & 0.6367 & 0.5751 \\
+    Test 12 & FedAvg & H2 & 81 & 640 & 20 & 0.5000 & 0.6500 & 0.6667 & 0.6444 & 0.6667 & 0.6530 & 0.7422 & 0.6800 & 0.8000 & 0.7467 \\
+    Test 12 & FedAvg & H3 & 628 & 4976 & 156 & 0.5064 & 0.4359 & 0.4047 & 0.4032 & 0.4047 & 0.4023 & 0.5908 & 0.5981 & 0.6122 & 0.5622 \\
+    \midrule
+    Test 13 & FedProx & H1 & 514 & 4096 & 128 & 0.5078 & 0.4922 & 0.4412 & 0.4412 & 0.4412 & 0.4411 & 0.6143 & 0.6642 & 0.6180 & 0.5608 \\
+    Test 13 & FedProx & H2 & 81 & 640 & 20 & 0.5000 & 0.7500 & 0.7333 & 0.7389 & 0.7333 & 0.7313 & 0.7778 & 0.8000 & 0.8267 & 0.7067 \\
+    Test 13 & FedProx & H3 & 628 & 4976 & 156 & 0.5064 & 0.4167 & 0.3417 & 0.3368 & 0.3417 & 0.3377 & 0.5995 & 0.6332 & 0.5950 & 0.5702 \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
+% ---------------------------------------------------------------------
+% TABELA 5 -- COMPOSICAO DAS PARTICOES.
+% ONDE USAR: seccao do setup experimental.
+% PORQUE IMPORTA: e aqui que a limitacao central da RQ2 fica visivel. As
+% particoes estratificadas mantem o racio de classes global em cada hospital,
+% logo so varia a QUANTIDADE de dados. So a particao por coorte e genuinamente
+% nao-IID, e o seu control size-matched isola o efeito da composicao.
+% ---------------------------------------------------------------------
+\begin{table}[htbp]
+  \centering
+  \caption[Partition composition]{Composition of the data partitions. The training
+    pool of 1527 patients is fully covered by every partition. The stratified
+    partitions preserve the global class ratio at every hospital, so only the
+    quantity of data varies between sites; consequently Tests~08 and 09 measure
+    quantity skew rather than label-distribution heterogeneity. Only the cohort
+    partition is genuinely non-IID, and the size-matched partition is its control.}
+  \label{tab:partitions}
+  \small
+  \begin{tabular}{l r l l c r l}
+    \toprule
+    Partition & Clients & Ratio & Fractions & Stratified & Patients & Tests \\
+    \midrule
+    \texttt{2\_clients\_balanced} & 2 & 1 : 1 & 50.0\% / 50.0\% & yes & 1527 & 02, 03 \\
+    \texttt{3\_clients\_balanced} & 3 & 1 : 1 : 1 & 33.3\% / 33.3\% / 33.3\% & yes & 1527 & 04, 05 \\
+    \texttt{4\_clients\_balanced} & 4 & 1 : 1 : 1 : 1 & 25.0\% / 25.0\% / 25.0\% / 25.0\% & yes & 1527 & 06, 07 \\
+    \texttt{4\_clients\_skewed} & 4 & 5 : 2 : 1 : 1 & 55.6\% / 22.2\% / 11.1\% / 11.1\% & yes & 1527 & 08, 09 \\
+    \texttt{3\_clients\_cohort} & 3 & 642 : 101 : 784 & 42.0\% / 6.6\% / 51.3\% & \textbf{no} & 1527 & 10, 11 \\
+    \texttt{3\_clients\_sizematched} & 3 & 642 : 101 : 784 & 42.0\% / 6.6\% / 51.3\% & yes & 1527 & 12, 13 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
