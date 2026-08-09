@@ -1,6 +1,6 @@
 # The experiments — design, limitations, and how to read them
 
-What the nine runs are, what each one can and cannot answer, and every place where a
+What the thirteen runs are, what each one can and cannot answer, and every place where a
 deliberate choice could be mistaken for a result.
 
 The protocol itself lives in `config/experiments.py` as a declarative table. This
@@ -86,8 +86,8 @@ was very little heterogeneity to detect.
 Two genuine alternatives are implemented and neither is the default:
 
 ```bash
-python scripts/partition_data.py --stratify none    # label skew
-python scripts/partition_data.py --by-cohort \
+python src/scripts/partition_data.py --stratify none    # label skew
+python src/scripts/partition_data.py --by-cohort \
     --source ../dataset/mine_subtype_pooled
 ```
 
@@ -104,14 +104,14 @@ result, always.
 ### 2. The server holds the test set
 
 In a production federation it would hold nothing. Here it holds a held-out set because
-the nine experiments must be compared on identical ground. **A benchmarking decision,
+the thirteen experiments must be compared on identical ground. **A benchmarking decision,
 not a claim about deployment.**
 
 ### 3. Model selection differs between the two arms
 
 | | selects on | why |
 |---|---|---|
-| centralised (01) | validation **macro-AUC**, 99 patients | the classifier phase's rule; AUC is well defined on 99 patients |
+| centralised (01) | validation **macro-AUC**, 268 patients | the classifier phase's rule; AUC is well defined on 268 patients |
 | federated (02–09) | **`val_balanced_accuracy`**, per hospital | a site holding 39 patients can draw a validation split missing a class, and macro-AUC is then NaN |
 
 Both are computed on held-out patients, which is the part that matters. Neither is
@@ -247,11 +247,11 @@ Two secondary findings worth carrying forward:
 
 ## Checklist before reporting a number
 
-- [ ] `scripts/verify_data.py` passed on this partition
+- [ ] `src/scripts/verify_data.py` passed on this partition
 - [ ] the source probe was run if the dataset pools cohorts, and is quoted beside the result
 - [ ] accuracy is quoted with the trivial baseline of the same split
 - [ ] the metric is patient-level macro-AUC, not slice-level
 - [ ] at least two seeds, or the text says "one seed"
 - [ ] any difference below 0.067 is reported as "no difference detected"
 - [ ] per-class recall is reported, not only the aggregate
-- [ ] `python scripts/generate_jobs.py --check` passes, so no job drifted from the table
+- [ ] `python src/scripts/generate_jobs.py --check` passes, so no job drifted from the table

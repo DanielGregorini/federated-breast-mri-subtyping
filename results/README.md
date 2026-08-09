@@ -5,8 +5,8 @@ if you can say what preceded it.
 
 | Folder | What it holds |
 |---|---|
-| `classifier/` | The classifier phase: 21 runs across 13 architectures and 5 data configurations, the run table `all_runs_pod.csv`, and the checkpoints that were retained. This phase chose the configuration the federated campaign then held fixed. |
-| `federated/` | The dissertation campaign: 13 experiments, `test01_centralized` through `test13_fedprox_sizematched`, plus `final_summary/` and `_ablations/`. |
+| `classifier/` | Where a local run from `notebooks/03_train_centralized.ipynb` lands, one `test_NNN_*` folder each. Empty until you train something. The classifier phase itself, 21 runs across 13 architectures and 5 data configurations, was archived to `unused/old_runs/classifier/` and is not reported in the dissertation. |
+| `federated/` | The dissertation campaign: 13 experiments, `test01_centralized` through `test13_fedprox_sizematched`, plus `final_summary/`. Nothing else. |
 
 ## What each experiment folder contains
 

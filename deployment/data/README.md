@@ -3,7 +3,7 @@
 ```
 data/
 ├── global/
-│   ├── test/          the held-out test set. Identical for all nine experiments.
+│   ├── test/          the held-out test set. Identical for all thirteen experiments.
 │   └── labels.csv
 └── partitions/
     ├── 2_clients_balanced/hospital_{1,2}/{train,val}/
@@ -28,13 +28,13 @@ read another's data — the files are not there.
    what produces the metric the server selects on, and it is local by construction: a
    hospital cannot validate on another hospital's patients.
 
-`scripts/verify_data.py` checks all three and exits non-zero if any fails. Run it
+`src/scripts/verify_data.py` checks all three and exits non-zero if any fails. Run it
 after every partitioning.
 
 ## Why the global test set sits with the server
 
 In a production federation the server usually holds no data at all. Here it holds a
-held-out set because the nine experiments must be compared on identical ground —
+held-out set because the thirteen experiments must be compared on identical ground —
 changing which patients are tested moved macro-AUC by more than any intervention ever
 measured in this project. This is a benchmarking decision, not a claim about
 deployment, and the dissertation states it as such.

@@ -63,7 +63,7 @@ a slice-level score measures patient recognition rather than disease. The headli
 metric is one-vs-rest **macro-AUC**. Accuracy is never quoted without the trivial
 baseline of the same split beside it.
 
-All nine experiments are scored on the **same global test set**, which no hospital
+All thirteen experiments are scored on the **same global test set**, which no hospital
 sees during training.
 
 ## Reading the result

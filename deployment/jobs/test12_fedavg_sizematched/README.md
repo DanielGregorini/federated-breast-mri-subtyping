@@ -33,7 +33,7 @@ server selects on, and it is local by construction: a hospital cannot validate o
 another hospital's patients.
 
 Data lives in `data/partitions/3_clients_sizematched/<hospital>/`, written by
-`scripts/partition_data.py` and checked by `scripts/verify_data.py`.
+`src/scripts/partition_data.py` and checked by `src/scripts/verify_data.py`.
 
 ## Aggregation algorithm
 
@@ -60,7 +60,7 @@ Every value above comes from `config/experiments.py`. Nothing is set in this fol
 ## Run
 
 ```bash
-python scripts/run_experiment.py test12
+python src/scripts/run_experiment.py test12
 ```
 
 ## What this produces
@@ -78,7 +78,7 @@ a slice-level score measures patient recognition rather than disease. The headli
 metric is one-vs-rest **macro-AUC**. Accuracy is never quoted without the trivial
 baseline of the same split beside it.
 
-All nine experiments are scored on the **same global test set**, which no hospital
+All thirteen experiments are scored on the **same global test set**, which no hospital
 sees during training.
 
 ## Reading the result

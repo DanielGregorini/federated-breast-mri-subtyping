@@ -192,7 +192,7 @@ def write_all(out_dir: Path, cfg, history: pd.DataFrame, results: dict,
         if src.exists():
             (out_dir / name).write_bytes(src.read_bytes())
 
-    # One flat row per split — this is the file `07_compare_experiments` reads.
+    # One flat row per split, the file `notebooks/05_compare_experiments.ipynb` reads.
     flat = []
     for split, m in results.items():
         row = {"split": split}

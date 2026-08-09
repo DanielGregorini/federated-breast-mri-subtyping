@@ -92,7 +92,7 @@ REPO_ROOT = PROJECT_ROOT.parent.parent
 # re-cropped, re-normalised or re-encoded.
 #
 # The pipeline that produced it is `core/dataset_builder.py`,
-# driven by `notebooks/03_build_dataset_mine.ipynb`, and its exact parameters are
+# driven by `notebooks/02_build_dataset.ipynb`, and its exact parameters are
 # recorded in that dataset's own `config.json`. Both are kept in the active tree
 # precisely so the preprocessing stays reproducible and unchanged. See
 # `docs/DATASET_SPEC.md` for the full specification.
@@ -174,7 +174,7 @@ class TrainingConfig:
     THESE ARE NOT DEFAULTS, THEY ARE A MEASURED CONFIGURATION.
 
     Every value below is read out of the winning checkpoint of the classifier phase,
-    `results/classifier/checkpoints/FREEZE_R18_*.pt`. Reproducing the
+    `unused/old_runs/classifier/checkpoints/FREEZE_R18_*.pt`. Reproducing the
     federated arm against a *different* configuration from the centralised one it is
     compared to is the single easiest way to make RQ1 meaningless, so the two share
     this object and nothing overrides it.

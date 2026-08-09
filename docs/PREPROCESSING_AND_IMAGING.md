@@ -229,7 +229,7 @@ prediction, and Zhang et al. report within-centre accuracy of 0.79/0.91 collapsi
 
 A classifier trained to predict **which cohort** an image came from — same images, same
 patients, same architecture, only the label changed — reaches macro-AUC **0.9978**,
-against 0.6069 for the subtype itself.
+against 0.6068 for the subtype itself.
 
 ![Class composition within each cohort](images/report_figures/fig1_p4_class_within_cohort.png)
 

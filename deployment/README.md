@@ -2,7 +2,7 @@
 
 What NVIDIA FLARE needs in order to run, and what it produces while running. No
 hyperparameter is defined here: `jobs/` is generated from
-`src/src/federated/config/experiments.py`, `config/` is a snapshot nothing reads back, and
+`src/federated/config/experiments.py`, `config/` is a snapshot nothing reads back, and
 `scripts/` are thin wrappers.
 
 | Folder | What it holds |

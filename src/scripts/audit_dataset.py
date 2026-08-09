@@ -353,8 +353,8 @@ def write_docs(source, glob_, parts, prov) -> None:
           "**Unchanged by this project.** The federated pipeline consumes this "
           "dataset; it does not build it. Produced by "
           "`src/core/dataset_builder.py` with "
-          "`pipelines/thesis/preprocessing.py`, driven by "
-          "`notebooks/03_build_dataset_mine.ipynb`.",
+          "`pipelines/thesis/preprocessing.py`, and by "
+          "`notebooks/02_build_dataset.ipynb`, which carries the same logic inline.",
           "",
           "| parameter | value |", "|---|---|",
           f"| cohorts | {cfg.get('cohorts')} |",

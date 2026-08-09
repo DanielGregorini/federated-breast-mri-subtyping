@@ -37,7 +37,7 @@ metric is pinned in `config/experiments.py` as `val_balanced_accuracy`.
 ## Provisioning
 
 ```bash
-./scripts/provision.sh
+src/scripts/provision.sh
 ```
 
 Produces one startup kit per participant under `provisioning/workspace/`, each with

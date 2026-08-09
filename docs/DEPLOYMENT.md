@@ -1,6 +1,6 @@
 # Deployment — running the federation, step by step
 
-Every command needed to go from a fresh clone to the nine finished experiments, with
+Every command needed to go from a fresh clone to the thirteen finished experiments, with
 an explanation of what each one does and what you should see when it works.
 
 This is a **real NVFLARE deployment**: PKI certificates, one operating-system process
@@ -14,20 +14,20 @@ the simulator. That distinction is a hard requirement of this dissertation, and
 
 ```bash
 pip install -r requirements.txt          # 0. once
-python scripts/prepare_data.py           # 1. global test set
-python scripts/partition_data.py         # 2. per-hospital splits
-python scripts/verify_data.py            # 2b. refuse if anything leaks
-./scripts/provision.sh                   # 3. PKI startup kits
-./scripts/start_federation.sh 4          # 4. server + 4 hospitals
-python scripts/run_experiment.py test06 # 5. submit one experiment
-./scripts/stop_federation.sh             # 6. stop
-python scripts/collect_results.py        # 7. score everything
+python src/scripts/prepare_data.py           # 1. global test set
+python src/scripts/partition_data.py         # 2. per-hospital splits
+python src/scripts/verify_data.py            # 2b. refuse if anything leaks
+src/scripts/provision.sh                   # 3. PKI startup kits
+src/scripts/start_federation.sh 4          # 4. server + 4 hospitals
+python src/scripts/run_experiment.py test06 # 5. submit one experiment
+src/scripts/stop_federation.sh             # 6. stop
+python src/scripts/collect_results.py        # 7. score everything
 ```
 
 Or, for the whole protocol in one command:
 
 ```bash
-python scripts/run_all_experiments.py
+python src/scripts/run_all_experiments.py
 ```
 
 The rest of this document explains each step.
@@ -81,7 +81,7 @@ export BREAST_CORE_ROOT=/path/to/src
 ## 1. Build the global test set
 
 ```bash
-python scripts/prepare_data.py
+python src/scripts/prepare_data.py
 ```
 
 Copies the held-out splits out of the prepared dataset into `data/global/`:
@@ -89,25 +89,24 @@ Copies the held-out splits out of the prepared dataset into `data/global/`:
 ```
 data/global/
 ├── images/<pid>/slice_NNN.png
-├── test.csv      99 patients — the official set, identical for all nine experiments
-├── val.csv       99 patients — the centralised baseline's selection set
+├── test.csv      268 patients — the official set, identical for all thirteen experiments
+├── val.csv       268 patients — the centralised baseline's selection set
 └── manifest.json
 ```
 
 **What you should see:**
 
 ```
-  test    99 patients     791 slices  per-class [40, 40, 19]  trivial 0.4040
-  val     99 patients     791 slices  per-class [36, 38, 25]  trivial 0.3838
+  test   268 patients   2,115 slices  per-class [137, 78, 53]  trivial 0.5112
+  val    268 patients   2,132 slices  per-class [132, 76, 60]  trivial 0.4925
 ```
 
-That `trivial 0.4040` is the majority-class rate among patients. Accuracy quoted
+That `trivial 0.5112` is the majority-class rate among patients. Accuracy quoted
 without it is meaningless, and it is not a constant — it is 0.404 on I-SPY2 alone and
 0.511 on the pooled cohorts.
 
 The split is **not re-drawn**. It is the same split the classifier phase used, so the
-federated numbers and the centralised numbers in `all_runs_pod.csv` are measured on
-the same 99 patients.
+federated numbers and the centralised numbers are measured on the same 268 patients.
 
 > **Disk.** Add `--hardlink` to link instead of copy. Each site still has its own path
 > and still cannot read another's folder; it only avoids storing the same immutable
@@ -116,7 +115,7 @@ the same 99 patients.
 ### Why the server holds data at all
 
 In a production federation the aggregation server usually holds nothing. Here it holds
-a held-out test set because the nine experiments must be compared on identical ground,
+a held-out test set because the thirteen experiments must be compared on identical ground,
 and a test set assembled from per-hospital leftovers would differ between a 2-client
 and a 4-client run. **That is a benchmarking decision, not a claim about deployment,**
 and the dissertation states it as such.
@@ -126,10 +125,10 @@ and the dissertation states it as such.
 ## 2. Partition the training data between hospitals
 
 ```bash
-python scripts/partition_data.py
+python src/scripts/partition_data.py
 ```
 
-Writes all four partitions. Each hospital folder is a self-contained dataset:
+Writes all six partitions. Each hospital folder is a self-contained dataset:
 
 ```
 data/partitions/4_clients_balanced/hospital_1/
@@ -163,8 +162,8 @@ is why the previous run of these experiments found no detectable RQ2 effect.
 Two alternatives are implemented:
 
 ```bash
-python scripts/partition_data.py --stratify none      # label skew
-python scripts/partition_data.py --by-cohort \
+python src/scripts/partition_data.py --stratify none      # label skew
+python src/scripts/partition_data.py --by-cohort \
     --source ../dataset/mine_subtype_pooled   # one cohort per hospital
 ```
 
@@ -182,7 +181,7 @@ is genuine heterogeneity rather than quantity skew.
 ## 2b. Verify — this step refuses rather than warns
 
 ```bash
-python scripts/verify_data.py --check-imports
+python src/scripts/verify_data.py --check-imports
 ```
 
 ```
@@ -210,21 +209,21 @@ converge, and the conclusion is wrong.
 ## 3. Provision the PKI
 
 ```bash
-./scripts/provision.sh
+src/scripts/provision.sh
 ```
 
 This is what makes the deployment real. It runs:
 
 ```bash
-nvflare provision -p production/project.yml \
-                  -w production/workspace
+nvflare provision -p deployment/project.yml \
+                  -w deployment/workspace
 ```
 
 and produces one **startup kit** per participant — a folder holding that
 participant's own certificate, private key and start script:
 
 ```
-production/workspace/breast_fl_project/prod_00/
+deployment/workspace/breast_fl_project/prod_00/
 ├── server/       start.sh, sub_start.sh, fed_server.json, server.crt/.key
 ├── hospital_1/   ... hospital_4/
 ├── admin@ips.pt/    the identity that submits jobs
@@ -238,7 +237,7 @@ comes from it.
 **What you should see:**
 
 ```
-startup kits in: .../production/breast_fl_project/prod_00
+startup kits in: .../deployment/breast_fl_project/prod_00
   ok    server
   ok    hospital_1
   ok    hospital_2
@@ -274,8 +273,8 @@ highest, so this cannot go wrong as long as you use the scripts.
 ## 4. Start the federation
 
 ```bash
-./scripts/start_federation.sh 4      # server + hospital_1..4
-./scripts/start_federation.sh 2      # server + hospital_1..2
+src/scripts/start_federation.sh 4      # server + hospital_1..4
+src/scripts/start_federation.sh 2      # server + hospital_1..2
 ```
 
 Starts the server, waits for it to accept connections, then starts each hospital —
@@ -293,8 +292,8 @@ memory, its own certificate and its own port.
 Under the hood each participant runs its own kit's start script:
 
 ```bash
-production/workspace/breast_fl_project/prod_00/server/startup/start.sh
-production/workspace/breast_fl_project/prod_00/hospital_1/startup/start.sh
+deployment/workspace/breast_fl_project/prod_00/server/startup/start.sh
+deployment/workspace/breast_fl_project/prod_00/hospital_1/startup/start.sh
 ```
 
 Ports, from `config/federation.py`:
@@ -325,8 +324,8 @@ pgrep -fl nvflare
 ## 5. Submit an experiment
 
 ```bash
-python scripts/run_experiment.py test06
-python scripts/run_experiment.py test06 --dry-run     # build it, do not submit
+python src/scripts/run_experiment.py test06
+python src/scripts/run_experiment.py test06 --dry-run     # build it, do not submit
 ```
 
 The script re-verifies the data, builds the recipe, and submits **through the admin
@@ -352,8 +351,8 @@ experiment while it holds the GPU.
 ### Test 01 is not an NVFLARE job
 
 ```bash
-python scripts/run_centralized.py            # seed 42
-python scripts/run_centralized.py --seed 1
+python src/scripts/run_centralized.py            # seed 42
+python src/scripts/run_centralized.py --seed 1
 ```
 
 One machine, all the training data, no server and no clients. It is budget-matched to
@@ -382,7 +381,7 @@ weights actually being sent, which is what the server selects on.
 ## 6. Stop the federation
 
 ```bash
-./scripts/stop_federation.sh
+src/scripts/stop_federation.sh
 ```
 
 Asks each participant to stop through its own kit's `stop_fl.sh`, waits, then kills
@@ -399,7 +398,7 @@ whatever is left — anchored to this project's workspace path.
 ## 7. Collect and compare
 
 ```bash
-python scripts/collect_results.py
+python src/scripts/collect_results.py
 ```
 
 Loads every finished experiment's model into the **shared architecture**, scores it on
@@ -412,12 +411,12 @@ experiment algorithm  n_clients  seed  test_auc  test_acc  test_bal  model_used
    ...
 
   centralised mean 0.6xxx (n=2)
-  federated   mean 0.5xxx (n=8)
+  federated   mean 0.5xxx (n=12)
   gap              +0.0xxx  — above the noise floor
 ```
 
 Evaluation is centralised here rather than done by each run because **the comparison
-is the point**: nine experiments scored by nine pieces of code is nine chances for
+is the point**: thirteen experiments scored by thirteen pieces of code is thirteen chances for
 them to differ. This project has already shipped a `collect_results.py` with
 `"resnet18"` hard-coded that silently evaluated runs which had trained a ResNet-50.
 
@@ -428,22 +427,23 @@ byte-identical configuration differing only in random seed. Treat a smaller diff
 as *"no difference detected"* — that is a finding, and belongs in the dissertation as
 one. **One seed is not a result.**
 
-For reference, the previous run of these nine experiments produced a FedAvg-vs-FedProx
-difference of 0.004 to 0.021, four times in the same direction. Four out of four is a
-trend. Never once outside the noise means it is not a fact.
+In this campaign the FedAvg-against-FedProx difference runs from −0.0032 to +0.0252
+across the six paired partitions, and it is largest where the sites genuinely differ.
+Every one of those values is inside the noise floor, so the direction is a trend and
+the magnitude is not a fact.
 
 ---
 
 ## Running everything
 
 ```bash
-python scripts/run_all_experiments.py
-python scripts/run_all_experiments.py --from test04       # resume
-python scripts/run_all_experiments.py --only test06 test07
-python scripts/run_all_experiments.py --dry-run
+python src/scripts/run_all_experiments.py
+python src/scripts/run_all_experiments.py --from test04       # resume
+python src/scripts/run_all_experiments.py --only test06 test07
+python src/scripts/run_all_experiments.py --dry-run
 ```
 
-Runs the nine in order, **one at a time**, restarting the federation when the required
+Runs the campaign in order, **one at a time**, restarting the federation when the required
 number of hospitals changes (2 → 3 → 4).
 
 One at a time is measured, not assumed: on one GPU, two concurrent jobs gave 0.074
@@ -457,19 +457,19 @@ client processes, so one experiment at a time *is* the parallel case.
 
 | symptom | cause | fix |
 |---|---|---|
-| `not provisioned: ... does not exist` | step 3 not run | `./scripts/provision.sh` |
+| `not provisioned: ... does not exist` | step 3 not run | `src/scripts/provision.sh` |
 | provisioning exits with `INVALID_ARGS ... ill-formatted for entity_type=admin` | the admin name is not a full email address — NVFLARE validates it against a regex that requires a TLD, so `admin@ips` is rejected | use `admin@ips.pt`, and keep `project.yml` and `config/federation.py::ADMIN_USER` identical |
 | `no startup kit for 'admin@...'` when submitting | `project.yml` and `config/federation.py` disagree about the admin name | make them match, re-provision |
-| TLS handshake failure on client start | server and client from different `prod_NN` | stop everything, `./scripts/start_federation.sh N` (it resolves one workspace for all) |
+| TLS handshake failure on client start | server and client from different `prod_NN` | stop everything, `src/scripts/start_federation.sh N` (it resolves one workspace for all) |
 | client exits with `architecture mismatch` | a site is running a stale `src/` | re-sync the repo on that machine; the fingerprint is a hash of parameter names and shapes |
 | `cannot find src/` | the classifier phase is elsewhere | `export BREAST_CORE_ROOT=/path/to/src` |
 | `cannot locate federated/` | client started outside the repo | `export FEDBREAST_ROOT=/path/to/federated` |
-| job submits but no client registers | fewer hospitals started than `min_clients` | `./scripts/start_federation.sh <n>` matching the experiment |
-| `NO LOCAL VALIDATION SPLIT` in a client log | partition built without local val | re-run `scripts/partition_data.py` |
-| `class_weight_scope='global' but manifest has no global_class_weights` | partition predates the setting | re-run `scripts/partition_data.py` |
+| job submits but no client registers | fewer hospitals started than `min_clients` | `src/scripts/start_federation.sh <n>` matching the experiment |
+| `NO LOCAL VALIDATION SPLIT` in a client log | partition built without local val | re-run `src/scripts/partition_data.py` |
+| `class_weight_scope='global' but manifest has no global_class_weights` | partition predates the setting | re-run `src/scripts/partition_data.py` |
 | server picks a nonsense model | the key metric is training accuracy | it is pinned to `val_balanced_accuracy` in `config/experiments.py` — check the client is reporting it |
 | everything is very slow, Mac | CPU fallback, by design | run on the CUDA box |
-| out of memory in an unrelated run | orphaned trainer from a previous experiment | `./scripts/stop_federation.sh`, then `pgrep -fl client.py` |
+| out of memory in an unrelated run | orphaned trainer from a previous experiment | `src/scripts/stop_federation.sh`, then `pgrep -fl client.py` |
 
 ### Reading a job that failed
 
@@ -486,7 +486,7 @@ cat results/<experiment>/job.json          # job id and status
 
 Three things change, and nothing else does.
 
-1. In `production/project.yml`, the server's `default_host` becomes the
+1. In `deployment/project.yml`, the server's `default_host` becomes the
    coordinating centre's DNS name or public IP, reachable by every hospital on ports
    8002 and 8003. Give each client its own `default_host` if it must be reachable.
 2. Mirror the same values in `config/federation.py` — **the only file in the Python

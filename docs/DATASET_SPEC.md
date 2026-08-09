@@ -1,6 +1,6 @@
 # `multi_subtype_80mm` — dataset specification
 
-Audited 2026-08-05 14:00 UTC by `scripts/audit_dataset.py`. Every number below is read from the data, not from a previous document.
+Audited 2026-08-05 14:00 UTC by `src/scripts/audit_dataset.py`. Every number below is read from the data, not from a previous document.
 
 **Source:** `/Users/daniel/Developer/tese/federated-breast-mri-subtyping/dataset/multi_subtype_80mm`
 
@@ -46,7 +46,7 @@ Accuracy is meaningless without the trivial baseline beside it — it is the acc
 
 ## Preprocessing
 
-**Unchanged by this project.** The federated pipeline consumes this dataset; it does not build it. Produced by `src/core/dataset_builder.py` with `pipelines/thesis/preprocessing.py`, driven by `notebooks/03_build_dataset_mine.ipynb`.
+**Unchanged by this project.** The federated pipeline consumes this dataset; it does not build it. Produced by `src/core/dataset_builder.py` with `pipelines/thesis/preprocessing.py`, and by `notebooks/02_build_dataset.ipynb`, which carries the same logic inline.
 
 | parameter | value |
 |---|---|

@@ -1,13 +1,13 @@
 # Comparator papers for Chapter 4
 
-Papers to read and cite when discussing the results of tests 01–09. Ranked by how
+Papers to read and cite when discussing the results of tests 01–13. Ranked by how
 directly their experimental setting can be compared with ours.
 
 **Our setting, for reference.** 3-class molecular subtype (HR+/HER2−, TripleNeg, HER2+)
 from DCE-MRI; ResNet-18; centralised baseline + FedAvg + FedProx (mu = 0.01); 2, 3 and 4
-hospitals; stratified balanced and 5:2:1:1 quantity-skewed partitions; patient-level
-macro-AUC 0.5594–0.6531 federated against 0.6068 centralised; trivial baseline 0.5112;
-single seed; NVIDIA FLARE, real PKI deployment.
+hospitals; stratified balanced, 5:2:1:1 quantity-skewed, one-cohort-per-site and its
+size-matched control; patient-level macro-AUC 0.5426–0.6152 federated against 0.6068
+centralised; trivial baseline 0.5112; single seed; NVIDIA FLARE, real PKI deployment.
 
 ## Verification status
 
@@ -286,7 +286,7 @@ Cross-site transfer (train one, test another) ranges 0.59–0.73 AUC.
     and a different endpoint.
 15. **What to discuss.** Two uses. (a) It is the flagship real-world breast-cancer FL study
     and belongs in the introduction to Chapter 4. (b) Its **AUC of 0.66 on a real
-    multicentric breast task** is a useful reality check on our 0.6068–0.6531: state-of-the-art
+    multicentric breast task** is a useful reality check on our 0.5426–0.6152 federated against 0.6068 centralised: state-of-the-art
     federated breast oncology on real data lands in the same band, which supports our
     argument that ~0.61 is a correct answer for this class of problem rather than a failure.
 

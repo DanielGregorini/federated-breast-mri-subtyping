@@ -4,8 +4,8 @@
 repository.** Where the repository does not record something, that is stated explicitly
 rather than filled in. Nothing here is inferred from defaults.
 
-Verified 2026-08-04 against `config/`, `federation/`, `production/project.yml`,
-`production/logs/` and `production/results/`.
+Verified 2026-08-04 against `config/`, `federation/`, `deployment/project.yml`,
+`deployment/logs/` and `deployment/results/`.
 
 ---
 
@@ -16,8 +16,8 @@ Verified 2026-08-04 against `config/`, `federation/`, `production/project.yml`,
 | evidence | value |
 |---|---|
 | `python3 -c "import nvflare; print(nvflare.__version__)"` | `2.8.0` |
-| `production/project.yml` | `api_version: 3` |
-| `production/README.md:523` | refers to NVFLARE 2.8 admin-name validation |
+| `deployment/project.yml` | `api_version: 3` |
+| `deployment/README.md:523` | refers to NVFLARE 2.8 admin-name validation |
 | campaign record, `docs/PROJECT_CONTEXT.md` | NVFLARE 2.8.0, CUDA 12.8, torch 2.8.0 |
 
 **Not confirmed.** The run logs produced on the RunPod host carry no version string, so
@@ -46,7 +46,7 @@ def build_env(n_clients: int):
     return ProdEnv(startup_kit_location=str(admin_dir), username=FED.ADMIN_USER)
 ```
 
-Confirmed from `production/logs/test06/server.log` — real listeners, real per-client TLS
+Confirmed from `deployment/logs/test06/server.log` — real listeners, real per-client TLS
 connections, separate PIDs:
 
 ```
@@ -63,19 +63,19 @@ ClientManager - Client: New client hospital_2@10.129.201.2 joined. Total clients
 
 | item | value | source |
 |---|---|---|
-| name / type / org | `server` / `server` / `ips` | `production/project.yml` |
+| name / type / org | `server` / `server` / `ips` | `deployment/project.yml` |
 | `fed_learn_port` | **8002** — clients receive tasks and return updates | `project.yml`, `config/federation.py` |
 | `admin_port` | **8003** — admin API submits and monitors jobs | same |
 | `default_host` | `localhost` | `project.yml` |
 | heartbeat timeout | 600 s | `logs/test06/server.log` |
-| workspace | `production/workspace/breast_fl_project/prod_00/server` | `server.log` |
+| workspace | `deployment/workspace/breast_fl_project/prod_00/server` | `server.log` |
 | internal listener | `tcp://localhost:40575` | `server.log` |
 | launch command | `python -m nvflare.private.fed.app.server.server_train -m <workspace>/server -s fed_server.json --set secure_train=true org=ips config_folder=config` | `logs/fedopt_overnight.log` |
 
 The two ports are kept separate so a hospital firewall can expose only the first.
 
 The server holds no patient images. It **does** hold the global test set — a benchmarking
-decision so that all nine experiments are scored on identical ground, not a claim about
+decision so that all thirteen experiments are scored on identical ground, not a claim about
 deployment, and the dissertation must say so.
 
 ---
@@ -184,7 +184,7 @@ Tests 10–13 were cancelled before completion.
 `meta_props.nr_aggregated` equals the client count in every case — 2, 2, 3, 3, 4, 4, 4, 4.
 
 Test01 (centralised) is **not an NVFLARE job**; it runs through
-`scripts/run_centralized.py`.
+`src/scripts/run_centralized.py`.
 
 ---
 
@@ -198,7 +198,7 @@ centralized_epochs  = 30
 
 **30 rounds × 1 local epoch = 30 epochs of data**, budget-matched to the centralised
 baseline. Without that, RQ1 would read a difference in compute as a difference in
-federation. `scripts/verify_production.py` asserts the equality as a pre-flight check.
+federation. `src/scripts/verify_production.py` asserts the equality as a pre-flight check.
 
 Confirmed: `sites/rounds.csv` holds rounds **0–29** for every site in every completed
 federated test.
@@ -298,7 +298,7 @@ GLOBAL_MODEL_NAMES = [
 ```
 
 **Confirmed from the retained files themselves.** Each
-`production/results/testNN_*/global_model.pt` (44.8 MB) is an NVFLARE persistor file with
+`deployment/results/testNN_*/global_model.pt` (44.8 MB) is an NVFLARE persistor file with
 keys `model`, `meta_props`, `train_conf`:
 
 | test | `nr_aggregated` | `meta_props.current_round` |
@@ -333,7 +333,7 @@ validation **macro-AUC**, with early stopping disabled so the whole curve is vis
 
 ## 11. Communication protocol and data exchanged
 
-**Transport**, from `production/logs/test06/server.log`: backbone external listeners on
+**Transport**, from `deployment/logs/test06/server.log`: backbone external listeners on
 `http://0:8002` and `http://0:8003`, an internal listener on `tcp://localhost:40575`, and
 per-client connections marked `SSL`. Mutual TLS is built on certificates issued by
 `CertBuilder`; the startup kits are signed by `SignatureBuilder` so tampering is
@@ -413,11 +413,11 @@ label or feature non-IID heterogeneity.** This is a deliberate, documented limit
 must be stated. Two genuine alternatives are implemented and neither is the default:
 
 ```bash
-python scripts/partition_data.py --stratify none     # label skew
-python scripts/partition_data.py --by-cohort         # one real cohort per hospital
+python src/scripts/partition_data.py --stratify none     # label skew
+python src/scripts/partition_data.py --by-cohort         # one real cohort per hospital
 ```
 
-**Evaluation** is identical for all nine tests: the selected global model is scored on the
+**Evaluation** is identical for all thirteen tests: the selected global model is scored on the
 same global test set (268 patients, 2,115 images, trivial baseline **0.5112**), with slice
 probabilities averaged per patient first.
 
@@ -456,7 +456,7 @@ participants is recoverable.
 
 ## 14. Example job record
 
-`production/results/test06_fedavg_4h/job.json`, verbatim:
+`deployment/results/test06_fedavg_4h/job.json`, verbatim:
 
 ```json
 {
@@ -485,21 +485,21 @@ participants is recoverable.
 cd federated
 
 # once
-./production/scripts/provision.sh
-./production/scripts/distributions.sh
-./production/scripts/verify.sh          # 198 checks; must pass before anything starts
+./deployment/scripts/provision.sh
+./deployment/scripts/distributions.sh
+./deployment/scripts/verify.sh          # 198 checks; must pass before anything starts
 
 # the centralised baseline — NOT an NVFLARE job
-python scripts/run_centralized.py --seed 42
+python src/scripts/run_centralized.py --seed 42
 
 # one federated experiment
-./production/scripts/start.sh 4 test06  # server + 4 hospitals, separate processes
-./production/scripts/run.sh test06      # submit through the admin API
-./production/scripts/stop.sh
+./deployment/scripts/start.sh 4 test06  # server + 4 hospitals, separate processes
+./deployment/scripts/run.sh test06      # submit through the admin API
+./deployment/scripts/stop.sh
 
 # after the runs
-./production/scripts/collect.sh         # score every model on the one test set
-./production/scripts/summary.sh         # build results/final_summary/
+./deployment/scripts/collect.sh         # score every model on the one test set
+./deployment/scripts/summary.sh         # build results/final_summary/
 ```
 
 Client count per test: 2 for test02–03, 3 for test04–05, 4 for test06–09.

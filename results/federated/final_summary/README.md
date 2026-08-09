@@ -1,13 +1,13 @@
 # `results/final_summary/`
 
 Everything the dissertation's results chapter needs, generated in one pass by
-[`scripts/build_final_summary.py`](../../scripts/build_final_summary.py).
+[`src/scripts/build_final_summary.py`](../../../src/scripts/build_final_summary.py).
 
 Regenerate at any time — it is a pure function of `results/`, `data/` and
 `config/experiments.py`, and it overwrites this folder:
 
 ```bash
-python scripts/build_final_summary.py
+python src/scripts/build_final_summary.py
 ```
 
 **Status: 13 of 13 experiments complete.**
@@ -19,7 +19,7 @@ python scripts/build_final_summary.py
 ```
 final_summary/
 ├── README.md                     this file
-├── manifest.json                 machine-readable status of all nine experiments
+├── manifest.json                 machine-readable status of all thirteen experiments
 ├── summary.csv                   one row per experiment — the main table
 ├── summary.xlsx                  every table as a sheet
 ├── summary.json                  everything, nested, including curve points
@@ -90,8 +90,8 @@ them, so it is not produced.
 ## Three things that will otherwise be misread
 
 **1. The noise floor is 0.067 macro-AUC.** It was measured in this project
-between two byte-identical configurations differing only in random seed. Four of these
-nine comparisons are expected to land inside it. Every comparison table therefore
+between two byte-identical configurations differing only in random seed. Most of these
+comparisons are expected to land inside it. Every comparison table therefore
 carries `delta_macro_auc` **and** `within_noise_floor`; a difference with
 `within_noise_floor = True` is not a finding, and must not be written up as one.
 
@@ -119,7 +119,7 @@ the biggest site?", which matters most for the skewed 4-hospital split where one
 holds 5/9 of the data.
 
 The official number for every experiment is always the global test set, which is
-identical across all nine. Per-hospital sets are small — down to 19 validation
+identical across all thirteen. Per-hospital sets are small — down to 19 validation
 patients — so their AUCs are noisy and sometimes NaN.
 
 ---
@@ -140,6 +140,6 @@ Metrics are recomputed from stored per-patient predictions rather than copied fr
 stored metric dict. That is what makes the confusion matrix, the ROC curve and the
 accuracy in the table mutually consistent by construction: they come from one array.
 
-The predictions themselves are written by `scripts/collect_results.py`, which scores
+The predictions themselves are written by `src/scripts/collect_results.py`, which scores
 every experiment through one code path on one test set. **Run that first** — this
 script reads its output.

@@ -90,7 +90,7 @@ Final training images, one per cohort and class. Each is a real file from `datas
 | **[`deployment/`](deployment/README.md)** | The running system: PKI startup kits, generated jobs, per-hospital data and per-participant logs. |
 | **[`results/`](results/README.md)** | Every run that was kept, classifier phase and federated campaign both. |
 | **[`docs/`](docs/README.md)** | All documentation and every figure. |
-| **[`notebooks/`](notebooks/README.md)** | The pipeline as notebooks, numbered in the order they run: analyse, build, train, evaluate, compare. |
+| **[`notebooks/`](notebooks/README.md)** | The whole pipeline as notebooks, numbered in the order they run: analyse, build, train, evaluate, compare, then set up and run the federation. Each carries its own logic rather than calling into `src/`. |
 
 The repository root holds only `README.md` and `requirements.txt`. Everything else
 belongs to one of the folders above.
@@ -211,7 +211,7 @@ python src/scripts/verify_data.py
 
 ### 5. Run a federated experiment → [`src/federated/`](src/federated/README.md)
 
-Verify first — 219 checks that write nothing and must pass before any federation starts.
+Verify first. These checks write nothing and must all pass before any federation starts.
 
 ```bash
 python src/scripts/verify_production.py
@@ -244,17 +244,49 @@ difference detected*, which is a finding rather than a failure. Every comparison
 carries a `within_noise_floor` column for exactly this reason.
 
 One further caveat belongs beside any pooled-cohort result: a probe trained to predict
-*which cohort* an image came from reaches macro-AUC **0.9978**, against 0.6069 for the
+*which cohort* an image came from reaches macro-AUC **0.9978**, against 0.6068 for the
 subtype itself. The cohorts are trivially separable, and a model can score respectably by
 learning the scanner rather than the biology. This is the finding that reshaped the
 project, and it is documented in full in the [dataset report](docs/DATASET_REPORT.md).
 
 ---
 
+## Licence and attribution
+
+The **code** in this repository is released under the [MIT licence](LICENSE).
+
+The **imaging** is not ours. It is derived from the BreastDCEDL MinCrop release, which is
+licensed [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), and it is
+redistributed here under that licence with attribution. The images are *not* the released
+volumes: they are 80 mm physical crops, normalised over the whole volume, resized to a
+constant 0.357 mm per pixel, with eight slices per patient and the three contrast phases
+fused as RGB. [`ATTRIBUTION.md`](ATTRIBUTION.md) records every change in full, as CC BY
+requires.
+
 ## Citation
 
-This work builds on the BreastDCEDL dataset:
+BreastDCEDL is an aggregation of three public collections held by
+[The Cancer Imaging Archive](https://www.cancerimagingarchive.net/). Cite the release
+**and** the collections it pools, not the release alone.
 
-> Fridman, N. et al. *BreastDCEDL: A standardized deep learning-ready breast DCE-MRI dataset of 2,070 patients.* Scientific Data 13, 264
+**The release:**
+
+> Fridman, N., Solway, B., Fridman, T., et al. *BreastDCEDL: A standardized deep
+> learning-ready breast DCE-MRI dataset of 2,070 patients.* Scientific Data **13**, 264
 > (2026). <https://doi.org/10.1038/s41597-026-06589-6>
-[text](.)
+
+**The three collections it aggregates:**
+
+| Collection | Patients used here |
+|---|---:|
+| I-SPY1 (ACRIN 6657), TCIA | 167 |
+| I-SPY2, TCIA | 982 |
+| Duke-Breast-Cancer-MRI, TCIA | 914 |
+
+The Duke collection is additionally described in:
+
+> Saha, A., Harowicz, M.R., Grimm, L.J., et al. *A machine learning approach to
+> radiogenomics of breast cancer: a study of 922 subjects and 529 DCE-MRI features.*
+> British Journal of Cancer **119**(4), 508–516 (2018).
+
+Each collection carries its own dataset DOI on its TCIA landing page.

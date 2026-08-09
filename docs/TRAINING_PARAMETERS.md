@@ -8,7 +8,7 @@ Verified 2026-08-04 against `src/federated/config/experiments.py`, `src/federate
 `src/federated/common/data.py`, `src/core/training.py`,
 `src/core/data.py`, `src/scripts/run_centralized.py`, the run logs in
 `deployment/logs/`, and the recorded configs in
-`results/classifier/_from_pod/`.
+`unused/old_runs/classifier/_from_pod/`, where the classifier phase was archived.
 
 ---
 
@@ -21,14 +21,14 @@ Conflating them is the main way to misreport this work.
 |---|---|---|---|
 | **PRELIMINARY** | The classifier phase — 21 runs, 13 architectures, 5 data configurations. Used to *choose* the configuration. | `src/dataset_config.py`; per-run `results/_from_pod/multi/<run>/config.json` | superseded; not the dissertation's numbers |
 | **FINAL** | The dissertation campaign — test01 (centralised) + test02–09 (federated), 2026-08-03/04 | `src/federated/config/experiments.py` — **single source of truth** | **these are the reported results** |
-| **PLANNED / NOT RUN** | Implemented and available, never executed | same file / `scripts/partition_data.py` | must not be reported as results |
+| **PLANNED / NOT RUN** | Implemented and available, never executed | same file / `src/scripts/partition_data.py` | must not be reported as results |
 
 **Three corrections to earlier summaries in this project, found while verifying:**
 
 1. **Gradient clipping is used and had been omitted.** `clip_grad_norm_(…, max_norm=1.0)`
    is applied in both the shared trainer and the FedProx fork.
 2. **The final campaign has no early-stopping mechanism at all.** `early_stopping` does
-   not exist in `src/federated/config/experiments.py`, and `scripts/run_centralized.py`
+   not exist in `src/federated/config/experiments.py`, and `src/scripts/run_centralized.py`
    contains no such code — the loop runs all 30 epochs and tracks the best. The phrase
    "early stopping disabled (`early_stopping_patience = 0`)" in `docs/PROJECT_CONTEXT.md`
    describes the *classifier-phase* field, which is `100 epochs / patience 30`, not the
@@ -58,7 +58,7 @@ different trainers.
 | Architecture fingerprint | `2d3031acc2075813` | both | `train.log`, `results.json` |
 | **Input image size** | 224 × 224 RGB | both | `TrainingConfig.image_size` |
 | Number of classes | 3 | both | `TrainingConfig.num_classes` |
-| **Optimizer** | AdamW, **over trainable parameters only** | both | `src/training.py::build_optimizer` |
+| **Optimiser** | AdamW, **over trainable parameters only** | both | `src/training.py::build_optimizer` |
 | **Learning rate** | 1e-4 (base) | both | `TrainingConfig.learning_rate` |
 | **Weight decay** | 5e-4 | both | `TrainingConfig.weight_decay` |
 | **Batch size** | 24 | both | `TrainingConfig.batch_size` |
@@ -105,7 +105,7 @@ whichever global model let clients memorise their own shard best (99%+).
 Balanced accuracy rather than macro-AUC on the federated side because a site holding few
 patients can draw a validation split missing a class, which makes macro-AUC NaN.
 
-**The official evaluation is separate from both.** All nine experiments are scored on the
+**The official evaluation is separate from both.** All thirteen experiments are scored on the
 same global test set — 268 patients, 2,115 images, trivial baseline **0.5112** — with
 slice probabilities averaged per patient first.
 
@@ -121,7 +121,7 @@ exactly one split.**
 | validation | 268 | 2,132 | 132 / 76 / 60 | 0.4925 |
 | test | 268 | 2,115 | 137 / 78 / 53 | **0.5112** |
 
-Confirmed verbatim in `production/logs/test01/*.log`.
+Confirmed verbatim in `deployment/logs/test01/*.log`.
 
 ---
 
@@ -251,7 +251,7 @@ in AUC, but one is reproducible.
 
 ## 5. Per-test values — where the experiments differ
 
-**Everything not in this table is identical across all nine tests.** Only the client
+**Everything not in this table is identical across all thirteen tests.** Only the client
 count, the partition and the aggregation algorithm vary.
 
 | Test | Kind | Clients | Partition | Algorithm | μ | Rounds × local epochs | Seed |
@@ -271,7 +271,7 @@ count, the partition and the aggregation algorithm vary.
 `key_metric`); test10 reached round 19 of 30 on CPU and was cancelled by the user; test11
 never ran. **No FedOpt result may be reported.**
 
-**Patients per site**, from `production/datasets/all_distributions.csv`:
+**Patients per site**, from `deployment/datasets/all_distributions.csv`:
 
 | Partition | Patients per hospital |
 |---|---|
@@ -290,7 +290,7 @@ label or feature non-IID heterogeneity.** This must be stated in the dissertatio
 
 | item | status |
 |---|---|
-| `--by-cohort` partition (one real cohort per hospital) | implemented in `scripts/partition_data.py`, **never run** |
+| `--by-cohort` partition (one real cohort per hospital) | implemented in `src/scripts/partition_data.py`, **never run** |
 | `--stratify none` (label skew) | implemented, **never run** |
 | `class_weight_scope = "global"` | implemented, **never run** — this is the real RQ4 experiment |
 | FedOpt (tests 10–13) | implemented, **cancelled** |
@@ -303,7 +303,7 @@ label or feature non-IID heterogeneity.** This must be stated in the dissertatio
 ## 7. Concise final hyperparameter table
 
 The single table for the dissertation. Values are those of the **final campaign**
-(test01–test09). "Both" = identical in the centralised and federated arms.
+(test01–test13). "Both" = identical in the centralised and federated arms.
 
 | Hyperparameter | Value | Arm |
 |---|---|---|
@@ -313,7 +313,7 @@ The single table for the dissertation. Values are those of the **final campaign*
 | Input | 224 × 224 RGB | both |
 | Output classes | 3 | both |
 | Head | Dropout(0.5) → Linear(512, 3) | both |
-| Optimizer | AdamW (trainable params only) | both |
+| Optimiser | AdamW (trainable params only) | both |
 | Learning rate | 1e-4, cosine `lr(r) = base·(1+cos(πr/30))/2` | both |
 | Weight decay | 5e-4 | both |
 | Batch size | 24, ≤ 1 slice per patient per batch | both |
@@ -345,7 +345,7 @@ differing only in seed scored 0.7023 and 0.6351. `seed` fixes initialisation and
 but not cuDNN kernel selection, AMP behaviour, or DataLoader worker ordering.
 
 Every federated experiment in this campaign is **a single run at seed 42**, and the full
-spread across the nine tests is 0.093. No comparison within that table is attributable to
+spread across the twelve federated tests is 0.0725. No comparison within that table is attributable to
 the factor that distinguishes two runs. The defensible claim is that federated training
 produces models in the **same range** as centralised training on this task — and nothing
 sharper.

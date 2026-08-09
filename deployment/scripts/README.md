@@ -1,9 +1,9 @@
-# `production/scripts/`
+# `deployment/scripts/`
 
-Thin wrappers. **Every one of them execs the real script in `../../scripts/`** and
+Thin wrappers. **Every one of them execs the real script in `../.src/scripts/`** and
 adds nothing — no arguments, no defaults, no logic.
 
-They exist so that the deployment can be driven from inside `production/` without
+They exist so that the deployment can be driven from inside `deployment/` without
 having to know where the implementation lives, and so that a future move to a
 hospital's own machine has one obvious entry point per action.
 
@@ -16,12 +16,12 @@ look, and eventually a second answer.
 | wrapper | runs | does |
 |---|---|---|
 | `provision.sh` | `scripts/provision.sh` | PKI startup kits into `workspace/` |
-| `verify.sh` | `scripts/verify_production.py` | the full pre-flight check |
-| `distributions.sh` | `scripts/build_distribution_report.py` | figures + tables into `figures/`, `datasets/` |
+| `verify.sh` | `src/scripts/verify_production.py` | the full pre-flight check |
+| `distributions.sh` | `src/scripts/build_distribution_report.py` | figures + tables into `figures/`, `datasets/` |
 | `start.sh N TEST` | `scripts/start_federation.sh` | server + N hospitals, logs into `logs/TEST/` |
-| `run.sh TEST` | `scripts/run_experiment.py` | submit one experiment through the admin API |
+| `run.sh TEST` | `src/scripts/run_experiment.py` | submit one experiment through the admin API |
 | `stop.sh` | `scripts/stop_federation.sh` | stop every participant |
-| `collect.sh` | `scripts/collect_results.py` | score every finished model on the one test set |
-| `summary.sh` | `scripts/build_final_summary.py` | build `results/final_summary/` |
+| `collect.sh` | `src/scripts/collect_results.py` | score every finished model on the one test set |
+| `summary.sh` | `src/scripts/build_final_summary.py` | build `results/final_summary/` |
 
 Run them from anywhere; each resolves its own location.

@@ -1,6 +1,6 @@
 # Final results summary
 
-Generated 2026-08-07 13:45 UTC by `scripts/build_final_summary.py`.
+Generated 2026-08-07 13:45 UTC by `src/scripts/build_final_summary.py`.
 
 **13 of 13 experiments complete.**
 

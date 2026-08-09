@@ -1,7 +1,7 @@
 # src/scripts — the operational scripts
 
 Run them from the repository root. Every one reads
-`src/src/federated/config/experiments.py`; none defines a hyperparameter of its own.
+`src/federated/config/experiments.py`; none defines a hyperparameter of its own.
 
 ## Building the data
 

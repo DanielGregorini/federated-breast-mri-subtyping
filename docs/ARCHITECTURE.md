@@ -49,7 +49,7 @@ Three files, and nothing else in the project hard-codes any of their values.
 
 | file | holds | why it is separate |
 |---|---|---|
-| `experiments.py` | the nine experiments, the four partitions, the model and its hyperparameters | changing the protocol is a change to one table |
+| `experiments.py` | the thirteen experiments, the six partitions, the model and its hyperparameters | changing the protocol is a change to one table |
 | `federation.py` | participant names, hosts, ports, admin identity | **the only file that knows an address**; deploying to real machines touches this and nothing else |
 | `training.py` | augmentation profile and other trainer-only settings | keeps `experiments.py` about the *design*, not about pixel jitter |
 
@@ -119,10 +119,10 @@ federation/
 ├── recipes.py           builds the recipe from an Experiment row
 └── provisioning/
     ├── project.yml      participants, ports, PKI builders
-    └── production/      generated startup kits (gitignored)
+    └── deployment/      generated startup kits (gitignored)
 ```
 
-The output folder is named **`production`** because that is what it holds: the real
+The output folder is named **`deployment`** because that is what it holds: the real
 deployment, one signed startup kit per participant, the thing that would be copied to
 a hospital machine. NVFLARE's simulator and POC modes never write here, and no number
 in this dissertation comes from either.
@@ -175,7 +175,7 @@ jobs/test06_fedavg_4h/
 
 Each `job.py` reads its own row from `config/experiments.py` and asks
 `federation/recipes.py` to build the recipe. It contains **no hyperparameters and no
-model definition** — if it did, the nine jobs would start drifting apart on day one.
+model definition** — if it did, the thirteen jobs would start drifting apart on day one.
 
 The READMEs are **generated** from the experiment table rather than written by hand,
 so a change to the protocol cannot leave stale documentation behind.
@@ -190,7 +190,7 @@ and because its README belongs beside the other eight.
 ```
 data/
 ├── global/
-│   ├── test/          the held-out test set. Identical for all nine experiments.
+│   ├── test/          the held-out test set. Identical for all thirteen experiments.
 │   └── labels.csv
 └── partitions/
     ├── 2_clients_balanced/
@@ -206,8 +206,8 @@ than symlinks. It costs disk and buys two things: the layout is exactly what wou
 `rsync`-ed to a real hospital machine, and it is impossible for a bug to let one site
 read another's data — the files are not there.
 
-Three rules are enforced by `scripts/partition_data.py` and verified by
-`scripts/verify_data.py`:
+Three rules are enforced by `src/scripts/partition_data.py` and verified by
+`src/scripts/verify_data.py`:
 
 1. **Split by patient, never by slice.** Every image of a patient goes to one site.
 2. **No patient appears in two hospitals**, and no training patient appears in the
@@ -217,7 +217,7 @@ Three rules are enforced by `scripts/partition_data.py` and verified by
    hospital cannot validate on another hospital's patients.
 
 The **global test set lives with the server**. In a production federation the server
-usually holds no data at all; here it holds a held-out set because the nine
+usually holds no data at all; here it holds a held-out set because the thirteen
 experiments must be compared on identical ground. That choice is a benchmarking
 decision, not a claim about deployment, and it is stated as such in the dissertation.
 
@@ -234,7 +234,7 @@ decision, not a claim about deployment, and it is stated as such in the disserta
 | `start_federation.sh` | starts server and N hospitals as separate processes |
 | `stop_federation.sh` | stops them, and cleans up orphans |
 | `run_experiment.py` | submits one experiment and waits for it |
-| `run_all_experiments.py` | the nine, in order, one at a time |
+| `run_all_experiments.py` | the whole campaign, in order, one at a time |
 | `collect_results.py` | evaluates every global model on the global test set |
 
 `start_federation.sh` deliberately starts **separate operating-system processes**, not

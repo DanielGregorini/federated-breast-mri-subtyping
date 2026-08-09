@@ -1,13 +1,13 @@
 # `config/` — what to run
 
 The single source of truth. Nothing else in the project hard-codes a hyperparameter,
-a port, or a split.
+a port, or a split. Two files. The trainer-only settings live in
+`../common/training.py`, which is shared with the centralised arm.
 
 | file | holds |
 |---|---|
-| `experiments.py` | the nine experiments, four partitions, model and hyperparameters |
+| `experiments.py` | the thirteen experiments, six partitions, model and hyperparameters |
 | `federation.py` | **the only file that knows a host or a port** |
-| `training.py` | augmentation and trainer-only settings |
 
 Both are runnable and print a summary:
 

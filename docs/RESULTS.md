@@ -26,15 +26,15 @@ scores 0.5112 here — higher than most of the models.
 
 | Test | Configuration | Algorithm | macro-AUC | Bal. acc | Accuracy |
 |---|---|---|---:|---:|---:|
-| 01 | Centralised | — | **0.6069** | 0.4503 | 0.5299 |
-| 02 | 2 hospitals, balanced | FedAvg | 0.5594 | 0.3742 | 0.4030 |
+| 01 | Centralised | — | **0.6068** | 0.4503 | 0.5299 |
+| 02 | 2 hospitals, balanced | FedAvg | 0.5816 | 0.3949 | 0.4328 |
 | 03 | 2 hospitals, balanced | FedProx | 0.5917 | 0.4025 | 0.4328 |
 | 04 | 3 hospitals, balanced | FedAvg | 0.5990 | 0.4198 | 0.4851 |
 | 05 | 3 hospitals, balanced | FedProx | 0.5958 | 0.4127 | 0.4590 |
-| 06 | 4 hospitals, balanced | FedAvg | **0.6531** | 0.4522 | 0.4776 |
+| 06 | 4 hospitals, balanced | FedAvg | 0.6077 | 0.4327 | 0.4925 |
 | 07 | 4 hospitals, balanced | FedProx | 0.6075 | 0.4393 | 0.4739 |
 | 08 | 4 hospitals, skewed | FedAvg | 0.5982 | 0.4259 | 0.4888 |
-| 09 | 4 hospitals, skewed | FedProx | 0.6250 | 0.4210 | 0.4515 |
+| 09 | 4 hospitals, skewed | FedProx | **0.6152** | 0.4285 | 0.4776 |
 | 10 | 3 hospitals, one cohort each | FedAvg | 0.5426 | 0.3582 | 0.4291 |
 | 11 | 3 hospitals, one cohort each | FedProx | 0.5678 | 0.4105 | 0.4590 |
 | 12 | 3 hospitals, cohorts mixed | FedAvg | 0.5836 | 0.4183 | 0.4478 |
@@ -57,13 +57,13 @@ the spread between two byte-identical runs differing only in seed.
 
 | | macro-AUC |
 |---|---:|
-| Centralised | 0.6069 |
-| Federated, mean of 12 | **0.5927** |
-| Difference | **0.0142** |
+| Centralised | 0.6068 |
+| Federated, mean of 12 | **0.5899** |
+| Difference | **0.0169** |
 
-The gap is **4.7 times smaller than the margin**, and every one of the twelve federated
-runs falls inside it — the largest single deviation is 0.047. Four federated runs scored
-*above* the centralised baseline.
+The gap is **4.0 times smaller than the margin**, and every one of the twelve federated
+runs falls inside it. The largest single deviation is 0.0641, on test 10. Three federated
+runs scored *above* the centralised baseline, by 0.0084, 0.0009 and 0.0007.
 
 > The cost of federation on this task is smaller than the cost of re-running the
 > centralised configuration with a different random seed.
@@ -109,8 +109,9 @@ cohort or from all three. The class spread is **27.5 percentage points against 0
 | FedProx (11 vs 13) | 0.5678 | 0.5882 | **−0.020** |
 
 **Both point the same way: real heterogeneity costs performance.** That consistency is
-what the quantity-skew comparison never produced — there the two pairs disagreed in sign
-(−0.054 and +0.017), the signature of noise dominating.
+what the quantity-skew comparison never produced. There the two pairs disagreed in sign,
+−0.0095 for FedAvg and +0.0077 for FedProx, and both are an order of magnitude smaller
+than the noise floor.
 
 Both differences remain inside the noise floor, so the magnitude is not established.
 Under the null, two independent comparisons both landing in the predicted direction has a
@@ -121,7 +122,7 @@ HER2+ class:
 
 | Test | HR+/HER2− | Triple Negative | HER2+ |
 |---|---:|---:|---:|
-| 10 — one cohort per site | 0.577 | 0.397 | **0.113** |
+| 10 — one cohort per site | 0.577 | 0.385 | **0.113** |
 | 12 — cohorts mixed | 0.511 | 0.423 | **0.321** |
 
 HER2+ recall collapses from 32% to 11%, and that class's AUC falls to 0.472 — below
@@ -134,32 +135,43 @@ only aggregate metrics would not show this.
 
 ### Communication is the strong result
 
-The global model reaches its plateau almost immediately. Averaged across sites, its
-validation AUC after **one** communication round is already 94–98% of its best value:
+The global model reaches its plateau almost immediately. The table below reads the
+aggregated model's own trajectory: `agg_val_auc` from each site's `rounds.csv`, averaged
+across sites, is the global model evaluated at a site *before* that site trains on it.
+The round at which it first reaches 95% and 99% of its own best value is what matters.
 
-| Test | Round 1 / best | Reaches 95% at round | Reaches 99% at round |
+| Test | Reaches 95% at round | Reaches 99% at round | Its best round |
 |---|---:|---:|---:|
-| 02 | 0.960 | 1 | 2 |
-| 04 | 0.960 | 1 | 3 |
-| 06 | 0.973 | 1 | 3 |
-| 08 | 0.963 | 1 | 3 |
-| 03 | 0.944 | 2 | 2 |
-| 05 | 0.967 | 1 | 2 |
-| 07 | 0.983 | 1 | 4 |
-| 09 | 0.953 | 1 | 2 |
+| 02 | 2 | 3 | 3 |
+| 03 | 2 | 2 | 2 |
+| 04 | 1 | 3 | 3 |
+| 05 | 1 | 2 | 2 |
+| 06 | 1 | 3 | 3 |
+| 07 | 1 | 4 | 5 |
+| 08 | 1 | 3 | 3 |
+| 09 | 1 | 4 | 4 |
+| 10 | 5 | 9 | 13 |
+| 11 | 2 | 2 | 9 |
+| 12 | 1 | 4 | 6 |
+| 13 | 4 | 13 | 13 |
 
-Thirty rounds were used; four would have sufficed. At 44.8 MB per client per round and
-per direction:
+Ten of the twelve are within 5% of their best by round 5, and eight of them by round 1.
+The two that are not, tests 10 and 13, are both from the cohort comparison, which is the
+consistent reading: heterogeneity is also what slows convergence.
 
-| Hospitals | 30 rounds | Stopping at round 4 | Saving |
-|---|---:|---:|---:|
-| 2 | 2.6 GB | 0.35 GB | **87%** |
-| 3 | 3.9 GB | 0.52 GB | **87%** |
-| 4 | 5.3 GB | 0.70 GB | **87%** |
+Thirty rounds were used. At 44.79 MB per client per round in each direction:
 
-Roughly 87% of the communication bought nothing measurable. This replicates on clean data
-a finding from an earlier campaign, where round 1 already contained 99.3% of the final
-macro-F1.
+| Hospitals | Per round | 30 rounds | Stopping at round 4 | Saving |
+|---|---:|---:|---:|---:|
+| 2 | 179.2 MB | 5.37 GB | 0.72 GB | **87%** |
+| 3 | 268.7 MB | 8.06 GB | 1.07 GB | **87%** |
+| 4 | 358.3 MB | 10.75 GB | 1.43 GB | **87%** |
+
+Across the whole campaign that is **102.12 GB** moved, against a dataset of 973 MB. Most
+of it bought nothing measurable. The caveat is that this reads the metric the server
+already selects on, so it says when the global model stops improving on held-out client
+data rather than proving that an early-stopped model would score the same on the global
+test set. No experiment stopped early to check.
 
 ### FedProx behaves as designed, but only where there is drift to correct
 
@@ -171,8 +183,9 @@ macro-F1.
 **Five times larger where the sites genuinely differ.** The proximal term of FedProx
 exists to stop a client drifting from the model it was given
 (Li et al., <https://arxiv.org/abs/1812.06127>), and on the stratified partitions it had
-almost nothing to correct — which is exactly what those results showed, flipping sign
-across configurations (+0.033, −0.003, −0.045, +0.026).
+almost nothing to correct. That is exactly what those results show: +0.0101 at two
+hospitals, −0.0032 at three, −0.0001 at four, and +0.0170 under quantity skew. The
+sign is not stable and every value is far inside the noise floor.
 
 ### Privacy is architectural here, not measured
 
@@ -203,7 +216,8 @@ collapsed HER2+ recall (0.113 → 0.283).
 
 **The security measures** — PKI provisioning, mutual TLS, patient-level partitioning,
 per-site local validation, and a non-finite-weight guard that refuses to transmit a
-diverged update — are implemented and verified by 219 pre-flight checks.
+diverged update — are implemented and verified by the pre-flight checks in `src/scripts/verify_production.py`,
+which refuse to let a federation start if any of them fails.
 
 **Not run, and each would strengthen this section:** global against local class-weight
 scope under the cohort partition, which is the direct privacy-versus-performance
@@ -225,12 +239,12 @@ privacy.
 **Not supported.**
 - Any specific magnitude for the heterogeneity cost. One seed, differences inside the
   noise floor.
-- Any ranking among the balanced configurations. The full spread across the nine original
-  experiments is 0.093 against a noise floor of 0.067.
+- Any ranking among the balanced configurations. The full spread across the twelve
+  federated experiments is 0.0725 against a noise floor of 0.067.
 - Any privacy claim beyond the architectural one.
 
 **The one caveat that belongs beside every pooled result.** A probe predicting which
-cohort an image came from reaches macro-AUC 0.9978 against 0.6069 for the subtype. The
+cohort an image came from reaches macro-AUC 0.9978 against 0.6068 for the subtype. The
 absolute numbers in this document are optimistic for that reason. In the stratified
 partitions the shortcut is available to every site equally, so it inflates the level
 without creating heterogeneity between sites — which is why it does not invalidate the

@@ -123,7 +123,8 @@ def _new_head(in_features: int, num_classes: int, dropout: float) -> nn.Module:
     """`Dropout(p) -> Linear`, or a bare `Linear` when `p` is 0.
 
     Wrapping the new `Linear` in its own two-element `Sequential` is what the
-    checkpoints in `results/classifier/checkpoints/` were trained with: every one of them
+    checkpoints of the classifier phase, archived in `unused/old_runs/classifier/
+    checkpoints/`, were trained with: every one of them
     stores `fc.1.weight` / `fc.1.bias`. A build that returns a bare `Linear` here
     cannot load them at all, and `strict=False` "loads" them with the classifier
     left at random init — which still scores near chance and reads as a result

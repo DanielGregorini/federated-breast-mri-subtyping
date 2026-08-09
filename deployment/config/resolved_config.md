@@ -16,7 +16,7 @@ readable without the source tree.
 | admin identity | `admin@ips.pt` (`project_admin`) |
 | hospitals | `hospital_1`, `hospital_2`, `hospital_3`, `hospital_4` |
 
-## Model and training — identical for all nine experiments
+## Model and training — identical for all thirteen experiments
 
 | | |
 |---|---|
@@ -42,7 +42,7 @@ readable without the source tree.
 | server model selection | `val_balanced_accuracy` — held-out client data |
 | local validation fraction | 0.2 |
 
-## The nine experiments
+## The thirteen experiments
 
 | test | folder | hospitals | distribution | algorithm |
 |---|---|---|---|---|
