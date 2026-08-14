@@ -38,6 +38,6 @@ which chose the configuration the federated campaign then held fixed. It was arc
 output in `_from_pod/` and the 7 retained checkpoints including the `FREEZE_R18_*.pt`
 pair that `TrainingConfig` was read out of.
 
-**The reported centralised baseline.** That is `results/federated/test01_centralized/`,
+**The reported centralised baseline.** That is `results/thesis/test01_centralized/`,
 macro AUC 0.6068, produced by `src/scripts/run_centralized.py` on the same pipeline as
 the twelve federated runs. Nothing in this folder is reported in the dissertation.

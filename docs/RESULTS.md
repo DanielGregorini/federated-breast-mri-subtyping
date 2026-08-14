@@ -1,6 +1,6 @@
 # Results — Centralised against Federated
 
-Every number here is read from `results/federated/final_summary/summary.csv` and the
+Every number here is read from `results/thesis/final_summary/summary.csv` and the
 per-experiment `test_metrics.json`. All 13 experiments are scored on the **same** global
 test set: 268 patients, 2,115 images, trivial baseline **0.5112**.
 

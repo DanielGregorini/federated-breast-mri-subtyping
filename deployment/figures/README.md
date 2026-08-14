@@ -1,7 +1,7 @@
 # deployment/figures — data distribution figures
 
 Figures about how the data is split, not about results. Result figures live in
-`results/federated/final_summary/figures/`.
+`results/thesis/final_summary/figures/`.
 
 Each exists as both `.png` and `.pdf`.
 

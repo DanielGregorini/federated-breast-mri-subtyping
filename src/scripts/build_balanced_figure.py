@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 REPO = Path(__file__).resolve().parent.parent.parent
-FED = REPO / "results" / "federated"
+FED = REPO / "results" / "thesis"
 POD3 = REPO / "results" / "_pod3" / "guardado"
 POD4 = REPO / "results" / "_pod4" / "keep"
 OLD = REPO / "old_runs"

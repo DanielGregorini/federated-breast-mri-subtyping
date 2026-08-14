@@ -57,7 +57,7 @@ import numpy as np
 import pandas as pd
 
 # 1. The metric stack must reproduce the reported centralised macro AUC exactly.
-pred = pd.read_csv(REPO / "results/federated/test01_centralized/seed_42/predictions_test.csv")
+pred = pd.read_csv(REPO / "results/thesis/test01_centralized/seed_42/predictions_test.csv")
 P = pred[["prob_HRposHER2neg", "prob_TripleNeg", "prob_HER2pos"]].to_numpy()
 m = ns["compute_metrics"](pred.label.to_numpy(), P, ns["CLASS_NAMES"])
 check("test01 macro AUC from the notebook's compute_metrics", m["auc"],

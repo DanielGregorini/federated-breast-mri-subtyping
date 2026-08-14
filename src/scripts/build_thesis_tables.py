@@ -4,7 +4,7 @@
     python src/scripts/build_thesis_tables.py
 
 Writes ``docs/thesis_tables_results.tex``. Every number is read from the files under
-``results/federated/``; nothing is typed by hand and nothing is rounded twice.
+``results/thesis/``; nothing is typed by hand and nothing is rounded twice.
 
 WHY IT RECOMPUTES THE PER-HOSPITAL METRICS
 ------------------------------------------
@@ -38,9 +38,9 @@ from sklearn.metrics import (accuracy_score, balanced_accuracy_score,
                              precision_recall_fscore_support, roc_auc_score)
 
 REPO = Path(__file__).resolve().parent.parent.parent
-FS = REPO / "results" / "federated" / "final_summary"
+FS = REPO / "results" / "thesis" / "final_summary"
 EXP = FS / "experiments"
-FED = REPO / "results" / "federated"
+FED = REPO / "results" / "thesis"
 OUT = REPO / "docs" / "thesis_tables_results.tex"
 
 CLS = ["HRposHER2neg", "TripleNeg", "HER2pos"]

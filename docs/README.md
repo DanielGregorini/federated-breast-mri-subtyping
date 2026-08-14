@@ -29,15 +29,6 @@ root [README](../README.md) summarises the first three and links here.
 | [NVFLARE_CONFIGURATION.md](NVFLARE_CONFIGURATION.md) | The exact deployment configuration, every value verified against a file or a run artefact |
 | [TRAINING_PARAMETERS.md](TRAINING_PARAMETERS.md) | Every hyperparameter, which arm used it, and the augmentation table |
 
-## The record
-
-| Document | What it covers |
-|---|---|
-| [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) | The complete technical record of the project as it stands |
-| [PROJECT_HISTORY.md](PROJECT_HISTORY.md) | How it got here, in order, including everything that was tried and abandoned |
-| [BREASTDCEDL_REPRODUCIBILITY_REPORT.md](BREASTDCEDL_REPRODUCIBILITY_REPORT.md) | The file-by-file audit of the dataset authors' repository |
-| [RELATED_WORK_COMPARISON.md](RELATED_WORK_COMPARISON.md) | The comparator papers for chapter 4, every DOI verified, ranked by how directly their experimental setting compares with ours |
-
 ## [images/](images/README.md)
 
 | Folder | What it holds |

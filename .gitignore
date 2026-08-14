@@ -267,3 +267,12 @@ docs/PROJECT_CONTEXT.md
 docs/PROJECT_HISTORY.md
 
 docs/RELATED_WORK_COMPARISON.md
+docs/BREASTDCEDL_REPRODUCIBILITY_REPORT.md
+docs/thesis_tables_results.tex
+
+# Runs you produce locally. The dissertation record is results/thesis/ and stays
+# tracked; your own runs are not published.
+results/classifier/test_*
+results/federated/*
+!results/federated/README.md
+results/classifier/all_experiments.csv

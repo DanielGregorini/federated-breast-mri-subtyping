@@ -30,8 +30,8 @@ Conflating them is the main way to misreport this work.
 2. **The final campaign has no early-stopping mechanism at all.** `early_stopping` does
    not exist in `src/federated/config/experiments.py`, and `src/scripts/run_centralized.py`
    contains no such code — the loop runs all 30 epochs and tracks the best. The phrase
-   "early stopping disabled (`early_stopping_patience = 0`)" in `docs/PROJECT_CONTEXT.md`
-   describes the *classifier-phase* field, which is `100 epochs / patience 30`, not the
+   "early stopping disabled (`early_stopping_patience = 0`)" seen in the classifier-phase
+   record describes that phase's field, which is `100 epochs / patience 30`, not the
    federated code.
 3. **`backbone_lr_scale = 0.1` was used in the preliminary phase and is absent from the
    final campaign.** The final arms apply one learning rate to all trainable parameters.

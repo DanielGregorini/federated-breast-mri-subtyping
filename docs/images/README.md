@@ -10,7 +10,7 @@ text disagree, regenerate the figure.
 | `report_figures/` | dataset composition, tumour size by cohort, example images before and after, and the physical-window rationale | `src/scripts/build_dataset_report_figures.py` |
 
 Result figures are not here. They live in
-`results/federated/final_summary/figures/`, built by
+`results/thesis/final_summary/figures/`, built by
 `src/scripts/build_final_summary.py` and the `build_*_figure(s).py` scripts.
 
 ## Where the data comes from

@@ -17,8 +17,9 @@ hyperparameter is defined here: `jobs/` is generated from
 | `scripts/` | `provision.sh`, `start.sh`, `run.sh`, `stop.sh`, `verify.sh`, `collect.sh`, `summary.sh` |
 | `project.yml` | The NVFLARE provisioning file: participants, ports, builders |
 
-Results are **not** here. They live at the repository root under `results/federated/`,
-beside the classifier-phase runs, so a reader looking for results does not have to know
+Results are **not** here. A campaign you collect lands at the repository root under
+`results/federated/`, and the thirteen experiments the dissertation reports are
+preserved in `results/thesis/`, so a reader looking for results does not have to know
 what a deployment is.
 
 ## The participants

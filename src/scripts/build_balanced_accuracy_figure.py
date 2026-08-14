@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 REPO = Path(__file__).resolve().parent.parent.parent
-FED = REPO / "results" / "federated"
+FED = REPO / "results" / "thesis"
 OUT = REPO / "latex" / "figuras"
 
 BLUE, ORANGE, GREY, VERM = "#0072B2", "#E69F00", "#999999", "#D55E00"

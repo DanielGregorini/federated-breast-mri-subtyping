@@ -29,7 +29,7 @@ import numpy as np
 import pandas as pd
 
 REPO = Path(__file__).resolve().parent.parent.parent
-FED = REPO / "results" / "federated"
+FED = REPO / "results" / "thesis"
 OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path.cwd()
 
 BLUE, ORANGE, GREY, BLACK = "#0072B2", "#E69F00", "#666666", "#000000"

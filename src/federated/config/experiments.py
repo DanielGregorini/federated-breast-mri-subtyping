@@ -495,8 +495,7 @@ EXPERIMENTS: list[Experiment] = [
     #
     # They are removed rather than left as empty rows because a results table
     # carrying four permanently blank experiments invites the reader to ask what
-    # happened to them in every chapter. The episode is recorded in
-    # docs/PROJECT_HISTORY.md.
+    # happened to them in every chapter.
     #
     # The asymmetry that made FedOpt unusable here is worth keeping in mind if it
     # is ever revived: with `key_metric` refused, FedOpt keeps the LAST round

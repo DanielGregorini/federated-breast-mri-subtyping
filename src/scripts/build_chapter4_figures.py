@@ -4,7 +4,7 @@
     python src/scripts/build_chapter4_figures.py
 
 Writes PDF + PNG into ``latex/figuras/``. Every value is read from
-``results/federated/``; nothing is synthetic. Re-running after a re-collection
+``results/thesis/``; nothing is synthetic. Re-running after a re-collection
 regenerates the whole chapter's artwork.
 
 Palette is Okabe-Ito (colour-blind safe). Figures are deliberately compact with
@@ -23,9 +23,9 @@ import numpy as np
 import pandas as pd
 
 REPO = Path(__file__).resolve().parent.parent.parent
-FS = REPO / "results" / "federated" / "final_summary"
+FS = REPO / "results" / "thesis" / "final_summary"
 EXP = FS / "experiments"
-FED = REPO / "results" / "federated"
+FED = REPO / "results" / "thesis"
 OUT = REPO / "latex" / "figuras"
 
 CLASSES = ["HR+/HER2$-$", "TripleNeg", "HER2+"]

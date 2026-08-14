@@ -2,7 +2,7 @@
 
 Audited 2026-08-05 14:00 UTC by `src/scripts/audit_dataset.py`. Every number below is read from the data, not from a previous document.
 
-**Source:** `/Users/daniel/Developer/tese/federated-breast-mri-subtyping/dataset/multi_subtype_80mm`
+**Source:** `/federated-breast-mri-subtyping/dataset/multi_subtype_80mm`
 
 ## Totals
 

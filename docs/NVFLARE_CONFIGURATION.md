@@ -18,7 +18,7 @@ Verified 2026-08-04 against `config/`, `federation/`, `deployment/project.yml`,
 | `python3 -c "import nvflare; print(nvflare.__version__)"` | `2.8.0` |
 | `deployment/project.yml` | `api_version: 3` |
 | `deployment/README.md:523` | refers to NVFLARE 2.8 admin-name validation |
-| campaign record, `docs/PROJECT_CONTEXT.md` | NVFLARE 2.8.0, CUDA 12.8, torch 2.8.0 |
+| campaign record | NVFLARE 2.8.0, CUDA 12.8, torch 2.8.0 |
 
 **Not confirmed.** The run logs produced on the RunPod host carry no version string, so
 the pod's exact patch level cannot be recovered from the repository. The value above is

@@ -88,7 +88,7 @@ Final training images, one per cohort and class. Each is a real file from `datas
 | **[`dataset/`](dataset/README.md)** | The processed 2-D dataset the network trains on: PNG slices, split manifests and the build configuration that defines them. |
 | **[`src/`](src/README.md)** | All the code: the dataset builder, the preprocessing pipelines, the shared trainer, the federated layer and every operational script. |
 | **[`deployment/`](deployment/README.md)** | The running system: PKI startup kits, generated jobs, per-hospital data and per-participant logs. |
-| **[`results/`](results/README.md)** | Every run that was kept, classifier phase and federated campaign both. |
+| **[`results/`](results/README.md)** | The dissertation record in `thesis/`, kept frozen, plus `classifier/` and `federated/` where runs you launch yourself land. |
 | **[`docs/`](docs/README.md)** | All documentation and every figure. |
 | **[`notebooks/`](notebooks/README.md)** | The whole pipeline as notebooks, numbered in the order they run: analyse, build, train, evaluate, compare, then set up and run the federation. Each carries its own logic rather than calling into `src/`. |
 
@@ -283,7 +283,20 @@ BreastDCEDL is an aggregation of three public collections held by
 | I-SPY2, TCIA | 982 |
 | Duke-Breast-Cancer-MRI, TCIA | 914 |
 
-The Duke collection is additionally described in:
+**I-SPY1:**
+
+> Newitt, D., Hylton, N., on behalf of the I-SPY 1 Network and ACRIN 6657 Trial Team.
+> *Multi-center breast DCE-MRI data and segmentations from patients in the I-SPY
+> 1/ACRIN 6657 trials* [Data set]. The Cancer Imaging Archive (2016).
+> <https://doi.org/10.7937/K9/TCIA.2016.HdHpgJLK>
+
+**I-SPY2:**
+
+> Li, W., Newitt, D.C., Gibbs, J., et al. *I-SPY 2 Breast Dynamic Contrast Enhanced
+> MRI Trial (ISPY2)* [Data set]. The Cancer Imaging Archive (2022).
+> <https://doi.org/10.7937/TCIA.D8Z0-9T85>
+
+**Duke:** the collection is additionally described in:
 
 > Saha, A., Harowicz, M.R., Grimm, L.J., et al. *A machine learning approach to
 > radiogenomics of breast cancer: a study of 922 subjects and 529 DCE-MRI features.*
