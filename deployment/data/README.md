@@ -1,50 +1,70 @@
-# `data/` — physically separated hospitals
+# deployment/data
+
+The images and manifests the participants read. One folder per hospital, so a site
+physically cannot open another site's patients.
 
 ```
 data/
-├── global/
-│   ├── test/          the held-out test set. Identical for all thirteen experiments.
-│   └── labels.csv
+├── global/                     the held-out sets, held by the server
+│   ├── images/<patient>/       PNG slices
+│   ├── test.csv                268 patients, 2,115 slices
+│   ├── val.csv                 268 patients, 2,132 slices
+│   └── manifest.json           sizes, class counts, trivial baseline per split
 └── partitions/
-    ├── 2_clients_balanced/hospital_{1,2}/{train,val}/
-    ├── 3_clients_balanced/hospital_{1..3}/{train,val}/
-    ├── 4_clients_balanced/hospital_{1..4}/{train,val}/
-    └── 4_clients_skewed/hospital_{1..4}/{train,val}/
+    ├── 2_clients_balanced/
+    ├── 3_clients_balanced/
+    ├── 3_clients_cohort/
+    ├── 3_clients_sizematched/
+    ├── 4_clients_balanced/
+    └── 4_clients_skewed/
+        ├── partition.json      per-site patient and class counts
+        └── hospital_N/
+            ├── images/<patient>/
+            ├── train.csv
+            ├── val.csv
+            └── manifest.json
 ```
 
-**Each hospital folder holds only that hospital's patients**, as real copies rather
-than symlinks. It costs disk and buys two things: the layout is exactly what would be
-`rsync`-ed to a real hospital machine, and it is impossible for a bug to let one site
-read another's data — the files are not there.
+Images are hardlinks into `dataset/multi_subtype_80mm/`, so each site has its own path
+without storing the same immutable PNG many times.
 
-## Three rules, enforced not assumed
+Patients are split by patient, never by slice. Every image of a patient goes to one
+site, and no patient appears in two of them or in both a training set and the global
+test set. Each hospital holds back 20% of its own patients as a local validation
+split, which is what produces the metric the server selects on.
 
-1. **Split by patient, never by slice.** Every image of a patient goes to one site.
-   Slices from one patient are near-duplicates; a slice-level split would let the
-   model recognise the patient instead of the disease.
-2. **No patient in two places.** Not across hospitals, and not between any training
-   set and the global test set.
-3. **Each hospital keeps its own validation split** — 20% of its own patients. This is
-   what produces the metric the server selects on, and it is local by construction: a
-   hospital cannot validate on another hospital's patients.
+## How to build it
 
-`src/scripts/verify_data.py` checks all three and exits non-zero if any fails. Run it
-after every partitioning.
-
-## Why the global test set sits with the server
-
-In a production federation the server usually holds no data at all. Here it holds a
-held-out set because the thirteen experiments must be compared on identical ground —
-changing which patients are tested moved macro-AUC by more than any intervention ever
-measured in this project. This is a benchmarking decision, not a claim about
-deployment, and the dissertation states it as such.
-
-## Regenerating
+Notebook 06 writes the whole folder:
 
 ```bash
-python3 scripts/prepare_data.py      # global test set
-python3 scripts/partition_data.py    # the four splits
-python3 scripts/verify_data.py       # leakage checks
+jupyter notebook notebooks/06_federated_setup.ipynb
 ```
 
-Nothing here is version-controlled. Back it up separately.
+The script path does the same in two steps:
+
+```bash
+python deployment/code/scripts/prepare_data.py --hardlink
+```
+
+Carves `global/` out of the processed dataset.
+
+```bash
+python deployment/code/scripts/partition_data.py --hardlink
+```
+
+Divides the remaining training patients into the six partitions. `--only NAME` builds
+one of them. `--by-cohort` gives each hospital one complete source cohort.
+`--stratify none` lets the class ratio differ between sites.
+
+## How to check it
+
+```bash
+python deployment/code/scripts/verify_data.py
+```
+
+Checks that no patient is in two sites, that no training patient is in the global test
+set, and that every local validation split covers all three classes. Exits non-zero if
+any check fails. Run it after every rebuild.
+
+Nothing in this folder is version controlled except this README.

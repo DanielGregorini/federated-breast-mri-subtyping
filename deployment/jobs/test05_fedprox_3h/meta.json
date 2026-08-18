@@ -1,0 +1,10 @@
+{
+    "name": "test05_fedprox_3h",
+    "resource_spec": {},
+    "min_clients": 3,
+    "deploy_map": {
+        "app": [
+            "@ALL"
+        ]
+    }
+}

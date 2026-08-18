@@ -181,7 +181,8 @@ cython_debug/
 .cursorindexingignore
 .DS_Store
 /radiomic_ai/data/segmented
-/dataset
+/dataset/*
+!/dataset/README.md
 /raw_dataset
 /federated_breast_classification/production/downloaded_models
 /federated_breast_classification/production/hospital_1/local_val
@@ -276,3 +277,4 @@ results/classifier/test_*
 results/federated/*
 !results/federated/README.md
 results/classifier/all_experiments.csv
+

@@ -4,9 +4,9 @@
 Nothing is inferred from library defaults or carried over from prose. Where the code and
 the project's own prose disagree, the code wins and the disagreement is stated.
 
-Verified 2026-08-04 against `src/federated/config/experiments.py`, `src/federated/common/training.py`,
-`src/federated/common/data.py`, `src/core/training.py`,
-`src/core/data.py`, `src/scripts/run_centralized.py`, the run logs in
+Verified 2026-08-04 against `deployment/code/config/experiments.py`, `deployment/code/common/training.py`,
+`deployment/code/common/data.py`, `src/core/training.py`,
+`src/core/data.py`, `deployment/code/scripts/run_centralized.py`, the run logs in
 `deployment/logs/`, and the recorded configs in
 `unused/old_runs/classifier/_from_pod/`, where the classifier phase was archived.
 
@@ -20,15 +20,15 @@ Conflating them is the main way to misreport this work.
 | phase | what it is | where the config lives | status |
 |---|---|---|---|
 | **PRELIMINARY** | The classifier phase — 21 runs, 13 architectures, 5 data configurations. Used to *choose* the configuration. | `src/dataset_config.py`; per-run `results/_from_pod/multi/<run>/config.json` | superseded; not the dissertation's numbers |
-| **FINAL** | The dissertation campaign — test01 (centralised) + test02–09 (federated), 2026-08-03/04 | `src/federated/config/experiments.py` — **single source of truth** | **these are the reported results** |
-| **PLANNED / NOT RUN** | Implemented and available, never executed | same file / `src/scripts/partition_data.py` | must not be reported as results |
+| **FINAL** | The dissertation campaign — test01 (centralised) + test02–09 (federated), 2026-08-03/04 | `deployment/code/config/experiments.py` — **single source of truth** | **these are the reported results** |
+| **PLANNED / NOT RUN** | Implemented and available, never executed | same file / `deployment/code/scripts/partition_data.py` | must not be reported as results |
 
 **Three corrections to earlier summaries in this project, found while verifying:**
 
 1. **Gradient clipping is used and had been omitted.** `clip_grad_norm_(…, max_norm=1.0)`
    is applied in both the shared trainer and the FedProx fork.
 2. **The final campaign has no early-stopping mechanism at all.** `early_stopping` does
-   not exist in `src/federated/config/experiments.py`, and `src/scripts/run_centralized.py`
+   not exist in `deployment/code/config/experiments.py`, and `deployment/code/scripts/run_centralized.py`
    contains no such code — the loop runs all 30 epochs and tracks the best. The phrase
    "early stopping disabled (`early_stopping_patience = 0`)" seen in the classifier-phase
    record describes that phase's field, which is `100 epochs / patience 30`, not the
@@ -42,7 +42,7 @@ Conflating them is the main way to misreport this work.
 
 `Used in` states the arm each value applies to. "Both" means the identical value, from the
 same `TrainingConfig` object — the centralised baseline and the federated clients run the
-same trainer, which is what makes RQ1 a measurement of federation rather than of two
+same trainer, which is what makes the comparison a measurement of federation rather than of two
 different trainers.
 
 | Parameter | Value | Used in | Source |
@@ -290,9 +290,9 @@ label or feature non-IID heterogeneity.** This must be stated in the dissertatio
 
 | item | status |
 |---|---|
-| `--by-cohort` partition (one real cohort per hospital) | implemented in `src/scripts/partition_data.py`, **never run** |
+| `--by-cohort` partition (one real cohort per hospital) | implemented in `deployment/code/scripts/partition_data.py`, **never run** |
 | `--stratify none` (label skew) | implemented, **never run** |
-| `class_weight_scope = "global"` | implemented, **never run** — this is the real RQ4 experiment |
+| `class_weight_scope = "global"` | implemented, **never run** |
 | FedOpt (tests 10–13) | implemented, **cancelled** |
 | `freeze_until = "layer4"` | supported, **never run** |
 | `chanclip` normalisation | implemented; run in the preliminary phase (lost by 0.025), **not used in the final dataset** |

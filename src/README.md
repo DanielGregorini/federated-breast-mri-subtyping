@@ -1,45 +1,52 @@
-# src — all the code
+# src
 
-| Folder | What it holds |
+The dataset and the model. Everything here is about turning MRI volumes into a
+trained classifier on one machine, with no notion of hospitals or a network.
+
+The federation imports from here, so both arms of the experiment run the same
+trainer. It lives in [`deployment/code/`](../deployment/code/README.md).
+
+| Path | What it holds |
 |---|---|
-| [`core/`](core/README.md) | The dataset builder and the shared trainer. The centralised baseline and every federated client run this same code |
-| [`pipelines/`](pipelines/README.md) | The two preprocessing rule sets: `thesis/` is what this dissertation proposes, `reference/` reproduces the dataset authors' published rules |
-| [`federated/`](federated/README.md) | Configuration, aggregation recipes, the client loop, and the library the clients share |
-| [`scripts/`](scripts/README.md) | Every operational script: build the data, generate the jobs, verify, run, collect, summarise |
-| `analysis/` | Exploratory notebooks |
-| `dataset_config.py` | Dataset and task configuration: where the raw release is, which cohorts and which task, and the `Config` object the builder takes |
+| [`core/`](core/README.md) | The dataset builder and the shared trainer. |
+| [`pipelines/`](pipelines/README.md) | The two preprocessing rule sets the dataset builder can be given. |
+| [`scripts/`](scripts/README.md) | The two scripts that regenerate the documentation figures. |
+| `dataset_config.py` | Where the raw release is, which cohorts and which task, and the `Config` object the builder takes. |
 
-## How the pieces relate
+## How the pieces fit
 
 ```
-dataset_config.py     what to build and from where
+dataset_config.py            what to build and from where
         |
         v
-core/dataset_builder.py    reads volumes, locates the lesion, writes PNGs
+core/dataset_builder.py      reads the volumes, locates the lesion, writes PNGs
         |
-        +---- pipelines/thesis/      which slices, how to crop, how to normalise
-        +---- pipelines/reference/   the same three decisions, the authors' way
+        +-- pipelines/thesis/      which slices, how to crop, how to normalise
+        +-- pipelines/reference/   the same three decisions, the authors' way
         |
         v
 core/{data,models,training,evaluation}.py     the shared trainer
         |
-        +---- run_centralized.py (at the repository root)
-        +---- federated/common/  ->  src/federated/federation/client.py
+        +-- notebooks/03_train_centralized.ipynb    one machine
+        +-- deployment/code/common/                 one hospital
 ```
 
-`federated/common/thesis.py` is the bridge: it loads `dataset_config.py` by explicit file
-location rather than by name, so it cannot be shadowed by another module called `config`
-on the path.
+`deployment/code/common/thesis.py` is the bridge. It loads `dataset_config.py` by
+explicit file location rather than by module name, so it cannot be shadowed by another
+module called `config` on the path. It finds this folder through `$BREAST_CORE_ROOT`,
+falling back to the repository layout.
 
-## The one rule
+## How to use it
 
-`src/federated/config/experiments.py` is the **single source of truth** for every
-hyperparameter and every experiment. Jobs are generated from it; the deployment snapshot
-is written from it and never read back; the scripts are wrappers around it.
+Nothing here is a command except the two figure scripts. The code is imported, by a
+notebook or by a federated client.
 
-Three separate defects in this project's history had one cause — two copies of a setting
-drifting apart. A server built a ResNet-18 while its clients built a ResNet-50; an
-evaluation script had the architecture hard-coded; federated clients were regularised
-differently from the baseline they were compared against. All three completed normally
-and produced meaningless numbers. Generating everything from one table makes that class
-of defect inexpressible.
+The shortest path through it is notebook 03:
+
+```bash
+jupyter notebook notebooks/03_train_centralized.ipynb
+```
+
+Nothing in this folder imports `nvflare`, and
+`deployment/code/scripts/verify_data.py --check-imports` checks that rather than
+trusting it.

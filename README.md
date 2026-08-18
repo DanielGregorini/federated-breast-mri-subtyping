@@ -1,80 +1,61 @@
 # Federated Learning for Breast Cancer Molecular Subtype Classification
 
-**Master's dissertation — Daniel Mahl Gregorini**
+Master's dissertation, Daniel Mahl Gregorini.
 
-A deployable federated learning system that trains a breast-cancer molecular-subtype
-classifier across several hospitals without any medical image leaving the institution
-that produced it. The classifier is the vehicle; the measurement is what federation
-costs.
+A federated learning system that trains a breast cancer molecular subtype classifier
+across several hospitals without any medical image leaving the institution that
+produced it.
 
-Built on **NVIDIA FLARE 2.8.0** in production mode — real PKI, one operating-system
-process per hospital, mutual TLS, jobs submitted through the admin API. Not the
+It runs on NVIDIA FLARE 2.8.0 in production mode. Real PKI, one operating-system
+process per hospital, mutual TLS, and jobs submitted through the admin API. Not the
 simulator.
 
 | | |
 |---|---|
-| **Task** | 3-class molecular subtype from DCE-MRI: HR+/HER2−, Triple Negative, HER2+ |
-| **Dataset** | **BreastDCEDL** (Fridman et al., 2026) — Duke + I-SPY1 + I-SPY2 · 2,063 patients · 16,378 images |
+| **Task** | 3-class molecular subtype from DCE-MRI: HR+/HER2-, Triple Negative, HER2+ |
+| **Dataset** | BreastDCEDL (Fridman et al., 2026), Duke + I-SPY1 + I-SPY2, 2,063 patients, 16,378 images |
 | **Model** | ResNet-18, ImageNet-pretrained, 11,178,051 parameters |
-| **Experiments** | 1 centralised baseline + 12 federated runs (FedAvg and FedProx, 2–4 hospitals) |
+| **Experiments** | 1 centralised baseline and 12 federated runs, FedAvg and FedProx, 2 to 4 hospitals |
 
-**BreastDCEDL** · [Paper (Scientific Data)](https://doi.org/10.1038/s41597-026-06589-6) ·
-[Download (Zenodo)](https://zenodo.org/records/18114231) ·
-[Code (GitHub)](https://github.com/naomifridman/BreastDCEDL)
-
----
-
-## Research questions
-
-| | Question |
-|---|---|
-| **RQ1** | Can federated learning reach performance comparable to centralised training? |
-| **RQ2** | What is the impact of non-IID data heterogeneity on federated models? |
-| **RQ3** | What are the trade-offs between privacy, communication efficiency and performance? |
-| **RQ4** | What strategies mitigate the limitations of federated learning in clinical environments? |
+BreastDCEDL: [paper](https://doi.org/10.1038/s41597-026-06589-6) ·
+[download](https://zenodo.org/records/18114231) ·
+[code](https://github.com/naomifridman/BreastDCEDL)
 
 ---
 
-## The pipeline, end to end
+## The pipeline
 
 ```
 raw_dataset_BreastDCEDL/        3-D NIfTI volumes, three DCE phases per patient
         |
-        |   notebooks/02_build_dataset.ipynb  ->  src/core/ + src/pipelines/thesis/
+        |   notebooks/02_build_dataset.ipynb
         v
 dataset/                        16,378 RGB PNGs, 224x224, constant 0.357 mm/px
         |                       R = pre-contrast, G = early post, B = late post
         |
-        +---> src/scripts/run_centralized.py -> results/classifier/
+        +---> notebooks/03_train_centralized.ipynb -> results/classifier/
         |     one machine, all patients pooled
         |
-        +---> src/scripts/partition_data.py
+        +---> notebooks/06_federated_setup.ipynb
               deployment/data/   per-hospital splits, by patient, never by slice
                     |
                     v
-              src/federated/  ->  NVIDIA FLARE  ->  results/federated/
-              server + 2-4 hospital clients, 30 rounds x 1 local epoch
+              NVIDIA FLARE  ->  results/federated/
+              server and 2 to 4 hospital clients, 30 rounds x 1 local epoch
 ```
 
-Each patient's slices stay together in exactly one split and one hospital. Splitting by
-slice instead would let the model recognise the patient rather than the disease — the
-first defect this project ever shipped, and the reason every split is verified before it
-is used.
+Every slice of a patient stays in one split and one hospital.
 
 <p align="center">
   <img src="docs/images/preprocessing_figures/fig_p5_flowchart.png" width="360">
 </p>
 
----
-
-## What the data looks like
-
-The same slice at every preprocessing step, produced by the same functions the dataset
+The same slice at every preprocessing step, produced by the functions the dataset
 builder calls:
 
 ![Preprocessing walkthrough](docs/images/preprocessing_figures/fig_p1_walkthrough.png)
 
-Final training images, one per cohort and class. Each is a real file from `dataset/`:
+Final training images, one per cohort and class, each a real file from `dataset/`:
 
 ![Example training images](docs/images/report_figures/fig3_examples_cohort_class.png)
 
@@ -84,65 +65,21 @@ Final training images, one per cohort and class. Each is a real file from `datas
 
 | Folder | What it holds |
 |---|---|
-| **[`raw_dataset_BreastDCEDL/`](raw_dataset_BreastDCEDL/README.md)** | The BreastDCEDL imaging release from Zenodo — 3-D NIfTI volumes and tumour annotations. Never written to. Not in version control; its README explains how to obtain it. |
-| **[`dataset/`](dataset/README.md)** | The processed 2-D dataset the network trains on: PNG slices, split manifests and the build configuration that defines them. |
-| **[`src/`](src/README.md)** | All the code: the dataset builder, the preprocessing pipelines, the shared trainer, the federated layer and every operational script. |
-| **[`deployment/`](deployment/README.md)** | The running system: PKI startup kits, generated jobs, per-hospital data and per-participant logs. |
-| **[`results/`](results/README.md)** | The dissertation record in `thesis/`, kept frozen, plus `classifier/` and `federated/` where runs you launch yourself land. |
-| **[`docs/`](docs/README.md)** | All documentation and every figure. |
-| **[`notebooks/`](notebooks/README.md)** | The whole pipeline as notebooks, numbered in the order they run: analyse, build, train, evaluate, compare, then set up and run the federation. Each carries its own logic rather than calling into `src/`. |
+| [`raw_dataset_BreastDCEDL/`](raw_dataset_BreastDCEDL/README.md) | The BreastDCEDL imaging release. Input only. Its README explains how to obtain it. |
+| [`dataset/`](dataset/README.md) | The processed 2-D dataset the network trains on. PNG slices, split manifests and the build configuration. |
+| [`src/`](src/README.md) | The dataset builder, the preprocessing pipelines and the shared trainer. Everything about turning volumes into a trained model on one machine. |
+| [`deployment/`](deployment/README.md) | The running system. The federated code in `code/`, the PKI startup kits, the generated jobs, the per-hospital data and the per-participant logs. |
+| [`results/`](results/README.md) | The dissertation record in `thesis/`, plus `classifier/` and `federated/` where your own runs land. |
+| [`docs/`](docs/README.md) | Every document and every figure. |
+| [`notebooks/`](notebooks/README.md) | The whole pipeline as notebooks, numbered in the order they run. Each carries its own logic. |
 
-The repository root holds only `README.md` and `requirements.txt`. Everything else
-belongs to one of the folders above.
-
----
-
-## Documentation
-
-Everything lives in **[`docs/`](docs/README.md)**. Start with the first three.
-
-### The dataset
-
-The network trains on 16,378 RGB PNG slices from 2,063 patients across three cohorts.
-Each image is 224×224 at a constant 0.357 mm/px, and its three colour channels are three
-DCE acquisition time-points — so the *colour* of a voxel encodes how it took up and
-released the contrast agent. Splits are at patient level, and the trivial baseline on the
-test set is 0.5112.
-
-→ **[How the dataset is organised, column by column, with example images](docs/DATASET_DOCUMENTATION.md)**
-→ [Full scientific characterisation](docs/DATASET_REPORT.md) ·
-  [Technical specification](docs/DATASET_SPEC.md)
-
-### Preprocessing and imaging
-
-What a DCE-MRI study is and why the channel assignment follows from it; the 80 mm
-physical crop window and why it is fixed in millimetres rather than pixels; slice
-selection; normalisation scope; and the interventions that were measured and rejected.
-Includes the patient-level data-leakage lesson, with the literature that quantifies it.
-
-→ **[Preprocessing and imaging](docs/PREPROCESSING_AND_IMAGING.md)** ·
-  [Step-by-step technical reference](docs/PREPROCESSING.md)
-
-### Results
-
-Centralised against federated, framed as an equivalence claim against the measured noise
-floor rather than as a failed significance test, and compared with the published
-literature on federated learning in medical imaging.
-
-→ **[Results](docs/RESULTS.md)**
-
-### The system
-
-→ [Architecture](docs/ARCHITECTURE.md) · [Deployment](docs/DEPLOYMENT.md) ·
-  [Experiment matrix](docs/EXPERIMENTS.md) ·
-  [NVFLARE configuration](docs/NVFLARE_CONFIGURATION.md) ·
-  [Training parameters](docs/TRAINING_PARAMETERS.md)
+The repository root holds only `README.md` and `requirements.txt`.
 
 ---
 
 ## How to run it
 
-Five operations, in order. Each links to the folder that documents it properly.
+Six steps, in order.
 
 ### 0. Install
 
@@ -150,124 +87,118 @@ Five operations, in order. Each links to the folder that documents it properly.
 pip install -r requirements.txt
 ```
 
-### 1. Get the raw imaging → [`raw_dataset_BreastDCEDL/`](raw_dataset_BreastDCEDL/README.md)
+### 1. Get the raw imaging
 
-Run this **from the repository root**:
+Run from the repository root. About 22 GB to download, 35 GB once extracted.
 
 ```bash
 python raw_dataset_BreastDCEDL/download_dataset.py
 ```
 
-About **22 GB** to download, **35 GB** once extracted. The script reads the file list
-from the Zenodo API, resumes an interrupted download, verifies the md5 published for
-each file, extracts the archives and reports whether the layout is what the builder
-expects.
+Writes into [`raw_dataset_BreastDCEDL/`](raw_dataset_BreastDCEDL/README.md). Add
+`--list` to see what is in the record without downloading anything.
 
-**If it fails for any reason** — no network, a proxy, a Zenodo outage, a corrupted
-transfer — it prints the record URL and step-by-step manual instructions instead of a
-traceback:
-
-> Open <https://zenodo.org/records/18114231>, download the four MinCrop files into
-> `raw_dataset_BreastDCEDL/`, and `tar xzf` each archive in place.
-
-See what is in the record without downloading anything:
-
-```bash
-python raw_dataset_BreastDCEDL/download_dataset.py --list
-```
-
-### 2. Build the processed dataset → [`dataset/`](dataset/README.md)
-
-Turns the NIfTI volumes into 16,378 RGB PNG slices. The builder refuses to finish if a
-patient appears in two splits, carries two labels, or has a file missing from disk.
+### 2. Build the processed dataset
 
 ```bash
 jupyter notebook notebooks/02_build_dataset.ipynb
 ```
 
-What it produces, column by column: [docs/DATASET_DOCUMENTATION.md](docs/DATASET_DOCUMENTATION.md)
+Turns the NIfTI volumes into 16,378 RGB PNG slices under
+[`dataset/`](dataset/README.md). The builder refuses to finish if a patient appears in
+two splits, carries two labels, or has a file missing from disk.
 
-### 3. Train the centralised baseline → [`src/scripts/`](src/scripts/README.md)
-
-One machine, all 1,527 training patients pooled, 30 epochs. This is the reference every
-federated run is measured against.
-
-```bash
-python src/scripts/run_centralized.py --seed 42
-```
-
-### 4. Split the patients between hospitals → [`deployment/`](deployment/README.md)
-
-By patient, never by slice. `--by-cohort` gives each hospital one complete source cohort,
-which is the genuinely heterogeneous case.
+### 3. Train the centralised baseline
 
 ```bash
-python src/scripts/partition_data.py --by-cohort --only 3_clients_cohort --hardlink
+jupyter notebook notebooks/03_train_centralized.ipynb
 ```
+
+One machine, all training patients pooled. Writes a numbered run folder into
+[`results/classifier/`](results/README.md). The scripted equivalent is
+`python deployment/code/scripts/run_centralized.py --seed 42`.
+
+### 4. Split the patients between hospitals
 
 ```bash
-python src/scripts/verify_data.py
+jupyter notebook notebooks/06_federated_setup.ipynb
 ```
 
-### 5. Run a federated experiment → [`src/federated/`](src/federated/README.md)
-
-Verify first. These checks write nothing and must all pass before any federation starts.
+Writes the global test set and the six partitions into
+[`deployment/data/`](deployment/README.md). Then check for leakage:
 
 ```bash
-python src/scripts/verify_production.py
+python deployment/code/scripts/verify_data.py
 ```
+
+### 5. Set up the federation
 
 ```bash
-./deployment/scripts/start.sh 3 test10 && ./deployment/scripts/run.sh test10
+bash deployment/code/scripts/provision.sh
+python deployment/code/scripts/generate_jobs.py
+python deployment/code/scripts/verify_production.py
 ```
+
+The first writes one PKI startup kit per participant, the second writes the thirteen
+job folders, and the third runs the pre-flight checks and has to pass before anything
+starts.
+
+### 6. Run a federated experiment
+
+Start the server and the hospitals from their startup kits in a terminal, then submit
+the job:
 
 ```bash
-./deployment/scripts/collect.sh && ./deployment/scripts/summary.sh
+python deployment/code/scripts/run_experiment.py test10
 ```
 
-Results land in [`results/federated/`](results/README.md). Full instructions, including
-provisioning and moving a hospital to its own machine:
-[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+Collect and summarise what finished:
+
+```bash
+python deployment/code/scripts/collect_results.py
+python deployment/code/scripts/build_final_summary.py
+```
+
+Results land in [`results/federated/`](results/README.md). Starting the participants,
+moving a hospital to its own machine and troubleshooting are all in
+[`deployment/README.md`](deployment/README.md) and
+[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 ---
 
-## Reading the results
+## Documentation
 
-Two numbers govern every comparison in this project.
+Everything is in [`docs/`](docs/README.md). Three to start with.
 
-**The trivial baseline is 0.5112** on the test set — the accuracy of always predicting
-the majority class. Accuracy is never quoted without it.
+**[DATASET_DOCUMENTATION.md](docs/DATASET_DOCUMENTATION.md)** describes how the
+dataset is organised, column by column, with example images.
 
-**The noise floor is 0.067 macro-AUC**, measured between two runs of a byte-identical
-configuration differing only in random seed. Differences below it are reported as *no
-difference detected*, which is a finding rather than a failure. Every comparison table
-carries a `within_noise_floor` column for exactly this reason.
+**[PREPROCESSING_AND_IMAGING.md](docs/PREPROCESSING_AND_IMAGING.md)** describes what a
+DCE-MRI study is, why the channel assignment follows from it, and every preprocessing
+step with the measurement that decided it.
 
-One further caveat belongs beside any pooled-cohort result: a probe trained to predict
-*which cohort* an image came from reaches macro-AUC **0.9978**, against 0.6068 for the
-subtype itself. The cohorts are trivially separable, and a model can score respectably by
-learning the scanner rather than the biology. This is the finding that reshaped the
-project, and it is documented in full in the [dataset report](docs/DATASET_REPORT.md).
+**[RESULTS.md](docs/RESULTS.md)** reports centralised against federated and compares
+both with the published literature.
 
 ---
 
 ## Licence and attribution
 
-The **code** in this repository is released under the [MIT licence](LICENSE).
+The code is released under the [MIT licence](LICENSE).
 
-The **imaging** is not ours. It is derived from the BreastDCEDL MinCrop release, which is
-licensed [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), and it is
-redistributed here under that licence with attribution. The images are *not* the released
-volumes: they are 80 mm physical crops, normalised over the whole volume, resized to a
-constant 0.357 mm per pixel, with eight slices per patient and the three contrast phases
-fused as RGB. [`ATTRIBUTION.md`](ATTRIBUTION.md) records every change in full, as CC BY
-requires.
+The imaging is not ours. It comes from the BreastDCEDL MinCrop release, which is
+licensed [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), and is
+redistributed here under that licence with attribution. The images are not the
+released volumes. They are 80 mm physical crops, normalised over the whole volume,
+resized to a constant 0.357 mm per pixel, with eight slices per patient and the three
+contrast phases fused as RGB. [`ATTRIBUTION.md`](ATTRIBUTION.md) records every change
+in full, as CC BY requires.
 
 ## Citation
 
-BreastDCEDL is an aggregation of three public collections held by
+BreastDCEDL aggregates three public collections held by
 [The Cancer Imaging Archive](https://www.cancerimagingarchive.net/). Cite the release
-**and** the collections it pools, not the release alone.
+and the collections it pools.
 
 **The release:**
 
@@ -300,6 +231,6 @@ BreastDCEDL is an aggregation of three public collections held by
 
 > Saha, A., Harowicz, M.R., Grimm, L.J., et al. *A machine learning approach to
 > radiogenomics of breast cancer: a study of 922 subjects and 529 DCE-MRI features.*
-> British Journal of Cancer **119**(4), 508–516 (2018).
+> British Journal of Cancer **119**(4), 508-516 (2018).
 
 Each collection carries its own dataset DOI on its TCIA landing page.

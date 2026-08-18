@@ -1,0 +1,30 @@
+{
+    "format_version": 2,
+    "executors": [
+        {
+            "tasks": [
+                "*"
+            ],
+            "executor": {
+                "path": "nvflare.app_opt.pt.in_process_client_api_executor.PTInProcessClientAPIExecutor",
+                "args": {
+                    "task_script_path": "federation/client.py",
+                    "task_script_args": "--partition 3_clients_cohort --local-epochs 1 --num-rounds 30 --fedprox-mu 0.01 --seed 42 --architecture 2d3031acc2075813 --results-dir results/federated/test11_fedprox_cohort/sites"
+                }
+            }
+        }
+    ],
+    "components": [
+        {
+            "id": "event_to_fed",
+            "path": "nvflare.app_common.widgets.convert_to_fed_event.ConvertToFedEvent",
+            "args": {
+                "events_to_convert": [
+                    "analytix_log_stats"
+                ]
+            }
+        }
+    ],
+    "task_data_filters": [],
+    "task_result_filters": []
+}

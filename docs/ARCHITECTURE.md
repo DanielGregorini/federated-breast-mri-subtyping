@@ -17,7 +17,7 @@ layer that says *which* algorithm trains *which* model over *which* split.
 This matters for three concrete reasons:
 
 1. **The centralised baseline and the federated clients run literally the same
-   trainer.** If they did not, the gap measured in RQ1 would partly be a difference
+   trainer.** If they did not, the measured gap would partly be a difference
    in code rather than a difference in federation.
 2. **A bug in the model is found by running `src/` alone**, in seconds, instead of by
    starting a server, four clients and an admin session.
@@ -169,7 +169,7 @@ Two details that are easy to get wrong and are therefore fixed here:
 
 ```
 jobs/test06_fedavg_4h/
-├── README.md     objective, clients, split, algorithm, purpose, research question
+├── README.md     objective, clients, split, algorithm, protocol
 └── job.py        builds and submits this experiment. Configuration only.
 ```
 
@@ -206,8 +206,8 @@ than symlinks. It costs disk and buys two things: the layout is exactly what wou
 `rsync`-ed to a real hospital machine, and it is impossible for a bug to let one site
 read another's data — the files are not there.
 
-Three rules are enforced by `src/scripts/partition_data.py` and verified by
-`src/scripts/verify_data.py`:
+Three rules are enforced by `deployment/code/scripts/partition_data.py` and verified by
+`deployment/code/scripts/verify_data.py`:
 
 1. **Split by patient, never by slice.** Every image of a patient goes to one site.
 2. **No patient appears in two hospitals**, and no training patient appears in the
@@ -231,13 +231,11 @@ decision, not a claim about deployment, and it is stated as such in the disserta
 | `partition_data.py` | writes the four per-hospital splits |
 | `verify_data.py` | leakage checks; refuses to pass if a patient is in two places |
 | `provision.sh` | runs `nvflare provision`, producing the PKI startup kits |
-| `start_federation.sh` | starts server and N hospitals as separate processes |
-| `stop_federation.sh` | stops them, and cleans up orphans |
+| `<workspace>/<identity>/startup/start.sh` | one per participant, from `nvflare provision`. Starts that participant as its own process |
 | `run_experiment.py` | submits one experiment and waits for it |
-| `run_all_experiments.py` | the whole campaign, in order, one at a time |
 | `collect_results.py` | evaluates every global model on the global test set |
 
-`start_federation.sh` deliberately starts **separate operating-system processes**, not
+Each startup kit starts a **separate operating-system process**, not
 threads. That is the difference between a simulation and a deployment: each hospital
 has its own Python interpreter, its own memory, its own certificate and its own port.
 Moving one of them to another machine changes an address, not a design.

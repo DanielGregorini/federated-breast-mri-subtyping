@@ -94,7 +94,7 @@ experiments and a difference between two results can never be a difference in PK
 ```
 
 Each client is a **separate OS process** started from its own PKI startup kit by
-`scripts/start_federation.sh`, with `OMP_NUM_THREADS=1` exported for every child.
+its own startup kit, with `OMP_NUM_THREADS=1` exported before they are started.
 
 Runtime, from `results/test06_fedavg_4h/sites/train.log`:
 
@@ -184,7 +184,7 @@ Tests 10–13 were cancelled before completion.
 `meta_props.nr_aggregated` equals the client count in every case — 2, 2, 3, 3, 4, 4, 4, 4.
 
 Test01 (centralised) is **not an NVFLARE job**; it runs through
-`src/scripts/run_centralized.py`.
+`deployment/code/scripts/run_centralized.py`.
 
 ---
 
@@ -197,8 +197,8 @@ centralized_epochs  = 30
 ```
 
 **30 rounds × 1 local epoch = 30 epochs of data**, budget-matched to the centralised
-baseline. Without that, RQ1 would read a difference in compute as a difference in
-federation. `src/scripts/verify_production.py` asserts the equality as a pre-flight check.
+baseline. Without that, the comparison would read a difference in compute as a difference in
+federation. `deployment/code/scripts/verify_production.py` asserts the equality as a pre-flight check.
 
 Confirmed: `sites/rounds.csv` holds rounds **0–29** for every site in every completed
 federated test.
@@ -209,7 +209,7 @@ federated test.
 
 Identical for the centralised and the federated arms — both run literally the same
 trainer, because `src/training.py` delegates to
-`src/core/training.py`. The gap RQ1 measures is therefore federation, not
+`src/core/training.py`. The measured gap is therefore federation, not
 a difference in code.
 
 | parameter | value |
@@ -244,7 +244,7 @@ which is exactly what `CosineAnnealingLR(T_max=T)` holds at epoch `r` centrally.
 follow the same curve.
 
 **The reported loss excludes the proximal term.** Including it would make FedAvg and
-FedProx losses incomparable across the very curves RQ3 is read from.
+FedProx losses incomparable across the very curves the two are compared on.
 
 ---
 
@@ -413,8 +413,8 @@ label or feature non-IID heterogeneity.** This is a deliberate, documented limit
 must be stated. Two genuine alternatives are implemented and neither is the default:
 
 ```bash
-python src/scripts/partition_data.py --stratify none     # label skew
-python src/scripts/partition_data.py --by-cohort         # one real cohort per hospital
+python deployment/code/scripts/partition_data.py --stratify none     # label skew
+python deployment/code/scripts/partition_data.py --by-cohort         # one real cohort per hospital
 ```
 
 **Evaluation** is identical for all thirteen tests: the selected global model is scored on the
@@ -430,22 +430,22 @@ probabilities averaged per patient first.
 
 | path | role |
 |---|---|
-| `src/federated/config/experiments.py` | **single source of truth** — 13 experiments, 4 partitions, `TrainingConfig`, `FederationConfig` |
-| `src/federated/config/federation.py` | the only file that knows hosts and ports; resolves the current `prod_NN` |
+| `deployment/code/config/experiments.py` | **single source of truth** — 13 experiments, 4 partitions, `TrainingConfig`, `FederationConfig` |
+| `deployment/code/config/federation.py` | the only file that knows hosts and ports; resolves the current `prod_NN` |
 | `deployment/project.yml` | NVFLARE provisioning — participants, ports, builders |
-| `src/federated/federation/recipes.py` | `build_recipe()` (FedAvg / FedProx / FedOpt), `build_env()` → `ProdEnv` |
-| `src/federated/federation/client.py` | the client loop: `flare.init` / `receive` / `send` |
-| `src/federated/common/models.py` | `FederatedClassifier`, `architecture_fingerprint` |
-| `src/federated/common/training.py` | delegates to `src/core/training.py` |
+| `deployment/code/federation/recipes.py` | `build_recipe()` (FedAvg / FedProx / FedOpt), `build_env()` → `ProdEnv` |
+| `deployment/code/federation/client.py` | the client loop: `flare.init` / `receive` / `send` |
+| `deployment/code/common/models.py` | `FederatedClassifier`, `architecture_fingerprint` |
+| `deployment/code/common/training.py` | delegates to `src/core/training.py` |
 | `deployment/workspace/breast_fl_project/prod_00/` | PKI startup kits: `server/`, `hospital_1..4/`, `admin@ips.pt/` |
 | `deployment/jobs/testNN_*/job.py` | generated from `experiments.py`; `generate_jobs.py --check` fails on drift |
 | `results/federated/testNN_*/` | `job.json`, `global_model.pt`, `test_metrics.json`, `predictions_test.csv`, `sites/rounds.csv`, `sites/train.log` |
 | `results/federated/final_summary/` | `summary.{csv,xlsx,json,md,pdf}`, 8 comparison tables, 9 LaTeX tables, figures |
 | `deployment/logs/testNN/` | `server.log`, `hospital_N.log`, `admin.log`, `timeline.log`, `pids` |
-| `src/scripts/verify_production.py` | 198 pre-flight checks; writes nothing |
-| `src/scripts/run_experiment.py` | submits one job through the admin API |
-| `src/scripts/collect_results.py` | scores every model on the one global test set |
-| `src/scripts/start_federation.sh` | server first, poll the admin port, then the hospitals |
+| `deployment/code/scripts/verify_production.py` | 198 pre-flight checks; writes nothing |
+| `deployment/code/scripts/run_experiment.py` | submits one job through the admin API |
+| `deployment/code/scripts/collect_results.py` | scores every model on the one global test set |
+| `<workspace>/<identity>/startup/start.sh` | server first, wait for the admin port, then the hospitals |
 
 One log file **per participant**, never a shared one: two participants appending to one
 log interleave mid-line under load and the result cannot be reconstructed.
@@ -485,21 +485,20 @@ participants is recoverable.
 cd federated
 
 # once
-./deployment/scripts/provision.sh
-./deployment/scripts/distributions.sh
-./deployment/scripts/verify.sh          # 198 checks; must pass before anything starts
+bash deployment/code/scripts/provision.sh
+python deployment/code/scripts/build_distribution_report.py
+python deployment/code/scripts/verify_production.py   # must pass before anything starts
 
 # the centralised baseline — NOT an NVFLARE job
-python src/scripts/run_centralized.py --seed 42
+python deployment/code/scripts/run_centralized.py --seed 42
 
 # one federated experiment
-./deployment/scripts/start.sh 4 test06  # server + 4 hospitals, separate processes
-./deployment/scripts/run.sh test06      # submit through the admin API
-./deployment/scripts/stop.sh
+deployment/workspace/breast_fl_project/prod_00/server/startup/start.sh       # then one per hospital
+python deployment/code/scripts/run_experiment.py test06         # submit through the admin API
 
 # after the runs
-./deployment/scripts/collect.sh         # score every model on the one test set
-./deployment/scripts/summary.sh         # build results/final_summary/
+python deployment/code/scripts/collect_results.py      # score every model on the one test set
+python deployment/code/scripts/build_final_summary.py  # build results/federated/final_summary/
 ```
 
 Client count per test: 2 for test02–03, 3 for test04–05, 4 for test06–09.

@@ -15,24 +15,23 @@ number of hospitals (2, 3, 4) and how the data is divided between them (balanced
 skewed), and each configuration runs once with FedAvg and once with FedProx, with
 everything else held fixed.
 
-| # | hospitals | split | algorithm | primary question |
+| # | hospitals | split | algorithm | what it is for |
 |---|---:|---|---|---|
-| 01 | — | all pooled | — | the reference |
-| 02 | 2 | 50/50 | FedAvg | RQ1 |
-| 03 | 2 | 50/50 | FedProx | RQ3 |
-| 04 | 3 | 33/33/33 | FedAvg | RQ1 |
-| 05 | 3 | 33/33/33 | FedProx | RQ3 |
-| 06 | 4 | 25 each | FedAvg | **RQ1 headline**, RQ2 control |
-| 07 | 4 | 25 each | FedProx | RQ3 |
-| 08 | 4 | 5:2:1:1 | FedAvg | RQ2 |
-| 09 | 4 | 5:2:1:1 | FedProx | RQ4 |
+| 01 | — | all pooled | — | the reference every federated run is measured against |
+| 02 | 2 | 50/50 | FedAvg | the smallest federation |
+| 03 | 2 | 50/50 | FedProx | the same split under FedProx |
+| 04 | 3 | 33/33/33 | FedAvg | one more site |
+| 05 | 3 | 33/33/33 | FedProx | the same split under FedProx |
+| 06 | 4 | 25 each | FedAvg | the headline comparison against 01, and the IID control |
+| 07 | 4 | 25 each | FedProx | the same split under FedProx |
+| 08 | 4 | 5:2:1:1 | FedAvg | quantity skew, against 06 |
+| 09 | 4 | 5:2:1:1 | FedProx | whether FedProx recovers what 08 loses |
 
-| | question | read from |
-|---|---|---|
-| **RQ1** | Can federated match centralised? | 01 vs 06 |
-| **RQ2** | Impact of non-IID heterogeneity? | 06 vs 08 |
-| **RQ3** | FedAvg vs FedProx trade-offs? | every even/odd pair |
-| **RQ4** | What mitigates FL limitations? | 09, plus class-weight scope |
+| comparison | read from |
+|---|---|
+| federated against centralised | 01 against 06 |
+| what quantity skew costs | 06 against 08 |
+| FedAvg against FedProx | every even and odd pair |
 
 ### A note on 50/20/10/10
 
@@ -48,7 +47,7 @@ and the program's behaviour agree instead of silently differing by ten percent.
 Every experiment shares one `TrainingConfig`: the same model, the same freezing, the
 same optimiser, the same augmentation, the same class-weighting rule, the same seed.
 The centralised baseline and the federated clients run **literally the same trainer** —
-`src/training.py` delegates to `src/core/training.py` — so the gap RQ1
+`src/training.py` delegates to `src/core/training.py`, so the measured gap
 measures is federation rather than a difference in code.
 
 This is not caution. Three separate bugs in the previous iteration of this project
@@ -64,7 +63,7 @@ All three were invisible until the numbers looked wrong.
 ### Budget matching
 
 30 rounds × 1 local epoch against 30 centralised epochs. The model sees the data the
-same number of times on both sides. Without that, RQ1 would read a difference in
+same number of times on both sides. Without that, the comparison would read a difference in
 compute as a difference in federation.
 
 This makes the baseline **weaker than the headline classifier result** (0.6159 ±
@@ -80,20 +79,20 @@ lands between 1 and 5 — the model exhausts the signal in the first pass.
 ### 1. Tests 08 and 09 are quantity skew, not non-IID
 
 Every hospital keeps the global class ratio; only the *amount* of data varies. That is
-why the previous run of these experiments found **no detectable RQ2 effect** — there
+why the previous run of these experiments detected **no effect from quantity skew**. There
 was very little heterogeneity to detect.
 
 Two genuine alternatives are implemented and neither is the default:
 
 ```bash
-python src/scripts/partition_data.py --stratify none    # label skew
-python src/scripts/partition_data.py --by-cohort \
+python deployment/code/scripts/partition_data.py --stratify none    # label skew
+python deployment/code/scripts/partition_data.py --by-cohort \
     --source ../dataset/mine_subtype_pooled
 ```
 
 `--by-cohort` gives one real cohort per hospital: DUKE at 64.6% HRposHER2neg against
 I-SPY2's 38.8%, with tumours five times smaller by volume and a different scanner
-population. That is the strongest available upgrade to RQ2.
+population. That is the strongest heterogeneity this dataset can express.
 
 **It carries a cost that must be reported with it.** On pooled cohorts the source
 probe reaches macro-AUC **0.9978** predicting which cohort an image came from, against
@@ -121,7 +120,7 @@ no information at all).
 
 ### 4. Only the seeds you actually run
 
-The noise floor is **0.067 macro-AUC**. `run_all_experiments.py` runs the centralised
+The noise floor is **0.067 macro-AUC**. `run_centralized.py` runs the centralised
 baseline at two seeds by default and each federated experiment once, which is enough
 to see a 0.07 effect and **not** enough to rank FedAvg against FedProx. Say so.
 
@@ -175,7 +174,7 @@ Three consequences worth carrying into the write-up:
 A federated client is re-instantiated each round and holds no state, so a
 `CosineAnnealingLR` object cannot survive to be stepped. Dropping the schedule would
 leave the federated arm at a constant rate while the baseline decays; re-creating it
-each round would produce a sawtooth. Either turns RQ1 into a comparison of schedules.
+each round would produce a sawtooth. Either turns the comparison into one of schedules.
 
 Because cosine annealing is a closed-form function of the step index, and the server
 sends `current_round` with every model, the client evaluates it directly:
@@ -197,10 +196,10 @@ and nothing warns you — so `federation/recipes.py` refuses to build a FedProx 
 weights to anchor to.
 
 The reported loss excludes the proximal term. Including it would make FedAvg and
-FedProx losses incomparable across the very curves RQ3 is read from, and would make
+FedProx losses incomparable across the very curves the two are compared on, and would make
 the number move with `mu` rather than with the model.
 
-### Class weights: whose frequencies? (RQ4)
+### Class weights: whose frequencies?
 
 `TrainingConfig.class_weight_scope` is `"local"` by default — each hospital weights
 its loss by its own class frequencies. Each site therefore optimises a slightly
@@ -208,7 +207,7 @@ different objective, and FedAvg averages models trained on different losses.
 
 Under the stratified partitions of tests 02–09 this is harmless; the weights agree to
 three decimals. **Under a cohort partition it stops being harmless**, and the choice
-becomes RQ4 material:
+starts to matter:
 
 | scope | what it means | cost |
 |---|---|---|
@@ -226,10 +225,10 @@ another site's data to use them.
 On the **old** binary TripleNeg-vs-rest task with ResNet-50 — superseded data, but the
 protocol was the same shape:
 
-* **RQ1 — no.** Centralised 0.6874 against 0.5776–0.6194 federated. A drop of 0.068 to
+* **Federated did not match centralised.** 0.6874 against 0.5776 to 0.6194. A drop of 0.068 to
   0.110, at or above the noise floor.
-* **RQ2 — no detectable effect**, consistent with the skew being quantity-only.
-* **RQ3 — FedProx won 4 of 4 paired comparisons** (+0.005, +0.021, +0.011, +0.004).
+* **Quantity skew had no detectable effect**, consistent with it being quantity only.
+* **FedProx won 4 of 4 paired comparisons** (+0.005, +0.021, +0.011, +0.004).
   Every one inside the noise floor. Four out of four in one direction is a **trend,
   not a fact**.
 
@@ -247,11 +246,11 @@ Two secondary findings worth carrying forward:
 
 ## Checklist before reporting a number
 
-- [ ] `src/scripts/verify_data.py` passed on this partition
+- [ ] `deployment/code/scripts/verify_data.py` passed on this partition
 - [ ] the source probe was run if the dataset pools cohorts, and is quoted beside the result
 - [ ] accuracy is quoted with the trivial baseline of the same split
 - [ ] the metric is patient-level macro-AUC, not slice-level
 - [ ] at least two seeds, or the text says "one seed"
 - [ ] any difference below 0.067 is reported as "no difference detected"
 - [ ] per-class recall is reported, not only the aggregate
-- [ ] `python src/scripts/generate_jobs.py --check` passes, so no job drifted from the table
+- [ ] `python deployment/code/scripts/generate_jobs.py --check` passes, so no job drifted from the table

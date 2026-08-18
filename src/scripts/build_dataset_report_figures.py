@@ -17,6 +17,7 @@ sees" has to BE what the network sees, or it is decoration.
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -74,12 +75,18 @@ plt.rcParams.update({
 })
 
 
+# PNG is the default output. PDF is vector and only needed for print, so it is
+# written when --pdf is passed.
+SAVE_PDF = False
+
+
 def save(fig, name: str) -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     fig.savefig(OUT / f"{name}.png")
-    fig.savefig(OUT / f"{name}.pdf")
+    if SAVE_PDF:
+        fig.savefig(OUT / f"{name}.pdf")
     plt.close(fig)
-    print(f"  wrote {name}.png/.pdf")
+    print(f"  wrote {name}.png" + ("/.pdf" if SAVE_PDF else ""))
 
 
 # --------------------------------------------------------------------------- #
@@ -503,6 +510,12 @@ def window_rationale(meta: pd.DataFrame) -> None:
 
 
 def main() -> None:
+    ap = argparse.ArgumentParser(description="Build the dataset report figures.")
+    ap.add_argument("--pdf", action="store_true",
+                    help="also write a vector .pdf beside every .png")
+    global SAVE_PDF
+    SAVE_PDF = ap.parse_args().pdf
+
     meta = pd.read_csv(DATASET / "metadata.csv", low_memory=False)
     raw = json.loads((DATASET / "config.json").read_text())
     cfg = {"crop_mm": raw["crop_mm"], "n_slices": raw["n_slices"],

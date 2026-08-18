@@ -1,20 +1,18 @@
-# pipelines/thesis/
+# src/pipelines/thesis
 
-This thesis's preprocessing. Every deviation from the authors is argued in
-`preprocessing.py` with the measurement that motivated it — including where the
-measurement went against the proposal.
+The preprocessing this dissertation proposes. `preprocessing.py` supplies the three
+decisions `core/dataset_builder.py` asks a pipeline for.
 
-| rule | value | why |
-|---|---|---|
-| slices | 8 spread, trimming 15% each end | neighbouring slices are near-duplicates |
-| crop | **80 mm physical**, constant 0.357 mm/px | a proportional crop erases tumour size |
-| normalisation | min-max over the whole volume | preserves enhancement kinetics |
-| cohorts | I-SPY2 only by default | the source probe reaches 0.9978 when pooled |
+| Rule | Value |
+|---|---|
+| slices | 8 evenly spaced, trimming 15% from each end of the lesion |
+| crop | 80 mm physical window, giving a constant 0.357 mm/px |
+| normalisation | min-max over the whole 4-D volume |
+| cohorts | I-SPY2 only by default |
 
-## Honest caveat
+Each rule carries the measurement that decided it in the source file.
 
-On the same 99 I-SPY2 test patients this preprocessing scored 0.5837 ± 0.011
-against 0.6201 ± 0.024 for the older pipeline. The difference is inside the
-0.067 noise floor, so the verdict is *no difference detected* — but it is not the
-improvement that was expected. What it did buy is a validation-to-test gap of
-+0.015 against +0.073.
+## How to use it
+
+Name it in a `Config` in `src/dataset_config.py`, then build the dataset with
+[`notebooks/02_build_dataset.ipynb`](../../../notebooks/02_build_dataset.ipynb).

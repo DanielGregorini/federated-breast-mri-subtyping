@@ -1,22 +1,22 @@
-# deployment/logs — what each participant wrote
+# deployment/logs
 
-One folder per experiment. Inside each, one file per participant plus the admin log.
-Terminal output scrolls and is lost; these files are the record a run is reconstructed
-from months later, and each line carries a UTC timestamp.
+What each participant wrote while a run was happening. One folder per experiment, one
+file per participant.
 
 | Path | What it is |
 |---|---|
 | `testNN/server.log` | the aggregation server |
 | `testNN/hospital_N.log` | that hospital's own process |
-| `testNN/admin.log` | the admin side: what was submitted, when, and what came back |
-| `run_all.log` | the whole campaign driven by `run_all_experiments.py` |
-| `rq2_run.log` | the cohort comparison, tests 10 to 13 |
-| `fedopt_overnight.log` | the FedOpt attempt, implemented and cancelled. Not reported |
+| `testNN/admin.log` | what was submitted, when, and what came back |
+| `testNN/timeline.log` | every event in order, across participants, UTC timestamped |
+| `testNN/pids` | the process ids started for that run |
+
+Terminal output scrolls and is lost. These files are what a run is reconstructed from
+afterwards.
 
 ## Where they come from
 
-`src/scripts/start_federation.sh` starts each participant with its own log target, and
-`src/scripts/run_experiment.py` tees the admin side into `testNN/admin.log`.
+Each participant's startup kit writes its own log. `deployment/code/scripts/run_experiment.py`
+tees the admin side into `testNN/admin.log`.
 
-Logs are not in version control. They are kept locally because a claim about a real
-deployment is only as good as the evidence that it ran.
+Logs are not in version control.

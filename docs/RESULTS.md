@@ -42,7 +42,7 @@ scores 0.5112 here — higher than most of the models.
 
 ---
 
-## 3. RQ1 — Can federated learning match centralised training?
+## 3. Can federated learning match centralised training?
 
 **Yes, within the margin the method's own variability defines.**
 
@@ -91,7 +91,7 @@ most likely explanation is that it depends on having enough patients per site.
 
 ---
 
-## 4. RQ2 — What does data heterogeneity cost?
+## 4. What does data heterogeneity cost?
 
 The four partitions used by tests 02–09 are **stratified**: the class-share spread
 between hospitals never exceeds 0.4 percentage points. They vary *how much* data each
@@ -131,7 +131,7 @@ only aggregate metrics would not show this.
 
 ---
 
-## 5. RQ3 — Privacy, communication and performance
+## 5. Privacy, communication and performance
 
 ### Communication is the strong result
 
@@ -208,7 +208,7 @@ guarantee rather than an architecture.
 
 ---
 
-## 6. RQ4 — What mitigates the limitations
+## 6. What mitigates the limitations
 
 **FedProx under heterogeneity** is the one mitigation tested where the mechanism and the
 measurement agree: +0.025 where the sites genuinely differ, and it partially recovers the
@@ -216,7 +216,7 @@ collapsed HER2+ recall (0.113 → 0.283).
 
 **The security measures** — PKI provisioning, mutual TLS, patient-level partitioning,
 per-site local validation, and a non-finite-weight guard that refuses to transmit a
-diverged update — are implemented and verified by the pre-flight checks in `src/scripts/verify_production.py`,
+diverged update — are implemented and verified by the pre-flight checks in `deployment/code/scripts/verify_production.py`,
 which refuse to let a federation start if any of them fails.
 
 **Not run, and each would strengthen this section:** global against local class-weight

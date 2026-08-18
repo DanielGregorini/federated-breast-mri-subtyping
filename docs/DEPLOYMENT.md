@@ -14,20 +14,15 @@ the simulator. That distinction is a hard requirement of this dissertation, and
 
 ```bash
 pip install -r requirements.txt          # 0. once
-python src/scripts/prepare_data.py           # 1. global test set
-python src/scripts/partition_data.py         # 2. per-hospital splits
-python src/scripts/verify_data.py            # 2b. refuse if anything leaks
-src/scripts/provision.sh                   # 3. PKI startup kits
-src/scripts/start_federation.sh 4          # 4. server + 4 hospitals
-python src/scripts/run_experiment.py test06 # 5. submit one experiment
-src/scripts/stop_federation.sh             # 6. stop
-python src/scripts/collect_results.py        # 7. score everything
-```
-
-Or, for the whole protocol in one command:
-
-```bash
-python src/scripts/run_all_experiments.py
+python deployment/code/scripts/prepare_data.py           # 1. global test set
+python deployment/code/scripts/partition_data.py         # 2. per-hospital splits
+python deployment/code/scripts/verify_data.py            # 2b. refuse if anything leaks
+bash deployment/code/scripts/provision.sh                # 3. PKI startup kits
+deployment/workspace/breast_fl_project/prod_00/server/startup/start.sh        # 4. the server
+deployment/workspace/breast_fl_project/prod_00/hospital_1/startup/start.sh    #    then one per hospital
+python deployment/code/scripts/run_experiment.py test06 # 5. submit one experiment
+deployment/workspace/breast_fl_project/prod_00/hospital_1/startup/stop_fl.sh  # 6. stop, or use the admin console
+python deployment/code/scripts/collect_results.py        # 7. score everything
 ```
 
 The rest of this document explains each step.
@@ -81,7 +76,7 @@ export BREAST_CORE_ROOT=/path/to/src
 ## 1. Build the global test set
 
 ```bash
-python src/scripts/prepare_data.py
+python deployment/code/scripts/prepare_data.py
 ```
 
 Copies the held-out splits out of the prepared dataset into `data/global/`:
@@ -125,7 +120,7 @@ and the dissertation states it as such.
 ## 2. Partition the training data between hospitals
 
 ```bash
-python src/scripts/partition_data.py
+python deployment/code/scripts/partition_data.py
 ```
 
 Writes all six partitions. Each hospital folder is a self-contained dataset:
@@ -153,21 +148,21 @@ two things: the layout is exactly what would be `rsync`-ed to a real hospital ma
 and it is impossible for a bug to let one site read another's data — the files are not
 there.
 
-### Genuine non-IID, for RQ2
+### Genuine non-IID
 
 The default partitions are **stratified**: every hospital keeps the global class
 ratio, so the only thing that varies is quantity. That is a real limitation, and it
-is why the previous run of these experiments found no detectable RQ2 effect.
+is why the previous run of these experiments detected no effect from quantity skew.
 
 Two alternatives are implemented:
 
 ```bash
-python src/scripts/partition_data.py --stratify none      # label skew
-python src/scripts/partition_data.py --by-cohort \
+python deployment/code/scripts/partition_data.py --stratify none      # label skew
+python deployment/code/scripts/partition_data.py --by-cohort \
     --source ../dataset/mine_subtype_pooled   # one cohort per hospital
 ```
 
-`--by-cohort` is the strongest available upgrade to RQ2: DUKE is 64.6%
+`--by-cohort` gives the strongest heterogeneity this dataset can express. DUKE is 64.6%
 HRposHER2neg against I-SPY2's 38.8%, with tumours five times smaller by volume. That
 is genuine heterogeneity rather than quantity skew.
 
@@ -181,7 +176,7 @@ is genuine heterogeneity rather than quantity skew.
 ## 2b. Verify — this step refuses rather than warns
 
 ```bash
-python src/scripts/verify_data.py --check-imports
+python deployment/code/scripts/verify_data.py --check-imports
 ```
 
 ```
@@ -209,7 +204,7 @@ converge, and the conclusion is wrong.
 ## 3. Provision the PKI
 
 ```bash
-src/scripts/provision.sh
+deployment/code/scripts/provision.sh
 ```
 
 This is what makes the deployment real. It runs:
@@ -273,13 +268,24 @@ highest, so this cannot go wrong as long as you use the scripts.
 ## 4. Start the federation
 
 ```bash
-src/scripts/start_federation.sh 4      # server + hospital_1..4
-src/scripts/start_federation.sh 2      # server + hospital_1..2
+deployment/workspace/breast_fl_project/prod_00/server/startup/start.sh
+deployment/workspace/breast_fl_project/prod_00/hospital_1/startup/start.sh     # repeat per hospital the experiment needs
 ```
 
-Starts the server, waits for it to accept connections, then starts each hospital —
-each as its **own operating-system process**, with its own Python interpreter, its own
-memory, its own certificate and its own port.
+Start the server first and wait until it is accepting connections on the admin port,
+then start one hospital per site. Each is its **own operating-system process**, with
+its own Python interpreter, its own memory, its own certificate and its own port.
+
+A client that tries to register before the server is listening retries with a backoff
+and delays the first round by up to a minute.
+
+Export these before starting a hospital, so its process can find the code:
+
+```bash
+export FEDBREAST_ROOT="$PWD/deployment/code"
+export BREAST_CORE_ROOT="$PWD/src"
+export OMP_NUM_THREADS=1
+```
 
 ```
   started server (pid 41234)
@@ -324,8 +330,8 @@ pgrep -fl nvflare
 ## 5. Submit an experiment
 
 ```bash
-python src/scripts/run_experiment.py test06
-python src/scripts/run_experiment.py test06 --dry-run     # build it, do not submit
+python deployment/code/scripts/run_experiment.py test06
+python deployment/code/scripts/run_experiment.py test06 --dry-run     # build it, do not submit
 ```
 
 The script re-verifies the data, builds the recipe, and submits **through the admin
@@ -351,12 +357,12 @@ experiment while it holds the GPU.
 ### Test 01 is not an NVFLARE job
 
 ```bash
-python src/scripts/run_centralized.py            # seed 42
-python src/scripts/run_centralized.py --seed 1
+python deployment/code/scripts/run_centralized.py            # seed 42
+python deployment/code/scripts/run_centralized.py --seed 1
 ```
 
 One machine, all the training data, no server and no clients. It is budget-matched to
-the federated arm — 30 epochs against 30 rounds × 1 local epoch — so RQ1 reads a
+the federated arm, 30 epochs against 30 rounds x 1 local epoch, so the comparison reads a
 difference in federation and not a difference in compute.
 
 ### What each experiment writes
@@ -373,7 +379,7 @@ results/test06_fedavg_4h/
 
 `rounds.csv` carries two curves per site and they answer different questions.
 `agg_val_*` is the **aggregated** model scored before local training — the convergence
-curve of the federation, which is what RQ1 is read from. `post_val_*` describes the
+curve of the federation, which is what the comparison is read from. `post_val_*` describes the
 weights actually being sent, which is what the server selects on.
 
 ---
@@ -381,7 +387,7 @@ weights actually being sent, which is what the server selects on.
 ## 6. Stop the federation
 
 ```bash
-src/scripts/stop_federation.sh
+deployment/workspace/breast_fl_project/prod_00/hospital_1/startup/stop_fl.sh
 ```
 
 Asks each participant to stop through its own kit's `stop_fl.sh`, waits, then kills
@@ -398,7 +404,7 @@ whatever is left — anchored to this project's workspace path.
 ## 7. Collect and compare
 
 ```bash
-python src/scripts/collect_results.py
+python deployment/code/scripts/collect_results.py
 ```
 
 Loads every finished experiment's model into the **shared architecture**, scores it on
@@ -437,10 +443,8 @@ the magnitude is not a fact.
 ## Running everything
 
 ```bash
-python src/scripts/run_all_experiments.py
-python src/scripts/run_all_experiments.py --from test04       # resume
-python src/scripts/run_all_experiments.py --only test06 test07
-python src/scripts/run_all_experiments.py --dry-run
+python deployment/code/scripts/run_experiment.py test06
+python deployment/code/scripts/run_experiment.py test06 --dry-run
 ```
 
 Runs the campaign in order, **one at a time**, restarting the federation when the required
@@ -457,19 +461,19 @@ client processes, so one experiment at a time *is* the parallel case.
 
 | symptom | cause | fix |
 |---|---|---|
-| `not provisioned: ... does not exist` | step 3 not run | `src/scripts/provision.sh` |
+| `not provisioned: ... does not exist` | step 3 not run | `deployment/code/scripts/provision.sh` |
 | provisioning exits with `INVALID_ARGS ... ill-formatted for entity_type=admin` | the admin name is not a full email address — NVFLARE validates it against a regex that requires a TLD, so `admin@ips` is rejected | use `admin@ips.pt`, and keep `project.yml` and `config/federation.py::ADMIN_USER` identical |
 | `no startup kit for 'admin@...'` when submitting | `project.yml` and `config/federation.py` disagree about the admin name | make them match, re-provision |
-| TLS handshake failure on client start | server and client from different `prod_NN` | stop everything, `src/scripts/start_federation.sh N` (it resolves one workspace for all) |
+| TLS handshake failure on client start | server and client from different `prod_NN` | stop everything and restart every participant from the same `prod_NN` |
 | client exits with `architecture mismatch` | a site is running a stale `src/` | re-sync the repo on that machine; the fingerprint is a hash of parameter names and shapes |
 | `cannot find src/` | the classifier phase is elsewhere | `export BREAST_CORE_ROOT=/path/to/src` |
-| `cannot locate federated/` | client started outside the repo | `export FEDBREAST_ROOT=/path/to/federated` |
-| job submits but no client registers | fewer hospitals started than `min_clients` | `src/scripts/start_federation.sh <n>` matching the experiment |
-| `NO LOCAL VALIDATION SPLIT` in a client log | partition built without local val | re-run `src/scripts/partition_data.py` |
-| `class_weight_scope='global' but manifest has no global_class_weights` | partition predates the setting | re-run `src/scripts/partition_data.py` |
+| `cannot locate federated/` | client started outside the repo | `export FEDBREAST_ROOT=/path/to/deployment/code` |
+| job submits but no client registers | fewer hospitals started than `min_clients` | start one hospital per site the experiment needs |
+| `NO LOCAL VALIDATION SPLIT` in a client log | partition built without local val | re-run `deployment/code/scripts/partition_data.py` |
+| `class_weight_scope='global' but manifest has no global_class_weights` | partition predates the setting | re-run `deployment/code/scripts/partition_data.py` |
 | server picks a nonsense model | the key metric is training accuracy | it is pinned to `val_balanced_accuracy` in `config/experiments.py` — check the client is reporting it |
 | everything is very slow, Mac | CPU fallback, by design | run on the CUDA box |
-| out of memory in an unrelated run | orphaned trainer from a previous experiment | `src/scripts/stop_federation.sh`, then `pgrep -fl client.py` |
+| out of memory in an unrelated run | orphaned trainer from a previous experiment | `pgrep -fl client.py`, then kill whatever is left over |
 
 ### Reading a job that failed
 
@@ -495,7 +499,7 @@ Three things change, and nothing else does.
    `data/partitions/<partition>/<hospital>/` folder to its own machine, and set:
 
    ```bash
-   export FEDBREAST_ROOT=/path/to/federated
+   export FEDBREAST_ROOT=/path/to/deployment/code
    export BREAST_CORE_ROOT=/path/to/src
    export BREAST_SITE_DIR=/path/to/this/hospitals/data
    ```

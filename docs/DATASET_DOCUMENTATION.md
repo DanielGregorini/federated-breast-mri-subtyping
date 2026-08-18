@@ -231,5 +231,5 @@ than one label, if a filename is duplicated, or if any listed file is missing fr
 ## Checking it
 
 ```bash
-python src/scripts/audit_dataset.py
+python deployment/code/scripts/audit_dataset.py
 ```
