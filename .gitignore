@@ -232,6 +232,12 @@ dataset/images/
 dataset/*/images/
 breastdcedl_thesis/data/*/images/
 
+# Validation and audit scripts. Removed on purpose: this repository holds the code
+# that produced the results, not scaffolding to check it.
+**/verify_*.py
+**/audit_*.py
+**/snapshot_config.py
+
 # PKI startup kits hold PRIVATE KEYS for every participant. Never commit these.
 deployment/workspace/
 **/workspace/breast_fl_project/

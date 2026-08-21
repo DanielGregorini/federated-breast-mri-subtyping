@@ -228,8 +228,3 @@ Needs `raw_dataset_BreastDCEDL/` — see [its README](../raw_dataset_BreastDCEDL
 The builder refuses to finish if any patient appears in two splits, if a patient has more
 than one label, if a filename is duplicated, or if any listed file is missing from disk.
 
-## Checking it
-
-```bash
-python deployment/code/scripts/audit_dataset.py
-```

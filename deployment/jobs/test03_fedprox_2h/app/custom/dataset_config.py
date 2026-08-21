@@ -1,17 +1,12 @@
 """Single configuration file. Change experiments here and nowhere else.
 
-Everything an experiment needs is one of three things: WHICH pipeline, WHICH task,
-and WHICH model. Those three lines are at the top. Everything below them is a
-default you can override without touching a line of training code.
+Everything an experiment needs is WHICH task and WHICH model. Those two lines are
+at the top. Everything below them is a default you can override without touching a
+line of training code.
 
     from config import Config
     cfg = Config()                                  # the defaults below
     cfg = Config(model="convnext_tiny", epochs=50)   # override anything
-
-The two pipelines are deliberately isolated. `authors` reproduces the published
-BreastDCEDL implementation; `mine` carries this thesis's proposals. Nothing is
-shared between their preprocessing, so a comparison between them is a comparison
-of methods rather than of leftovers.
 """
 
 from __future__ import annotations
@@ -21,23 +16,14 @@ from pathlib import Path
 from typing import Literal
 
 # =========================================================================== #
-#  THE THREE LINES THAT DEFINE AN EXPERIMENT                                  #
+#  THE TWO LINES THAT DEFINE AN EXPERIMENT                                    #
 # =========================================================================== #
 
-# --- 1. PIPELINE ----------------------------------------------------------- #
-# PIPELINE = "reference"   # faithful reproduction of the BreastDCEDL repository
-PIPELINE = "thesis"        # this thesis's proposals
-
-# --- 2. TASK --------------------------------------------------------------- #
-# Authors' pipeline (binary):
-#   TASK = "hr"        hormone-receptor status
-#   TASK = "her2"      HER2 status
-#   TASK = "pcr"       pathological complete response
-# My pipeline (3 classes):
+# --- 1. TASK --------------------------------------------------------------- #
 #   TASK = "subtype"   HRposHER2neg / TripleNeg / HER2pos
 TASK = "subtype"
 
-# --- 3. MODEL -------------------------------------------------------------- #
+# --- 2. MODEL -------------------------------------------------------------- #
 # Uncomment exactly one. Every entry below is implemented and tested.
 #
 # MODEL = "resnet18"            11.2M   the measured winner on the subtype task
@@ -101,7 +87,6 @@ class Task:
     name: str
     column: str
     classes: tuple[str, ...]
-    pipeline: str                  # which pipeline this task belongs to
     description: str
 
     @property
@@ -114,25 +99,10 @@ class Task:
 
 
 TASKS: dict[str, Task] = {
-    # ---- authors' pipeline: three binary targets ------------------------- #
-    "hr": Task(
-        name="hr", column="HR", classes=("HRneg", "HRpos"), pipeline="reference",
-        description="Hormone-receptor status. Positive in ~55% of I-SPY2."),
-    "her2": Task(
-        name="her2", column="HER2", classes=("HER2neg", "HER2pos"), pipeline="reference",
-        description="HER2 status. The authors report AUC 0.744 with THDA-ResNet "
-                    "(arXiv:2510.13897)."),
-    "pcr": Task(
-        name="pcr", column="pCR", classes=("no_pCR", "pCR"), pipeline="reference",
-        description="Pathological complete response. The authors report AUC 0.72 "
-                    "overall — 0.78 I-SPY2, 0.68 I-SPY1, 0.54 DUKE. Note this is a "
-                    "PRE-treatment scan predicting a post-chemotherapy outcome."),
-    # ---- my pipeline: the thesis target ---------------------------------- #
     "subtype": Task(
         name="subtype", column="HR_HER2_STATUS",
-        classes=("HRposHER2neg", "TripleNeg", "HER2pos"), pipeline="thesis",
-        description="Molecular subtype, three classes. The authors never attempted "
-                    "this; it is this thesis's target."),
+        classes=("HRposHER2neg", "TripleNeg", "HER2pos"),
+        description="Molecular subtype, three classes."),
 }
 
 # =========================================================================== #
@@ -145,7 +115,6 @@ class Config:
     """Everything one experiment needs. Override any field at construction."""
 
     # ---- identity -------------------------------------------------------- #
-    pipeline: Literal["reference", "thesis"] = PIPELINE
     task: str = TASK
     model: str = MODEL
 
@@ -201,20 +170,14 @@ class Config:
     monitor_metric: str = "auc"          # what selects the best checkpoint
 
     # ---- filled in automatically ----------------------------------------- #
-    dataset_name: str = ""               # resolved from pipeline + task
+    dataset_name: str = ""               # resolved from the task
     notes: str = ""
 
     def __post_init__(self) -> None:
         if self.task not in TASKS:
             raise ValueError(f"unknown task {self.task!r}. Known: {list(TASKS)}")
-        spec = TASKS[self.task]
-        if spec.pipeline != self.pipeline:
-            raise ValueError(
-                f"task {self.task!r} belongs to the {spec.pipeline!r} pipeline, "
-                f"not {self.pipeline!r}. Mixing them would make the comparison "
-                f"between pipelines meaningless.")
         if not self.dataset_name:
-            self.dataset_name = f"{self.pipeline}_{self.task}"
+            self.dataset_name = self.task
 
     # ---- derived --------------------------------------------------------- #
     @property
@@ -241,7 +204,6 @@ class Config:
 
     def summary(self) -> str:
         return "\n".join([
-            f"pipeline   : {self.pipeline}",
             f"task       : {self.task} — {self.task_spec.description}",
             f"classes    : {self.num_classes} — {', '.join(self.class_names)}",
             f"model      : {self.model}",

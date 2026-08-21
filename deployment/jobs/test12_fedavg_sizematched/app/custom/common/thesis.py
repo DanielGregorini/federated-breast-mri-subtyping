@@ -1,38 +1,35 @@
-"""The bridge to `the repository root`. The only file that knows where it lives.
+"""The bridge to the shared trainer. The only file that knows where it lives.
 
 WHY A BRIDGE INSTEAD OF A COPY
 ------------------------------
-The classifier phase produced a trainer, a model factory, an augmentation policy
-and a patient-level evaluator, all of them measured and all of them already used to
-produce the numbers this dissertation reports. The federated phase needs exactly
-those things.
+The trainer, the model factory, the augmentation policy and the patient-level
+evaluator already exist and are already measured. The federated clients need exactly
+those, and copying them here would create a second definition that starts drifting on
+day one. The previous iteration of this project did copy: `model.py` went into all 28
+participant folders and needed a `sync_model.py` to keep them equal. FedAvg only
+averages correctly if every site builds an identical network.
 
-Copying them here would create a second definition that starts drifting on day one.
-The previous iteration of this project did copy — `model.py` went into all 28
-participant folders and needed a `sync_model.py` to keep them equal — and FedAvg
-only averages correctly if every site builds an identical network.
-
-So: one definition, in `core//`, imported from here. The
-centralised baseline and every federated client therefore run **literally the same
-code** as the classifier phase. That is what makes the comparison a measurement of federation
-rather than a measurement of two codebases.
+So there is one definition, imported from here, and the centralised baseline and every
+federated client run the same code.
 
 WHY sys.path AND NOT AN IMPORT
 ------------------------------
-`` is not an installed package and has no `__init__.py` — it is
-a project folder whose `config.py` and `core/` are imported by adding the folder to
-`sys.path`, which is what its own notebooks do. Reproducing that here keeps the two
-projects independent: neither has to be installed for the other to work.
+`core/` is not an installed package and has no `__init__.py`. It is a folder whose
+modules are imported by putting its parent on `sys.path`, and `dataset_config.py` is
+loaded from its file location rather than by name, because `config` is also the name
+of the federated configuration package and whichever came first on the path would
+silently win.
 
-DEPLOYING TO A REAL HOSPITAL MACHINE
-------------------------------------
-NVFLARE ships a job's `custom/` folder to each site, so `src/` travels with the job.
-`core//` does NOT. On a real hospital machine, either
-  * place the repository at the same relative path (the default assumption), or
-  * set $BREAST_CORE_ROOT to wherever it lives.
-Both are checked below, in that order, and a clear error is raised if neither
-resolves — a missing model definition must fail loudly at startup, not silently
-produce a differently-shaped network that FedAvg would then average.
+WHERE IT LOOKS
+--------------
+1. Beside this file. Inside a submitted job that is `<job>/app/custom/`, which is
+   where NVFLARE unpacks the code the job shipped. A hospital machine therefore needs
+   nothing from this repository.
+2. $BREAST_CORE_ROOT, for a site that keeps the code somewhere of its own.
+3. The repository layout, for running from a checkout.
+
+A missing definition raises rather than falls back. A differently shaped network is
+something FedAvg would average without complaining.
 """
 
 from __future__ import annotations

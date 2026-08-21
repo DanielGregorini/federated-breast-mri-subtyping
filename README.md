@@ -33,10 +33,10 @@ raw_dataset_BreastDCEDL/        3-D NIfTI volumes, three DCE phases per patient
 dataset/                        16,378 RGB PNGs, 224x224, constant 0.357 mm/px
         |                       R = pre-contrast, G = early post, B = late post
         |
-        +---> notebooks/03_train_centralized.ipynb -> results/classifier/
+        +---> notebooks/04_train_centralized.ipynb -> results/classifier/
         |     one machine, all patients pooled
         |
-        +---> notebooks/06_federated_setup.ipynb
+        +---> notebooks/07_federated_setup.ipynb
               deployment/data/   per-hospital splits, by patient, never by slice
                     |
                     v
@@ -67,7 +67,7 @@ Final training images, one per cohort and class, each a real file from `dataset/
 |---|---|
 | [`raw_dataset_BreastDCEDL/`](raw_dataset_BreastDCEDL/README.md) | The BreastDCEDL imaging release. Input only. Its README explains how to obtain it. |
 | [`dataset/`](dataset/README.md) | The processed 2-D dataset the network trains on. PNG slices, split manifests and the build configuration. |
-| [`src/`](src/README.md) | The dataset builder, the preprocessing pipelines and the shared trainer. Everything about turning volumes into a trained model on one machine. |
+| [`src/`](src/README.md) | The dataset builder, the preprocessing and the shared trainer. Everything about turning volumes into a trained model on one machine. |
 | [`deployment/`](deployment/README.md) | The running system. The federated code in `code/`, the PKI startup kits, the generated jobs, the per-hospital data and the per-participant logs. |
 | [`results/`](results/README.md) | The dissertation record in `thesis/`, plus `classifier/` and `federated/` where your own runs land. |
 | [`docs/`](docs/README.md) | Every document and every figure. |
@@ -111,7 +111,7 @@ two splits, carries two labels, or has a file missing from disk.
 ### 3. Train the centralised baseline
 
 ```bash
-jupyter notebook notebooks/03_train_centralized.ipynb
+jupyter notebook notebooks/04_train_centralized.ipynb
 ```
 
 One machine, all training patients pooled. Writes a numbered run folder into
@@ -121,27 +121,21 @@ One machine, all training patients pooled. Writes a numbered run folder into
 ### 4. Split the patients between hospitals
 
 ```bash
-jupyter notebook notebooks/06_federated_setup.ipynb
+jupyter notebook notebooks/07_federated_setup.ipynb
 ```
 
 Writes the global test set and the six partitions into
-[`deployment/data/`](deployment/README.md). Then check for leakage:
-
-```bash
-python deployment/code/scripts/verify_data.py
-```
+[`deployment/data/`](deployment/README.md).
 
 ### 5. Set up the federation
 
 ```bash
 bash deployment/code/scripts/provision.sh
 python deployment/code/scripts/generate_jobs.py
-python deployment/code/scripts/verify_production.py
 ```
 
-The first writes one PKI startup kit per participant, the second writes the thirteen
-job folders, and the third runs the pre-flight checks and has to pass before anything
-starts.
+The first writes one PKI startup kit per participant. The second writes the twelve
+job folders and copies them where the admin console looks for them.
 
 ### 6. Run a federated experiment
 

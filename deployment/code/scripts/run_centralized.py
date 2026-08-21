@@ -7,7 +7,7 @@
 This is the reference every federated run is measured against, so the only thing
 that may differ between it and a client is that it sees all the data. It uses the
 same `TrainingConfig`, the same model builder, the same augmentation, the same
-patient-level evaluator, and — through `src/training.py` — the same training loop.
+patient-level evaluator, and through `core/training.py` the same training loop.
 
 BUDGET MATCHING, AND WHY IT IS NOT OPTIONAL
 -------------------------------------------
@@ -215,7 +215,7 @@ def main(argv: list[str] | None = None) -> None:
         # Selected on validation AUC, the classifier phase's rule. The federated
         # server selects on val_balanced_accuracy because that is what survives a
         # 39-patient local split; here the validation set is 99 patients and AUC is
-        # well defined. The difference is stated in docs/EXPERIMENTS.md.
+        # well defined.
         score = val[training.monitor_metric]
         if np.isfinite(score) and (score > best_score or epoch == 0):
             best_score, best_epoch, train_acc_at_best = score, epoch, acc

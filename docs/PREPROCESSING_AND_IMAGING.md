@@ -184,7 +184,7 @@ instance of the general problem of leakage in predictive modelling
 
 **What this project does about it.** The split comes from the release's own `split`
 column and is applied at patient level; `partition_data.py` divides *patients* between
-hospitals, never slices; and `verify_data.py` runs 111 checks that refuse to pass if any
+hospitals, never slices
 patient appears in two splits, in two hospitals, or in both the training pool and the
 test set. The dataset builder raises rather than writing a dataset that violates it.
 

@@ -104,7 +104,7 @@ ADMIN_ROLE = "project_admin"
 # --------------------------------------------------------------------------- #
 # WHERE THE STARTUP KITS LIVE                                                  #
 # --------------------------------------------------------------------------- #
-# config/ -> federated/ -> src/ -> repository root
+# config/ -> code/ -> deployment/ -> repository root
 PROJECT_DIR = Path(__file__).resolve().parent.parent.parent.parent
 
 # `nvflare provision -p deployment/project.yml -w deployment/workspace` writes here.
@@ -117,10 +117,9 @@ PROJECT_DIR = Path(__file__).resolve().parent.parent.parent.parent
 #                                              /hospital_1/ ... /hospital_4/
 #                                              /admin@ips.pt/
 #
-# Mirrors `config/experiments.py::WORKSPACE_DIR`. The two are kept equal by
-# `scripts/verify_production.py`, which fails if they ever diverge — a server and a
-# client resolving different workspaces fails at the TLS handshake with an error that
-# never mentions provisioning.
+# Mirrors `config/experiments.py::WORKSPACE_DIR` and `deployment/project.yml`, which
+# have to say the same. A server and a client resolving different workspaces fail at
+# the TLS handshake with an error that never mentions provisioning.
 PRODUCTION_DIR = PROJECT_DIR / "deployment"
 PROJECT_YML = PRODUCTION_DIR / "project.yml"
 WORKSPACE_ROOT = PRODUCTION_DIR / "workspace"
@@ -145,7 +144,7 @@ def workspace_dir() -> Path:
     if not root.is_dir():
         raise SystemExit(
             f"not provisioned: {root} does not exist.\n"
-            "  Run scripts/provision.sh — see docs/DEPLOYMENT.md step 3.")
+            "  Run deployment/code/scripts/provision.sh")
 
     runs = sorted((d for d in root.iterdir()
                    if d.is_dir() and re.fullmatch(r"prod_\d+", d.name)),

@@ -5,15 +5,17 @@ carries its own logic, so you can read what happens without opening anything els
 
 | Notebook | What it does | What it writes |
 |---|---|---|
-| `01_dataset_analysis.ipynb` | describes the raw BreastDCEDL release: label availability, the official split, and how far the three cohorts differ | nothing |
+| `01_raw_dataset_analysis.ipynb` | describes the raw BreastDCEDL release: label availability, the official split, and how far the three cohorts differ | nothing |
 | `02_build_dataset.ipynb` | the preprocessing pipeline, NIfTI volumes to a 2-D PNG dataset | `dataset/multi_subtype_80mm/` |
-| `03_train_centralized.ipynb` | the centralised classifier end to end: dataset, sampler, model, training loop, metrics, figures | `results/classifier/test_NNN_*/` |
-| `04_evaluate_run.ipynb` | reads one finished run and adds the analyses that need judgement | nothing |
-| `05_compare_experiments.ipynb` | every run in one table | `results/classifier/all_experiments.csv` |
-| `06_federated_setup.ipynb` | the global test set and the six per-hospital partitions | `deployment/data/` |
-| `07_federated_run.ipynb` | drives the twelve federated experiments and collects all thirteen results | `results/federated/` |
+| `03_dataset_analysis.ipynb` | describes the dataset that came out: composition, splits, the trivial baseline of each one, resolution, and example images | nothing |
+| `04_train_centralized.ipynb` | the centralised classifier end to end: dataset, sampler, model, training loop, metrics, figures | `results/classifier/test_NNN_*/` |
+| `05_evaluate_run.ipynb` | reads one finished run and adds the analyses that need judgement | nothing |
+| `06_compare_experiments.ipynb` | every run in one table | `results/classifier/all_experiments.csv` |
+| `07_federated_setup.ipynb` | the global test set and the six per-hospital partitions | `deployment/data/` |
+| `08_federated_run.ipynb` | drives the twelve federated experiments and collects all thirteen results | `results/federated/` |
 
-Run `02` first. Notebooks `03` and `06` both fail without it.
+Run `02` first. Every notebook after it fails without the dataset, and `01` is the
+only one that needs the raw release.
 
 ## How to run them
 
@@ -24,15 +26,7 @@ jupyter notebook notebooks/02_build_dataset.ipynb
 ```
 
 Every notebook resolves paths as `Path.cwd().parent`, so the working directory has to
-be `notebooks/`. That is what Jupyter does by default when you open a notebook from
-there.
-
-`verify_notebooks.py` checks that the notebooks still agree with the configuration
-they were written against:
-
-```bash
-python notebooks/verify_notebooks.py
-```
+be `notebooks/`. That is what Jupyter does when you open one from there.
 
 ## The shape every notebook follows
 
@@ -46,7 +40,7 @@ python notebooks/verify_notebooks.py
    away.
 5. A closing cell listing what was written and where.
 
-## What notebook 07 cannot inline
+## What notebook 08 cannot inline
 
 NVFLARE runs here as a real deployment rather than a simulator. The server and each
 hospital are separate operating-system processes with their own certificates, and the

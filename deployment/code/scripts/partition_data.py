@@ -20,7 +20,7 @@ disk and buys two things: the layout is exactly what would be `rsync`-ed to a re
 hospital machine, and it is impossible for a bug to let one site read another's
 data — the files are not there.
 
-THREE RULES, ENFORCED HERE AND RE-CHECKED BY verify_data.py
+THREE RULES, ENFORCED HERE
 -----------------------------------------------------------
 1. Split by PATIENT, never by slice. Every image of a patient goes to one site.
    Splitting by slice would let a model recognise the patient rather than the
@@ -58,7 +58,7 @@ import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
-# `from scripts.prepare_data import ...` below needs src/ on the path,
+# `from scripts.prepare_data import ...` below needs deployment/code on the path,
 # which is the parent of this file's own directory.
 SCRIPTS_PARENT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SCRIPTS_PARENT))
@@ -279,7 +279,7 @@ def main() -> None:
                                       src / "images", Path(args.out), args)
 
     print(f"\nwritten: {args.out}")
-    print("next: python deployment/code/scripts/verify_data.py")
+    print("next: python deployment/code/scripts/generate_jobs.py")
 
 
 if __name__ == "__main__":

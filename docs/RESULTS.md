@@ -216,8 +216,7 @@ collapsed HER2+ recall (0.113 → 0.283).
 
 **The security measures** — PKI provisioning, mutual TLS, patient-level partitioning,
 per-site local validation, and a non-finite-weight guard that refuses to transmit a
-diverged update — are implemented and verified by the pre-flight checks in `deployment/code/scripts/verify_production.py`,
-which refuse to let a federation start if any of them fails.
+diverged update — are implemented.
 
 **Not run, and each would strengthen this section:** global against local class-weight
 scope under the cohort partition, which is the direct privacy-versus-performance

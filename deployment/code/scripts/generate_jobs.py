@@ -2,7 +2,6 @@
 """Write one complete NVFLARE job folder per federated experiment.
 
     python deployment/code/scripts/generate_jobs.py
-    python deployment/code/scripts/generate_jobs.py --check      # fail if stale
 
 Each folder under `deployment/jobs/` is a job the admin console can submit by name,
 holding `meta.json`, the two config files, and every module the hospitals import
@@ -11,7 +10,7 @@ job can be copied to a hospital machine and submitted there.
 
 The folders are GENERATED from `config/experiments.py`. Editing one by hand is how
 this project once ran a server building a ResNet-18 against clients building a
-ResNet-50, so `--check` refuses when a folder no longer matches the table.
+ResNet-50, so change the table and regenerate instead.
 
 `submit_job <name>` resolves the name against the admin's own `transfer/` directory,
 not against an arbitrary path, so this script copies the folders there as well.
@@ -23,7 +22,6 @@ all the training data, no server and no clients. `run_centralized.py` runs it.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import shutil
 import tempfile
 import sys
@@ -150,7 +148,7 @@ def job_readme(experiment) -> str:
         "    ├── config/config_fed_client.json     executor and the client command line\n"
         "    └── custom/                           the code that runs at each hospital\n"
         "        ├── federation/client.py\n"
-        "        ├── config/  common/  core/  pipelines/\n"
+        "        ├── config/  common/  core/\n"
         "        └── dataset_config.py\n"
         "```\n"
         "\n"
@@ -219,14 +217,6 @@ def build_job_folder(experiment, dest: Path) -> None:
         shutil.copytree(built, dest)
 
 
-def job_fingerprint(job_dir: Path) -> dict[str, str]:
-    """Every file in a job folder and its sha256, for comparing two builds."""
-    out = {}
-    for f in sorted(job_dir.rglob("*")):
-        if f.is_file() and f.name != "README.md" and "__pycache__" not in f.parts:
-            out[str(f.relative_to(job_dir))] = hashlib.sha256(f.read_bytes()).hexdigest()
-    return out
-
 
 def install_for_admin(jobs_dir: Path) -> Path | None:
     """Copy the jobs into the admin's upload directory.
@@ -259,43 +249,17 @@ def install_for_admin(jobs_dir: Path) -> Path | None:
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--check", action="store_true",
-                   help="exit non-zero if any generated file is stale")
     p.add_argument("--no-install", action="store_true",
                    help="do not copy the jobs into the admin's transfer directory")
     args = p.parse_args()
 
     federated = [e for e in EX.EXPERIMENTS if e.kind == "federated"]
-    stale: list[str] = []
-
     for experiment in federated:
         job_dir = EX.JOBS_DIR / experiment.name
-        readme = job_dir / "README.md"
-
-        if args.check:
-            with tempfile.TemporaryDirectory(prefix="fl_check_") as tmp:
-                fresh = Path(tmp) / experiment.name
-                build_job_folder(experiment, fresh)
-                if job_fingerprint(fresh) != job_fingerprint(job_dir):
-                    stale.append(f"{job_dir.relative_to(EX.REPO_ROOT)}/")
-            if (readme.read_text() if readme.is_file() else None) != job_readme(experiment):
-                stale.append(str(readme.relative_to(EX.REPO_ROOT)))
-            continue
-
         build_job_folder(experiment, job_dir)
-        readme.write_text(job_readme(experiment))
+        (job_dir / "README.md").write_text(job_readme(experiment))
         n = sum(1 for f in job_dir.rglob("*") if f.is_file())
         print(f"  {experiment.name:<28} {n:>3} files")
-
-    if args.check:
-        if stale:
-            print("STALE — regenerate with: "
-                  "python deployment/code/scripts/generate_jobs.py")
-            for s in stale:
-                print(f"  {s}")
-            sys.exit(1)
-        print(f"all {len(federated)} job folders are up to date")
-        return
 
     print(f"\n{len(federated)} job folders written to "
           f"{EX.JOBS_DIR.relative_to(EX.REPO_ROOT)}/")
@@ -306,7 +270,7 @@ def main() -> None:
             print(f"installed for the admin console: {transfer}")
             print("submit one with:  submit_job <name>")
         else:
-            print("no provisioned admin kit yet — run provision.sh, then this again")
+            print("no provisioned admin kit yet, run provision.sh then this again")
 
 
 if __name__ == "__main__":

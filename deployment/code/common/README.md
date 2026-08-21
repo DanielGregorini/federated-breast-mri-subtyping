@@ -19,8 +19,7 @@ weights with nothing to warn you.
 
 ## How to use it
 
-Imported, not run. `deployment/code/scripts/verify_data.py --check-imports` checks that nothing
-here has picked up an `nvflare` import.
+Imported, not run.
 
 ## The one-epoch shape
 

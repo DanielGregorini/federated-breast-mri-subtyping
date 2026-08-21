@@ -14,7 +14,7 @@ test10_fedavg_cohort/
     ├── config/config_fed_client.json     executor and the client command line
     └── custom/                           the code that runs at each hospital
         ├── federation/client.py
-        ├── config/  common/  core/  pipelines/
+        ├── config/  common/  core/
         └── dataset_config.py
 ```
 

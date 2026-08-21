@@ -295,7 +295,7 @@ actually support.
 ## 5. Preprocessing methodology
 
 Everything in this section was read from
-`core/dataset_builder.py` and `pipelines/thesis/preprocessing.py`. Parameters are
+`core/dataset_builder.py` and `preprocessing.py`. Parameters are
 those recorded in the built dataset's own `config.json`:
 
 ```json

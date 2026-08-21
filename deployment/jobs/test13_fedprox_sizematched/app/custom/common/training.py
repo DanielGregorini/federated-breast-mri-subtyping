@@ -9,10 +9,9 @@ measurement of federation rather than of two different trainers.
 
 WHERE THE CODE ACTUALLY LIVES
 -----------------------------
-`train_one_epoch` with `prox_mu == 0` **delegates to
-`src/core/training.py`**, unchanged. So FedAvg clients and the
-centralised baseline run byte-identical training code, and that is a fact about the
-call graph rather than a promise in a comment.
+`train_one_epoch` with `prox_mu == 0` **delegates to `core/training.py`**,
+unchanged. So FedAvg clients and the centralised baseline run byte-identical training
+code, and that is a fact about the call graph rather than a promise in a comment.
 
 FedProx needs a term that depends on the model parameters rather than on the logits,
 so it cannot be expressed as a criterion and the loop is forked below. The fork

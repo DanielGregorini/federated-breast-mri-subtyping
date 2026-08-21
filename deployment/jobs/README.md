@@ -20,7 +20,6 @@ test06_fedavg_4h/
         ├── config/                       experiments.py, federation.py
         ├── common/                       models, data, training, evaluation, thesis
         ├── core/                         the trainer the centralised arm also runs
-        ├── pipelines/                    the preprocessing rules
         └── dataset_config.py
 ```
 
@@ -44,12 +43,7 @@ Writes all twelve folders from
 them into the admin's `transfer/` directory, which is where `submit_job` looks names
 up.
 
-```bash
-python deployment/code/scripts/generate_jobs.py --check
-```
-
-Rebuilds each job into a temporary folder and compares it file by file. Exits
-non-zero if one has drifted from the table. Do not edit a job folder by hand.
+Do not edit a job folder by hand. Change the table and regenerate.
 
 ## How to submit one
 

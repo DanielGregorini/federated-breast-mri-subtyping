@@ -71,7 +71,7 @@ from pathlib import Path
 # --------------------------------------------------------------------------- #
 # PATHS                                                                        #
 # --------------------------------------------------------------------------- #
-# config/ -> federated/ -> src/ -> repository root
+# config/ -> code/ -> deployment/ -> repository root
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 REPO_ROOT = PROJECT_ROOT.parent.parent
 
@@ -90,10 +90,7 @@ REPO_ROOT = PROJECT_ROOT.parent.parent
 # re-cropped, re-normalised or re-encoded.
 #
 # The pipeline that produced it is `core/dataset_builder.py`,
-# driven by `notebooks/02_build_dataset.ipynb`, and its exact parameters are
-# recorded in that dataset's own `config.json`. Both are kept in the active tree
-# precisely so the preprocessing stays reproducible and unchanged. See
-# `docs/DATASET_SPEC.md` for the full specification.
+# and its exact parameters are recorded in that dataset's own `config.json`.
 #
 # THE CONFOUND THIS CARRIES, STATED ONCE AND NOT AGAIN
 # ----------------------------------------------------
@@ -141,7 +138,7 @@ JOBS_DIR = PRODUCTION_DIR / "jobs"             # one folder per experiment
 RESULTS_DIR = REPO_ROOT / "results" / "federated"  # metrics, models, predictions
 LOGS_DIR = PRODUCTION_DIR / "logs"             # one folder per test, one file per site
 FIGURES_DIR = RESULTS_DIR / "distributions"    # how the data was divided
-DATASETS_DIR = PRODUCTION_DIR / "datasets"     # split manifests and provenance
+DATASETS_DIR = FIGURES_DIR                     # the split tables, beside their figures
 
 # --------------------------------------------------------------------------- #
 # CLASSIFICATION TASK                                                          #
@@ -152,7 +149,7 @@ NUM_CLASSES = len(CLASS_NAMES)
 
 # The trivial baseline (always predict the majority class) is NOT a constant. It
 # depends on the split, and quoting accuracy without it is meaningless. It is
-# computed from the test CSV at evaluation time — see src/evaluation/.
+# computed from the test CSV at evaluation time.
 
 # --------------------------------------------------------------------------- #
 # MODEL AND HYPERPARAMETERS — shared by every experiment                       #
@@ -207,7 +204,7 @@ class TrainingConfig:
     dropout: float = 0.5
     label_smoothing: float = 0.1
     optimizer: str = "adamw"
-    scheduler: str = "cosine"            # evaluated per round; see src/training.py
+    scheduler: str = "cosine"            # stepped once per round, not per epoch
 
     # Freeze conv1 + bn1 + layer1 + layer2. This is what makes the baseline
     # reproducible: seed spread fell from 0.026 to 0.003, nearly ten-fold, for
@@ -231,7 +228,7 @@ class TrainingConfig:
     # Under a cohort-based partition it is not, and the choice starts to matter: local
     # weights mean the sites optimise different objectives and FedAvg averages
     # models trained on different losses; global weights mean one objective and one
-    # leaked vector of class counts. See src/data.py::class_weights.
+    # leaked vector of class counts.
     class_weight_scope: str = "local"
 
     # At most one slice per patient per batch. Neighbouring slices of one tumour are
@@ -326,7 +323,7 @@ class Partition:
     # Stratified keeps each hospital's class ratio equal to the global one, so the
     # only thing that varies between hospitals is QUANTITY. This is a deliberate
     # limitation and must be stated in the dissertation: it is quantity skew, not
-    # genuine non-IID heterogeneity. See docs/EXPERIMENTS.md.
+    # genuine non-IID heterogeneity.
     stratified: bool = True
 
     def __post_init__(self) -> None:
@@ -464,7 +461,7 @@ EXPERIMENTS: list[Experiment] = [
         objective="Four sites of very unequal size, one holding half the data.",
         notes="Quantity skew only: each hospital keeps the global class ratio. "
               "A genuinely non-IID partition would also skew the label "
-              "distribution. Stated as a limitation in docs/EXPERIMENTS.md."),
+              "distribution."),
     Experiment(
         id="test09", name="test09_fedprox_skewed", kind="federated",
         partition="4_clients_skewed", algorithm="fedprox",

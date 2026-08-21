@@ -62,8 +62,8 @@ def new_experiment(cfg, results_dir: Path | None = None,
 def load_experiments(results_dir: Path | None = None) -> list[dict]:
     """Every finished run as a flat record, newest number last.
 
-    This is what `notebooks/05_compare_experiments.ipynb` reads. Runs without `results.json` —
-    crashed or still going — are skipped rather than reported as zeros.
+    A run without `results.json` either crashed or is still going, and is skipped
+    rather than reported as zeros.
     """
     from dataset_config import RESULTS_DIR
     root = Path(results_dir or RESULTS_DIR)

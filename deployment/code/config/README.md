@@ -9,7 +9,7 @@ split.
 | `federation.py` | The participant names, the two ports (8002 for clients, 8003 for the admin API) and the resolver that always picks the highest provisioned workspace. |
 
 `federation.py` is mirrored into `deployment/project.yml`, and
-`deployment/code/scripts/verify_production.py` fails if the two disagree.
+Both have to say the same thing.
 
 ## How to use it
 
@@ -27,5 +27,4 @@ Edit the table, then regenerate everything derived from it:
 ```bash
 python deployment/code/scripts/generate_jobs.py       # the thirteen job folders
 python deployment/code/scripts/partition_data.py      # the per-hospital splits
-python deployment/code/scripts/snapshot_config.py     # the deployment record
 ```

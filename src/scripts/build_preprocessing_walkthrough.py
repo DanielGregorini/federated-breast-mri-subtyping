@@ -45,7 +45,7 @@ from matplotlib.patches import FancyArrowPatch, FancyBboxPatch, Rectangle  # noq
 
 import dataset_config as CFG                                           # noqa: E402
 from core import dataset_builder as DB                         # noqa: E402
-from pipelines.thesis import preprocessing as P                  # noqa: E402
+import preprocessing as P                  # noqa: E402
 
 DATASET = REPO_ROOT / "dataset" / "multi_subtype_80mm"
 OUT = REPO_ROOT / "docs" / "images" / "preprocessing_figures"
@@ -270,10 +270,14 @@ def fig_normalisation(D: dict) -> None:
     the pixels is the SCOPE of the statistic: one (min, max) for the whole 4-D
     volume, or one per slice.
 
-    Both arms call the real functions: `pipelines.thesis.normalize_volume` and
-    `pipelines.reference.normalize`.
+    The first arm calls the real `preprocessing.normalize_volume`. The second is
+    the published rule, min-max of one slice jointly over its three channels,
+    written out here because it is three lines and nothing else in the project
+    uses it.
     """
-    from pipelines.reference import preprocessing as AP
+    def per_slice(slice_3ch):
+        lo, hi = float(slice_3ch.min()), float(slice_3ch.max())
+        return ((slice_3ch - lo) / (hi - lo)) if hi > lo else np.zeros_like(slice_3ch)
 
     vr, vn, chosen, box = D["vol_raw"], D["vol_norm"], D["chosen"], D["box"]
     roi = D["roi"]
@@ -294,7 +298,7 @@ def fig_normalisation(D: dict) -> None:
     for i, z in enumerate(chosen[:8]):
         a = blank(fig.add_subplot(gs[1, i]))
         # the authors normalise the SLICE, jointly over its three channels
-        a.imshow(np.clip(DB._crop_pad(AP.normalize(vr[:, int(z)]), box), 0, 1)
+        a.imshow(np.clip(DB._crop_pad(per_slice(vr[:, int(z)]), box), 0, 1)
                  .transpose(1, 2, 0), vmin=0, vmax=1)
         if i == 0:
             a.set_ylabel("AUTHORS'\nper slice", fontsize=12.0, color=C_TRAIN)
@@ -302,7 +306,7 @@ def fig_normalisation(D: dict) -> None:
     a = fig.add_subplot(gs[2, :])
     zs = roi.zs
     ours = [float(vn[:, int(z)].max()) for z in zs]
-    theirs = [float(AP.normalize(vr[:, int(z)]).max()) for z in zs]
+    theirs = [float(per_slice(vr[:, int(z)]).max()) for z in zs]
 
     a.plot(zs, ours, color=C_STEP, lw=2.2, marker="o", ms=3.4,
            label="ours — each slice keeps its true brightness")

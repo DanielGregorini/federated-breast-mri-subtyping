@@ -18,12 +18,13 @@ No hyperparameter is defined twice. Everything comes from
 | `workspace/` | One startup kit per participant, written by `nvflare provision`. Each holds that participant's certificate, private key and start script. Contains real private keys and is never committed. |
 | `data/` | The images and manifests each participant reads. `global/` is the shared validation and test set, `partitions/` is the six per-hospital splits. |
 | `jobs/` | Twelve complete NVFLARE jobs, one per federated experiment. Each carries the code the hospitals run. Generated, never written by hand. |
-| `logs/` | One folder per experiment, one log file per participant, plus `timeline.log`. |
-| `datasets/` | Tables describing how the data was divided. No images and no weights. |
-| `config/` | `resolved_config.json` and `.md`, a record of what the configuration was at run time. Nothing reads them back. |
 | `project.yml` | The provisioning file. Participants, organisations, ports and builders. |
 
-Output from a run lands in [`results/federated/`](../results/README.md).
+Those six things are everything the federation needs. Copy this folder to a machine,
+start the participants, submit a job. Nothing has to be prepared first.
+
+A run writes into [`results/federated/`](../results/README.md), and creates `logs/`
+here for the admin side of each submission.
 
 ## The participants
 
@@ -46,16 +47,10 @@ Run every command from the repository root.
 
 ### 1. Build the data
 
-Notebook 06 writes `data/global/` and all six partitions under `data/partitions/`.
+Notebook 07 writes `data/global/` and all six partitions under `data/partitions/`.
 
 ```bash
-jupyter notebook notebooks/06_federated_setup.ipynb
-```
-
-Then check that no patient ended up in two places:
-
-```bash
-python deployment/code/scripts/verify_data.py
+jupyter notebook notebooks/07_federated_setup.ipynb
 ```
 
 ### 2. Provision the identities
@@ -79,18 +74,9 @@ python deployment/code/scripts/generate_jobs.py
 ```
 
 Writes the twelve job folders under `jobs/` and copies them into the admin's
-`transfer/` directory. Add `--check` to fail instead if any has drifted from the
-experiment table.
+`transfer/` directory.
 
-### 4. Check everything before starting
-
-Writes nothing, starts nothing, and has to pass first.
-
-```bash
-python deployment/code/scripts/verify_production.py
-```
-
-### 5. Start the federation
+### 4. Start the federation
 
 Open a terminal and point the hospital processes at this repository:
 

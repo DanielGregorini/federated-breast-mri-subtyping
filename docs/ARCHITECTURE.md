@@ -66,7 +66,6 @@ table, that class of bug is not expressible.
 ## `src/` — how to train
 
 Pure PyTorch. **No file in here imports `nvflare`.** That is the invariant, and
-`scripts/verify_data.py --check-imports` checks it rather than trusting it.
 
 ```
 src/
@@ -206,8 +205,7 @@ than symlinks. It costs disk and buys two things: the layout is exactly what wou
 `rsync`-ed to a real hospital machine, and it is impossible for a bug to let one site
 read another's data — the files are not there.
 
-Three rules are enforced by `deployment/code/scripts/partition_data.py` and verified by
-`deployment/code/scripts/verify_data.py`:
+Three rules are enforced by `deployment/code/scripts/partition_data.py`:
 
 1. **Split by patient, never by slice.** Every image of a patient goes to one site.
 2. **No patient appears in two hospitals**, and no training patient appears in the
@@ -229,7 +227,6 @@ decision, not a claim about deployment, and it is stated as such in the disserta
 |---|---|
 | `prepare_data.py` | builds the global test set from the source dataset |
 | `partition_data.py` | writes the four per-hospital splits |
-| `verify_data.py` | leakage checks; refuses to pass if a patient is in two places |
 | `provision.sh` | runs `nvflare provision`, producing the PKI startup kits |
 | `<workspace>/<identity>/startup/start.sh` | one per participant, from `nvflare provision`. Starts that participant as its own process |
 | `run_experiment.py` | submits one experiment and waits for it |

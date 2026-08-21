@@ -263,7 +263,7 @@ def main() -> None:
                         f"bal={agg['balanced_accuracy']:.4f} acc={agg['accuracy']:.4f}")
 
         # 2. train locally. The LR follows the same cosine curve the centralised
-        #    baseline follows, evaluated from the round index — see src/training.py.
+        #    baseline follows, evaluated from the round index.
         lr = T.lr_for_round(training.learning_rate, rnd, args.num_rounds,
                             training.scheduler)
         T.set_lr(optimizer, lr)

@@ -1,12 +1,11 @@
-"""Turns MinCrop NIfTI volumes into a 2D PNG dataset for one pipeline and task.
+"""Turns MinCrop NIfTI volumes into a 2D PNG dataset.
 
-One builder, two pipelines. The pipeline supplies three functions — slice
-selection, crop window, normalisation — and this module does everything that is
-common: reading volumes, locating the lesion, splitting by patient, writing PNGs
-and a CSV, and verifying there is no leakage.
+`preprocessing.py` supplies three decisions, slice selection, crop window and
+normalisation, and this module does the rest: reading volumes, locating the lesion,
+splitting by patient, and writing the PNGs and the CSV.
 
     from core.dataset_builder import build
-    build(Config(pipeline="reference", task="pcr"))
+    build(Config(task="subtype"))
 
 WHY THE COHORTS ARE HANDLED DIFFERENTLY, AND WHY THAT IS NOT A DIFFERENCE
 ------------------------------------------------------------------------
@@ -164,13 +163,9 @@ def _process(args) -> tuple[list[dict], str | None]:
 
     row, opts, out_dir = args
     pid, cohort = row["pid"], row["dataset"]
-    pipeline = opts["pipeline"]
     root = CFG.COHORT_DIRS[cohort]
 
-    if pipeline == "reference":
-        from pipelines.reference import preprocessing as P
-    else:
-        from pipelines.thesis import preprocessing as P
+    import preprocessing as P
 
     try:
         paths, phases = _phase_paths(root / DCE_SUBDIR[cohort], pid, cohort,
@@ -199,14 +194,12 @@ def _process(args) -> tuple[list[dict], str | None]:
     if roi is None:
         return [], "no usable ROI"
 
-    # ---- normalise (volume-level only; the authors normalise per slice) ---- #
-    if pipeline == "thesis":
-        vol = (P.normalize_channel_clip(vol) if opts["normalization"] == "chanclip"
-               else P.normalize_volume(vol))
+    # ---- normalise over the whole volume ---- #
+    vol = (P.normalize_channel_clip(vol) if opts["normalization"] == "chanclip"
+           else P.normalize_volume(vol))
 
     # ---- select slices ---- #
-    chosen = (P.select_slices(roi.zs) if pipeline == "reference"
-              else P.select_slices(roi.zs, opts["n_slices"], opts["trim_fraction"]))
+    chosen = P.select_slices(roi.zs, opts["n_slices"], opts["trim_fraction"])
     if len(chosen) == 0:
         return [], "no slice survived selection"
 
@@ -214,12 +207,8 @@ def _process(args) -> tuple[list[dict], str | None]:
     spacing = float(row["xy_spacing"])
     if not np.isfinite(spacing) or spacing <= 0:
         return [], "invalid xy_spacing"
-    if pipeline == "reference":
-        box = P.crop_window(roi.row0, roi.row1, roi.col0, roi.col1, opts["crop_px"])
-        side = opts["crop_px"]
-    else:
-        box, side = P.crop_window(roi.row0, roi.row1, roi.col0, roi.col1,
-                                  spacing, opts["crop_mm"])
+    box, side = P.crop_window(roi.row0, roi.row1, roi.col0, roi.col1,
+                              spacing, opts["crop_mm"])
 
     pdir = out_dir / "images" / pid
     pdir.mkdir(parents=True, exist_ok=True)
@@ -232,8 +221,6 @@ def _process(args) -> tuple[list[dict], str | None]:
     for order, z in enumerate(chosen):
         z = int(z)
         plane = vol[:, z]
-        if pipeline == "reference":
-            plane = P.normalize(plane)          # per slice, joint over channels
         plane = _crop_pad(plane, box)
         img = (np.clip(plane, 0, 1) * 255).astype(np.uint8).transpose(1, 2, 0)
         if img.shape[0] != S:
@@ -382,22 +369,17 @@ def build(cfg, n_slices: int = 8, trim_fraction: float = 0.15,
     """Build the dataset for `cfg`. Returns the output folder."""
     patients = patient_table(cfg)
     out_dir = cfg.dataset_dir
-    opts = dict(pipeline=cfg.pipeline, n_slices=n_slices,
+    opts = dict(n_slices=n_slices,
                 trim_fraction=trim_fraction, crop_mm=crop_mm, crop_px=crop_px,
                 save_size=save_size, normalization=normalization,
                 min_tumor_px=min_tumor_px)
 
-    print(f"BUILD  {cfg.pipeline} / {cfg.task}  ->  {out_dir}")
+    print(f"BUILD  {cfg.task}  ->  {out_dir}")
     print(f"  cohorts : {', '.join(cfg.cohorts)}")
     print(f"  patients: {len(patients)}")
-    if cfg.pipeline == "reference":
-        print(f"  slices  : 4, range(idx-2, idx+2) — the authors' rule")
-        print(f"  crop    : {crop_px} px fixed, centred on the ROI")
-        print(f"  norm    : per slice, joint over channels")
-    else:
-        print(f"  slices  : {n_slices} spread, trimming {trim_fraction:.0%} each end")
-        print(f"  crop    : {crop_mm:.0f} mm physical -> {save_size} px")
-        print(f"  norm    : {normalization}, whole volume")
+    print(f"  slices  : {n_slices} spread, trimming {trim_fraction:.0%} each end")
+    print(f"  crop    : {crop_mm:.0f} mm physical -> {save_size} px")
+    print(f"  norm    : {normalization}, whole volume")
     print()
     print(pd.crosstab(patients.dataset, [patients.split, patients.label_name]).to_string())
     if dry_run:
@@ -422,7 +404,7 @@ def build(cfg, n_slices: int = 8, trim_fraction: float = 0.15,
     (out_dir / "config.json").write_text(json.dumps(
         {**opts, "task": cfg.task, "cohorts": list(cfg.cohorts),
          "n_patients": int(meta.pid.nunique()), "n_images": len(meta),
-         "fromarray_fix": cfg.pipeline == "reference", "errors": errors}, indent=2))
+         "errors": errors}, indent=2))
 
     verify(meta, out_dir)
     print(f"\n{len(meta):,} images from {meta.pid.nunique():,} patients -> {out_dir}")

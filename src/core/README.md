@@ -5,7 +5,7 @@ federated client import from here, so both arms of the experiment run the same c
 
 | File | What it does |
 |---|---|
-| `dataset_builder.py` | Turns the raw NIfTI volumes into the 2-D PNG dataset. Reads the volumes, locates the lesion from a mask or a bounding box, delegates the three pipeline-specific decisions to `pipelines/`, and writes the images and the metadata CSV. It refuses to finish if an integrity check fails. |
+| `dataset_builder.py` | Turns the raw NIfTI volumes into the 2-D PNG dataset. Reads the volumes, locates the lesion from a mask or a bounding box, delegates the three preprocessing decisions to `preprocessing.py`, and writes the images and the metadata CSV. It refuses to finish if an integrity check fails. |
 | `data.py` | The `Dataset`, the augmentation profiles, and `PatientBatchSampler`, which allows at most one slice per patient per batch. |
 | `models.py` | `build_model` for thirteen architectures, the head-construction rule, and the layer freezing. |
 | `training.py` | The epoch loop. AMP, gradient clipping at max-norm 1.0, the cosine schedule, and device selection. |
@@ -13,8 +13,7 @@ federated client import from here, so both arms of the experiment run the same c
 | `reporting.py` | The per-run report. Metrics, curves, confusion matrices and predictions. |
 | `experiment.py` | Orchestration for a single centralised run. |
 
-Nothing here imports `nvflare`. `deployment/code/scripts/verify_data.py --check-imports` checks
-that rather than trusting it.
+Nothing here imports `nvflare`.
 
 ## How to use it
 

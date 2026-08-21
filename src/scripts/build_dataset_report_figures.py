@@ -36,7 +36,7 @@ from matplotlib.patches import Rectangle                       # noqa: E402
 
 import dataset_config as CFG                                           # noqa: E402
 from core import dataset_builder as DB                         # noqa: E402
-from pipelines.thesis import preprocessing as P                  # noqa: E402
+import preprocessing as P                  # noqa: E402
 
 DATASET = REPO_ROOT / "dataset" / "multi_subtype_80mm"
 

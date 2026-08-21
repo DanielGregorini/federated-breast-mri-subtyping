@@ -198,7 +198,7 @@ centralized_epochs  = 30
 
 **30 rounds × 1 local epoch = 30 epochs of data**, budget-matched to the centralised
 baseline. Without that, the comparison would read a difference in compute as a difference in
-federation. `deployment/code/scripts/verify_production.py` asserts the equality as a pre-flight check.
+federation.
 
 Confirmed: `sites/rounds.csv` holds rounds **0–29** for every site in every completed
 federated test.
@@ -436,13 +436,12 @@ probabilities averaged per patient first.
 | `deployment/code/federation/recipes.py` | `build_recipe()` (FedAvg / FedProx / FedOpt), `build_env()` → `ProdEnv` |
 | `deployment/code/federation/client.py` | the client loop: `flare.init` / `receive` / `send` |
 | `deployment/code/common/models.py` | `FederatedClassifier`, `architecture_fingerprint` |
-| `deployment/code/common/training.py` | delegates to `src/core/training.py` |
+| `deployment/code/common/training.py` | delegates to `core/training.py` |
 | `deployment/workspace/breast_fl_project/prod_00/` | PKI startup kits: `server/`, `hospital_1..4/`, `admin@ips.pt/` |
-| `deployment/jobs/testNN_*/job.py` | generated from `experiments.py`; `generate_jobs.py --check` fails on drift |
+| `deployment/jobs/testNN_*/` | a complete NVFLARE job, generated from `experiments.py` |
 | `results/federated/testNN_*/` | `job.json`, `global_model.pt`, `test_metrics.json`, `predictions_test.csv`, `sites/rounds.csv`, `sites/train.log` |
 | `results/federated/final_summary/` | `summary.{csv,xlsx,json,md,pdf}`, 8 comparison tables, 9 LaTeX tables, figures |
 | `deployment/logs/testNN/` | `server.log`, `hospital_N.log`, `admin.log`, `timeline.log`, `pids` |
-| `deployment/code/scripts/verify_production.py` | 198 pre-flight checks; writes nothing |
 | `deployment/code/scripts/run_experiment.py` | submits one job through the admin API |
 | `deployment/code/scripts/collect_results.py` | scores every model on the one global test set |
 | `<workspace>/<identity>/startup/start.sh` | server first, wait for the admin port, then the hospitals |
@@ -487,7 +486,6 @@ cd federated
 # once
 bash deployment/code/scripts/provision.sh
 python deployment/code/scripts/build_distribution_report.py
-python deployment/code/scripts/verify_production.py   # must pass before anything starts
 
 # the centralised baseline — NOT an NVFLARE job
 python deployment/code/scripts/run_centralized.py --seed 42

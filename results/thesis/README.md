@@ -34,12 +34,12 @@ Every experiment is scored on the same global test set,
 `deployment/data/global/test.csv`: 268 patients and 2,115 slices, which no hospital
 sees during training. The per-hospital training data comes from
 `deployment/data/partitions/<name>/`. Both are built by
-[`notebooks/06_federated_setup.ipynb`](../../notebooks/06_federated_setup.ipynb).
+[`notebooks/07_federated_setup.ipynb`](../../notebooks/07_federated_setup.ipynb).
 
 ## How to read it
 
 ```bash
-jupyter notebook notebooks/05_compare_experiments.ipynb
+jupyter notebook notebooks/06_compare_experiments.ipynb
 ```
 
 Puts every run in one table. `final_summary/summary.md` is the same material as a

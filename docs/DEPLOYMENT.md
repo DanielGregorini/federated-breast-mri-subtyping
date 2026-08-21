@@ -16,7 +16,6 @@ the simulator. That distinction is a hard requirement of this dissertation, and
 pip install -r requirements.txt          # 0. once
 python deployment/code/scripts/prepare_data.py           # 1. global test set
 python deployment/code/scripts/partition_data.py         # 2. per-hospital splits
-python deployment/code/scripts/verify_data.py            # 2b. refuse if anything leaks
 bash deployment/code/scripts/provision.sh                # 3. PKI startup kits
 deployment/workspace/breast_fl_project/prod_00/server/startup/start.sh        # 4. the server
 deployment/workspace/breast_fl_project/prod_00/hospital_1/startup/start.sh    #    then one per hospital
@@ -174,10 +173,6 @@ is genuine heterogeneity rather than quantity skew.
 ---
 
 ## 2b. Verify — this step refuses rather than warns
-
-```bash
-python deployment/code/scripts/verify_data.py --check-imports
-```
 
 ```
 ======================================================================

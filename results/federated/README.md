@@ -12,8 +12,57 @@ Where a federated campaign you run yourself lands. One folder per experiment.
 | `sites/train.log` | each hospital's training log |
 
 `final_summary/` appears once you build it, holding the tables and figures that
-compare the experiments in this folder against each other. `distributions/` holds one
-figure per experiment showing how the patients were divided between the hospitals.
+compare the experiments in this folder against each other.
+
+## distributions/
+
+How the patients were divided between the hospitals. One figure per experiment, plus
+three overviews, and the tables behind them.
+
+### The tables
+
+#### `all_distributions.csv`
+
+One row per experiment, site and split. 78 rows covering all thirteen experiments.
+
+| Column | What it is |
+|---|---|
+| `experiment` | `test01` to `test13` |
+| `name` | the experiment's folder name |
+| `algorithm` | `centralized`, `fedavg` or `fedprox` |
+| `partition` | which split under `data/partitions/` this row belongs to |
+| `site` | `hospital_1` to `hospital_4`, or `centralized` |
+| `split` | `train` or `val` |
+| `patients` | patients at that site in that split |
+| `images` | slices at that site in that split |
+| `patients_HRposHER2neg`, `patients_TripleNeg`, `patients_HER2pos` | patients per class |
+| `cohorts` | JSON, patients per source cohort at that site |
+| `pct_patients`, `pct_images` | that site's share of the experiment |
+
+`all_distributions.json` holds the same rows plus the generation timestamp and the
+splitting rule.
+
+#### `global_splits.csv`
+
+Two rows, the held-out sets no hospital ever receives.
+
+| Column | What it is |
+|---|---|
+| `site` | `global_test` or `global_val` |
+| `patients`, `images` | size of the split |
+| `patients_<class>` | patients per class |
+| `trivial_baseline` | accuracy of always predicting the majority class of that split |
+
+#### `dataset_audit.json`
+
+The output of the integrity audit. Source dataset totals, the global splits, every
+partition, and the list of checks that ran and whether any failed.
+
+Rebuild them with:
+
+```bash
+python deployment/code/scripts/build_distribution_report.py
+```
 
 ## How to fill it
 
@@ -32,10 +81,10 @@ And build the summary:
 python deployment/code/scripts/build_final_summary.py
 ```
 
-Notebook 07 drives both:
+Notebook 08 drives both:
 
 ```bash
-jupyter notebook notebooks/07_federated_run.ipynb
+jupyter notebook notebooks/08_federated_run.ipynb
 ```
 
 Run folders here are not version controlled.

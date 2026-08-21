@@ -71,15 +71,17 @@ CLIENT_SCRIPT_IN_JOB = "federation/client.py"
 # machine it lands on. Traced from client.py:
 #     client.py  -> config.experiments, common.{data,evaluation,models,training}
 #     common/*   -> common.thesis -> core.{data,evaluation,models,training}
-#     core/*     -> dataset_config, pipelines/
+#     core/*     -> dataset_config, preprocessing
 SHIPPED_TREES = {
     "config": PROJECT_ROOT / "config",
     "common": PROJECT_ROOT / "common",
     "federation": PROJECT_ROOT / "federation",
     "core": THESIS_SRC / "core",
-    "pipelines": THESIS_SRC / "pipelines",
 }
-SHIPPED_FILES = {"dataset_config.py": THESIS_SRC / "dataset_config.py"}
+SHIPPED_FILES = {
+    "dataset_config.py": THESIS_SRC / "dataset_config.py",
+    "preprocessing.py": THESIS_SRC / "preprocessing.py",
+}
 
 _IGNORE = shutil.ignore_patterns("__pycache__", "*.pyc", "README.md")
 
@@ -180,7 +182,7 @@ def _build_recipe(experiment):
     # the recorded constructor arguments; a torchvision ResNet cannot be recorded
     # (it stores `_norm_layer` as a class, which is not JSON-serialisable) and
     # would rebuild as a default 1000-class model even if it could. See
-    # src/models.py::FederatedClassifier.
+    # common/models.py::FederatedClassifier.
     model = M.federated_model(EX.TRAINING, EX.NUM_CLASSES)
 
     # Identical for every algorithm. Only the recipe CLASS and, for FedOpt, the

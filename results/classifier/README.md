@@ -1,7 +1,7 @@
 # results/classifier
 
 Centralised runs from
-[`notebooks/03_train_centralized.ipynb`](../../notebooks/03_train_centralized.ipynb).
+[`notebooks/04_train_centralized.ipynb`](../../notebooks/04_train_centralized.ipynb).
 One folder per run, named `test_NNN_<model>_<task>/`.
 
 The number is one above the highest already present, and gaps are never reused, so a
@@ -25,7 +25,7 @@ folder, so archiving old runs elsewhere restarts the numbering at 001.
 A run without `results.json` either crashed or is still going.
 
 `all_experiments.csv` is one row per run, written by
-[`notebooks/05_compare_experiments.ipynb`](../../notebooks/05_compare_experiments.ipynb).
+[`notebooks/06_compare_experiments.ipynb`](../../notebooks/06_compare_experiments.ipynb).
 
 ## How to produce one
 
@@ -33,12 +33,12 @@ The dataset has to exist first, built by
 [`notebooks/02_build_dataset.ipynb`](../../notebooks/02_build_dataset.ipynb).
 
 ```bash
-jupyter notebook notebooks/03_train_centralized.ipynb
+jupyter notebook notebooks/04_train_centralized.ipynb
 ```
 
 Then read one run, or compare them all:
 
 ```bash
-jupyter notebook notebooks/04_evaluate_run.ipynb
-jupyter notebook notebooks/05_compare_experiments.ipynb
+jupyter notebook notebooks/05_evaluate_run.ipynb
+jupyter notebook notebooks/06_compare_experiments.ipynb
 ```

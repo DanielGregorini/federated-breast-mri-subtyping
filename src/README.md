@@ -9,7 +9,7 @@ trainer. It lives in [`deployment/code/`](../deployment/code/README.md).
 | Path | What it holds |
 |---|---|
 | [`core/`](core/README.md) | The dataset builder and the shared trainer. |
-| [`pipelines/`](pipelines/README.md) | The two preprocessing rule sets the dataset builder can be given. |
+| `preprocessing.py` | Which slices to keep, how to crop, how to normalise. |
 | [`scripts/`](scripts/README.md) | The two scripts that regenerate the documentation figures. |
 | `dataset_config.py` | Where the raw release is, which cohorts and which task, and the `Config` object the builder takes. |
 
@@ -21,13 +21,12 @@ dataset_config.py            what to build and from where
         v
 core/dataset_builder.py      reads the volumes, locates the lesion, writes PNGs
         |
-        +-- pipelines/thesis/      which slices, how to crop, how to normalise
-        +-- pipelines/reference/   the same three decisions, the authors' way
+        +-- preprocessing.py       which slices, how to crop, how to normalise
         |
         v
 core/{data,models,training,evaluation}.py     the shared trainer
         |
-        +-- notebooks/03_train_centralized.ipynb    one machine
+        +-- notebooks/04_train_centralized.ipynb    one machine
         +-- deployment/code/common/                 one hospital
 ```
 
@@ -41,12 +40,10 @@ falling back to the repository layout.
 Nothing here is a command except the two figure scripts. The code is imported, by a
 notebook or by a federated client.
 
-The shortest path through it is notebook 03:
+The shortest path through it is notebook 04:
 
 ```bash
-jupyter notebook notebooks/03_train_centralized.ipynb
+jupyter notebook notebooks/04_train_centralized.ipynb
 ```
 
-Nothing in this folder imports `nvflare`, and
-`deployment/code/scripts/verify_data.py --check-imports` checks that rather than
-trusting it.
+Nothing in this folder imports `nvflare`.

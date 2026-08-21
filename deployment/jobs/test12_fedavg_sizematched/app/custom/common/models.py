@@ -2,7 +2,7 @@
 
 WHY THIS FILE IS THIN
 ---------------------
-It delegates to `src/core/models.py` and adds nothing of its own.
+It delegates to `core/models.py` and adds nothing of its own.
 That is deliberate. FedAvg averages tensors position by position: if two sites build
 networks that differ by so much as an inserted Dropout, the averaged weights are
 meaningless and nothing warns you. The previous iteration of this project kept 28
@@ -205,7 +205,7 @@ def verify_architecture(model: nn.Module, expected: str | None) -> str:
             f"architecture mismatch: this site built {got}, the job expects {expected}.\n"
             "  FedAvg averages tensors position by position, so continuing would "
             "produce a meaningless global model without raising an error.\n"
-            "  Check that every site is running the same src/ and the same "
+            "  Check that every site is running the same job and the same "
             "TrainingConfig.")
     return got
 

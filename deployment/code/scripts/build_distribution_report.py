@@ -153,7 +153,7 @@ def centralized_frame() -> pd.DataFrame:
     Built from the 4-client balanced partition because that partition is a complete
     cover of the training pool: summing its sites reproduces exactly the patients the
     centralised baseline trains on. Any of the four partitions would give the same
-    total — checked by `verify_production.py`, which compares all four.
+    total.
     """
     df = partition_frame("4_clients_balanced")
     pooled = []

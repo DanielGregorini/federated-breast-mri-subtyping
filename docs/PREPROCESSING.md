@@ -38,7 +38,7 @@ from disk — the actual file the network trains on.
 |---|---|
 | **input** | BreastDCEDL **MinCrop** release (Zenodo record 18114231): 3-D NIfTI volumes, cohorts I-SPY2 + I-SPY1 + Duke |
 | **output** | `data/multi_subtype_80mm/` — 2,063 patients, 16,378 images, 224×224 8-bit RGB PNG |
-| **code** | `core/dataset_builder.py` (common machinery) + `pipelines/thesis/preprocessing.py` (the three pipeline-specific functions) |
+| **code** | `core/dataset_builder.py` (common machinery) + `preprocessing.py` (the three pipeline-specific functions) |
 | **driver** | `notebooks/02_build_dataset.ipynb` |
 
 **"Raw" in this project means raw relative to us, not raw from the scanner.** The
@@ -443,7 +443,7 @@ From `data/multi_subtype_80mm/config.json`, verbatim:
 
 | parameter | value | set in |
 |---|---|---|
-| slices per patient | 8 | `pipelines/thesis/preprocessing.py::N_SLICES` |
+| slices per patient | 8 | `preprocessing.py::N_SLICES` |
 | trim fraction | 0.15 per end | `::TRIM_FRACTION` |
 | crop window | 80.0 mm | `::CROP_MM` |
 | output size | 224 × 224 | `dataset_builder.build(save_size=...)` |

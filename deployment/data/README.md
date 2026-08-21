@@ -35,10 +35,10 @@ split, which is what produces the metric the server selects on.
 
 ## How to build it
 
-Notebook 06 writes the whole folder:
+Notebook 07 writes the whole folder:
 
 ```bash
-jupyter notebook notebooks/06_federated_setup.ipynb
+jupyter notebook notebooks/07_federated_setup.ipynb
 ```
 
 The script path does the same in two steps:
@@ -56,15 +56,5 @@ python deployment/code/scripts/partition_data.py --hardlink
 Divides the remaining training patients into the six partitions. `--only NAME` builds
 one of them. `--by-cohort` gives each hospital one complete source cohort.
 `--stratify none` lets the class ratio differ between sites.
-
-## How to check it
-
-```bash
-python deployment/code/scripts/verify_data.py
-```
-
-Checks that no patient is in two sites, that no training patient is in the global test
-set, and that every local validation split covers all three classes. Exits non-zero if
-any check fails. Run it after every rebuild.
 
 Nothing in this folder is version controlled except this README.

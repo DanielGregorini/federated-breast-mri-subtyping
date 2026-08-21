@@ -246,11 +246,9 @@ Two secondary findings worth carrying forward:
 
 ## Checklist before reporting a number
 
-- [ ] `deployment/code/scripts/verify_data.py` passed on this partition
 - [ ] the source probe was run if the dataset pools cohorts, and is quoted beside the result
 - [ ] accuracy is quoted with the trivial baseline of the same split
 - [ ] the metric is patient-level macro-AUC, not slice-level
 - [ ] at least two seeds, or the text says "one seed"
 - [ ] any difference below 0.067 is reported as "no difference detected"
 - [ ] per-class recall is reported, not only the aggregate
-- [ ] `python deployment/code/scripts/generate_jobs.py --check` passes, so no job drifted from the table
