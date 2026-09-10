@@ -1,0 +1,10 @@
+{
+    "name": "test08_fedavg_skewed_s19",
+    "resource_spec": {},
+    "min_clients": 4,
+    "deploy_map": {
+        "app": [
+            "@ALL"
+        ]
+    }
+}

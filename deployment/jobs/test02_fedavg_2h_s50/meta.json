@@ -1,0 +1,10 @@
+{
+    "name": "test02_fedavg_2h_s50",
+    "resource_spec": {},
+    "min_clients": 2,
+    "deploy_map": {
+        "app": [
+            "@ALL"
+        ]
+    }
+}

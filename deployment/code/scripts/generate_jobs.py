@@ -84,7 +84,8 @@ def split_table(experiment) -> str:
         "as a local validation split, which is what produces the metric the server "
         "selects on.\n"
         "\n"
-        f"The files are in `deployment/data/partitions/{partition.name}/<hospital>/`.\n"
+        f"The files are in "
+        f"`deployment/data/partitions/{experiment.partition_dir}/<hospital>/`.\n"
     )
 
 
@@ -95,7 +96,7 @@ def job_readme(experiment) -> str:
     protocol = [
         ("algorithm", ALGORITHM_SHORT[experiment.algorithm]),
         ("hospitals", f"{experiment.n_clients}"),
-        ("partition", f"`{experiment.partition}`"),
+        ("partition", f"`{experiment.partition_dir}`"),
         ("rounds x local epochs", f"{fed.num_rounds} x {fed.local_epochs}"),
         ("model selection", f"`{fed.key_metric}`, on held-out client patients"),
     ]
@@ -118,7 +119,7 @@ def job_readme(experiment) -> str:
                        f"{tr.max_slices_per_patient_per_batch} slice per patient"),
         ("class weights", f"inverse frequency per patient, scope "
                           f"`{tr.class_weight_scope}`"),
-        ("seed", f"{tr.seed}"),
+        ("seed", f"{experiment.train_seed}"),
     ]
     protocol_rows = "\n".join(f"| {k} | {v} |" for k, v in protocol)
 
@@ -251,9 +252,20 @@ def main() -> None:
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--no-install", action="store_true",
                    help="do not copy the jobs into the admin's transfer directory")
+    p.add_argument("--seed", type=int, action="append", default=None,
+                   metavar="N",
+                   help="also write a seed replica of every federated job, reading "
+                        "data/partitions/<shape>_sN/. Repeatable. Build that data "
+                        "first with partition_data.py --seed N --suffix _sN.")
     args = p.parse_args()
 
     federated = [e for e in EX.EXPERIMENTS if e.kind == "federated"]
+    for seed in args.seed or []:
+        if seed == EX.TRAINING.seed:
+            raise SystemExit(f"seed {seed} is the base protocol; it is already "
+                             "written without --seed")
+        federated += [EX.seed_replica(e, seed)
+                      for e in EX.EXPERIMENTS if e.kind == "federated"]
     for experiment in federated:
         job_dir = EX.JOBS_DIR / experiment.name
         build_job_folder(experiment, job_dir)

@@ -134,15 +134,28 @@ def append_round(path: Path, row: dict) -> None:
 def resolve_site_dir(args, site: str) -> Path:
     """This hospital's own data folder, and nobody else's.
 
-    Order: explicit flag, then $BREAST_SITE_DIR (what a real hospital machine sets),
-    then the partition layout this project generates. The site never receives a path
-    to the pooled dataset — it cannot read what is not there.
+    Order: explicit flag, then $BREAST_SITE_DIR, then $BREAST_DATA_ROOT, then the
+    layout this repository generates. The site never receives a path to the pooled
+    dataset — it cannot read what is not there.
+
+    $BREAST_DATA_ROOT is what a hospital machine sets, and it is the one that
+    scales: it names the `deployment/data` folder once, and the partition name in
+    the job's own command line picks the rest. $BREAST_SITE_DIR names a single
+    site folder, so it pins the machine to one partition and one seed and has to
+    be changed between jobs.
+
+    The last fallback only works where the repository itself is on disk. Inside a
+    submitted job it does not: `EX.REPO_ROOT` resolves against the unpacked job
+    in the client's workspace, not against any checkout.
     """
     if args.site_dir:
         return Path(args.site_dir)
     env = os.environ.get("BREAST_SITE_DIR")
     if env:
         return Path(env)
+    root = os.environ.get("BREAST_DATA_ROOT")
+    if root:
+        return Path(root) / "partitions" / args.partition / site
     return EX.PARTITIONS_DIR / args.partition / site
 
 
@@ -187,8 +200,14 @@ def main() -> None:
         EX.RESULTS_DIR / "sites" / site)
     # The job ships with a repository-relative path so the same job folder can be
     # submitted from any machine. An absolute one is honoured unchanged.
+    #
+    # $BREAST_RESULTS_ROOT is what that relative path hangs off on a hospital
+    # machine. Without it the anchor is `EX.REPO_ROOT`, which inside a submitted
+    # job is the unpacked job in the client's own workspace — the CSVs are still
+    # written, but they land somewhere the run does not survive.
     if not results_dir.is_absolute():
-        results_dir = EX.REPO_ROOT / results_dir
+        results_dir = Path(os.environ.get("BREAST_RESULTS_ROOT",
+                                          EX.REPO_ROOT)) / results_dir
     logger = build_logger(results_dir, site)
 
     training = EX.TRAINING

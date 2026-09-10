@@ -282,5 +282,29 @@ docs/thesis_tables_results.tex
 results/classifier/test_*
 results/federated/*
 !results/federated/README.md
+# The dataset organization record: how the patients were divided at each seed, the
+# per-hospital counts and the patient listings. It describes the SPLITS, not a run,
+# it is what makes a result reproducible and comparable across seeds, and it goes
+# into the dissertation. Model weights and run outputs stay ignored.
+!results/federated/distributions/
 results/classifier/all_experiments.csv
 
+
+# The thesis-era source dataset, rebuilt by scripts/rebuild_thesis_source.py.
+# Same 16,378 slices as multi_subtype_80mm/ but the August CSV schema and the
+# August pixels, which is what every reported result was measured on.
+dataset/multi_subtype_80mm_thesis/
+
+# Resultados antigos e nao utilizados, arquivados em 2026-09-09. Nada aqui entra
+# em resultado ou relatorio: o registo reportado e results/thesis/<seed>/<test>/.
+# Guardado, nao apagado.
+old/
+
+# Documento de referencia dos resultados, gerado a partir dos arquivos em
+# results/thesis/. Regenerar em vez de editar a mao.
+docs/RESULTS_REFERENCE.md
+
+# Copia das figuras do capitulo 4, para levar para o editor da tese. Geradas por
+# script a partir de results/thesis/; regenerar em vez de editar.
+imagem_mestrado/
+results/thesis/figures/

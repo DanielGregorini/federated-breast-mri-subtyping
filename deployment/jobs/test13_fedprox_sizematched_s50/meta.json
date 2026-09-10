@@ -1,0 +1,10 @@
+{
+    "name": "test13_fedprox_sizematched_s50",
+    "resource_spec": {},
+    "min_clients": 3,
+    "deploy_map": {
+        "app": [
+            "@ALL"
+        ]
+    }
+}

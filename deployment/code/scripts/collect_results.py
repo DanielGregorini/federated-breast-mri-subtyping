@@ -151,8 +151,23 @@ def main() -> None:
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--only", default=None)
-    p.add_argument("--out", type=Path, default=EX.RESULTS_DIR / "all_experiments.csv")
+    p.add_argument("--out", type=Path, default=None)
+    p.add_argument("--results-dir", type=Path, default=None,
+                   help="where the runs are. Defaults to results/thesis if it holds "
+                        "seed_* folders, otherwise results/federated.")
     args = p.parse_args()
+
+    # Two layouts exist. A run you start lands flat in results/federated/<name>/.
+    # The 39 reported runs were curated into results/thesis/seed_<n>/<test>/, one
+    # folder per seed, because thirteen names cannot hold three seeds each.
+    root = args.results_dir or (EX.THESIS_DIR if list(EX.THESIS_DIR.glob("seed_*"))
+                                else EX.RESULTS_DIR)
+    per_seed = bool(list(root.glob("seed_*")))
+    if args.out is None:
+        # --only scores one experiment, so writing the shared table would replace
+        # 39 rows with one. It gets its own file instead.
+        args.out = (root / f"_only_{args.only}.csv") if args.only \
+                   else (root / "all_experiments.csv")
 
     device = M.get_device()
     use_amp = T.use_amp_on(device, EX.TRAINING.mixed_precision)
@@ -165,11 +180,26 @@ def main() -> None:
     print(f"  chance macro-AUC: 0.5000")
     print("=" * 78)
 
+    # (experiment, folder, seed) for every run to score. In the per-seed layout the
+    # folder name carries no suffix, so test04_fedavg_3h_s19 lives at
+    # seed_19/test04_fedavg_3h/ and the seed comes from the parent, not the name.
+    alvos = []
+    if per_seed:
+        for seed_dir in sorted(root.glob("seed_*")):
+            seed = int(seed_dir.name.split("_")[1])
+            for experiment in EX.EXPERIMENTS:
+                d = seed_dir / experiment.name
+                if d.is_dir():
+                    alvos.append((experiment, d, seed))
+    else:
+        for experiment in EX.all_runs():
+            alvos.append((experiment, root / experiment.name, experiment.train_seed))
+
     records = []
-    for experiment in EX.EXPERIMENTS:
-        if args.only and experiment.name != args.only and experiment.id != args.only:
+    for experiment, exp_dir, seed in alvos:
+        if args.only and experiment.name != args.only and experiment.id != args.only \
+                and exp_dir.name != args.only:
             continue
-        exp_dir = EX.RESULTS_DIR / experiment.name
         if not exp_dir.is_dir():
             print(f"\n{experiment.id:<9} not run yet")
             continue
@@ -178,15 +208,20 @@ def main() -> None:
             "experiment": experiment.id, "name": experiment.name,
             "kind": experiment.kind, "algorithm": experiment.algorithm or "-",
             "n_clients": experiment.n_clients,
+            # `partition` stays the SHAPE, so a replica's row lines up with the
+            # frozen seed-42 record in results/thesis/all_experiments.csv and the
+            # two CSVs concatenate. The folder actually read is its own column.
             "partition": experiment.partition or "-",
+            "partition_dir": experiment.partition_dir or "-",
             "n_test": int(rows.pid.nunique()), "baseline": round(baseline, 4),
         }
 
         if experiment.kind == "centralized":
-            # One folder per seed. Each already evaluated itself on this same set;
-            # re-scoring here anyway means every row in the table is produced by
-            # one code path.
-            for seed_dir in sorted(exp_dir.glob("seed_*")):
+            # Re-scored here even though the run already evaluated itself, so every
+            # row in the table comes out of one code path. In the per-seed layout the
+            # folder is already one seed, so there is nothing to glob.
+            seed_dirs = [exp_dir] if per_seed else sorted(exp_dir.glob("seed_*"))
+            for seed_dir in seed_dirs:
                 ckpt = seed_dir / "best_model.pt"
                 if not ckpt.is_file():
                     continue
@@ -211,7 +246,7 @@ def main() -> None:
             print(f"\n{experiment.id:<9} no aggregated model found under {exp_dir}")
             continue
         metrics, model = evaluate_checkpoint(path, loader, rows, device, use_amp)
-        records.append({**base, "seed": EX.TRAINING.seed, "model_used": which,
+        records.append({**base, "seed": seed, "model_used": which,
                         "best_epoch": None,
                         "test_auc": round(metrics["auc"], 4),
                         "test_acc": round(metrics["accuracy"], 4),

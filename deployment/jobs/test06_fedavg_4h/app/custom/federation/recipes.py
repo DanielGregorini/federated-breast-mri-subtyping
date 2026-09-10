@@ -134,11 +134,13 @@ def train_args_for(experiment) -> str:
 
     model = M.build_model(EX.TRAINING, EX.NUM_CLASSES)
     return " ".join([
-        f"--partition {partition.name}",
+        # `partition_dir`, not `partition.name`: a seed replica reads its own
+        # folder under data/partitions/ and the base row reads the seed-42 one.
+        f"--partition {experiment.partition_dir}",
         f"--local-epochs {EX.FEDERATION.local_epochs}",
         f"--num-rounds {EX.FEDERATION.num_rounds}",
         f"--fedprox-mu {mu}",
-        f"--seed {EX.TRAINING.seed}",
+        f"--seed {experiment.train_seed}",
         f"--architecture {M.architecture_fingerprint(model)}",
         # Relative to the repository root, not absolute: the job folder is
         # submitted by path from the admin console and has to mean the same thing

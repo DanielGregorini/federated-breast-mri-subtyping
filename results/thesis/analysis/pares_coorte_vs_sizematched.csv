@@ -1,0 +1,7 @@
+seed,algorithm,3_clients_balanced,3_clients_cohort,3_clients_sizematched,dif
+19,fedavg,0.5931,0.5649,0.6003,-0.0354
+19,fedprox,0.5896,0.5726,0.5982,-0.0256
+42,fedavg,0.599,0.5426,0.5836,-0.041
+42,fedprox,0.5958,0.5928,0.5882,0.0046
+50,fedavg,0.5874,0.5546,0.5862,-0.0316
+50,fedprox,0.6024,0.5582,0.6233,-0.0651

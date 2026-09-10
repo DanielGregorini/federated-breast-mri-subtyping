@@ -114,11 +114,11 @@ def global_splits() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def cohort_counts(partition: str, site: str) -> dict[str, int]:
+def cohort_counts(partition_dir: str, site: str) -> dict[str, int]:
     """Patients per cohort at one site, read from the site's own CSVs."""
     out: dict[str, int] = {}
     for split in ("train", "val"):
-        csv = EX.PARTITIONS_DIR / partition / site / f"{split}.csv"
+        csv = EX.PARTITIONS_DIR / partition_dir / site / f"{split}.csv"
         if not csv.is_file():
             continue
         df = pd.read_csv(csv, usecols=["pid", "cohort"]).drop_duplicates("pid")
@@ -127,13 +127,17 @@ def cohort_counts(partition: str, site: str) -> dict[str, int]:
     return out
 
 
-def partition_frame(partition_name: str) -> pd.DataFrame:
-    """One row per (site, split) for a federated partition."""
-    pj = _read_json(EX.PARTITIONS_DIR / partition_name / "partition.json")
+def partition_frame(partition_dir: str) -> pd.DataFrame:
+    """One row per (site, split) for one built partition folder.
+
+    Takes the FOLDER name, not the shape name, so a seed replica such as
+    `4_clients_balanced_s19` is read from its own folder.
+    """
+    pj = _read_json(EX.PARTITIONS_DIR / partition_dir / "partition.json")
     rows = []
     for site in pj.get("sites", []):
         name = site.get("site")
-        cohorts = cohort_counts(partition_name, name)
+        cohorts = cohort_counts(partition_dir, name)
         for split in ("train", "val"):
             s = site.get(split) or {}
             pcp = s.get("per_class_patients") or []
@@ -147,7 +151,7 @@ def partition_frame(partition_name: str) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def centralized_frame() -> pd.DataFrame:
+def centralized_frame(suffix: str = "") -> pd.DataFrame:
     """Test 01 pools every hospital's data onto one machine.
 
     Built from the 4-client balanced partition because that partition is a complete
@@ -155,7 +159,7 @@ def centralized_frame() -> pd.DataFrame:
     centralised baseline trains on. Any of the four partitions would give the same
     total.
     """
-    df = partition_frame("4_clients_balanced")
+    df = partition_frame(f"4_clients_balanced{suffix}")
     pooled = []
     for split in ("train", "val"):
         sub = df[df.split == split]
@@ -169,8 +173,9 @@ def centralized_frame() -> pd.DataFrame:
 
 
 def frame_for(experiment) -> pd.DataFrame:
-    return (centralized_frame() if experiment.partition is None
-            else partition_frame(experiment.partition))
+    suffix = "" if experiment.seed is None else f"_s{experiment.seed}"
+    return (centralized_frame(suffix) if experiment.partition is None
+            else partition_frame(experiment.partition_dir))
 
 
 # --------------------------------------------------------------------------- #
@@ -329,10 +334,10 @@ def overview_figure(frames: dict[str, pd.DataFrame], out: Path) -> None:
     save_fig(fig, out)
 
 
-def global_figure(gl: pd.DataFrame, out: Path) -> None:
+def global_figure(gl: pd.DataFrame, out: Path, suffix: str = "") -> None:
     """The task itself: how many patients and images carry each class."""
     fig, axes = plt.subplots(1, 3, figsize=(12, 3.6))
-    pooled = centralized_frame()
+    pooled = centralized_frame(suffix)
 
     ax = axes[0]
     vals = [float(pooled[f"patients_{c}"].sum()) for c in CLASSES]
@@ -343,7 +348,7 @@ def global_figure(gl: pd.DataFrame, out: Path) -> None:
     ax.tick_params(axis="x", rotation=15, labelsize=7)
 
     ax = axes[1]
-    counts = images_per_class()
+    counts = images_per_class(suffix)
     vals = [float(counts.get(c, 0)) for c in CLASSES]
     bars = ax.bar(CLASSES, vals, color=CLASS_COLOUR)
     _pct_labels(ax, bars, vals, sum(vals))
@@ -425,7 +430,7 @@ def cohort_overview_figure(out: Path) -> None:
     save_fig(fig, out)
 
 
-def images_per_class() -> dict[str, int]:
+def images_per_class(suffix: str = "") -> dict[str, int]:
     """Slice counts per class across the training pool, from the site CSVs.
 
     Counted from the CSVs rather than from `partition.json`, which records patients
@@ -435,7 +440,8 @@ def images_per_class() -> dict[str, int]:
     counts: dict[str, int] = {c: 0 for c in CLASSES}
     for site in EX.PARTITIONS["4_clients_balanced"].client_names:
         for split in ("train", "val"):
-            csv = EX.PARTITIONS_DIR / "4_clients_balanced" / site / f"{split}.csv"
+            csv = (EX.PARTITIONS_DIR / f"4_clients_balanced{suffix}" / site
+                   / f"{split}.csv")
             if not csv.is_file():
                 continue
             df = pd.read_csv(csv, usecols=["label"])
@@ -444,42 +450,226 @@ def images_per_class() -> dict[str, int]:
     return counts
 
 
+def patient_assignments(seed: int) -> pd.DataFrame:
+    """Every patient, in every partition, with the site and split it landed in.
+
+    This is the listing that makes a split reproducible rather than merely
+    described. `partition.json` says a site holds 306 patients; this says WHICH
+    306. Read straight from the per-site CSVs, so it cannot disagree with what the
+    clients actually load.
+
+    Slice-level listings are the per-site `train.csv` and `val.csv` themselves and
+    are not repeated here: they carry one row per image, and the split is decided
+    per patient.
+    """
+    suffix = "" if seed == EX.TRAINING.seed else f"_s{seed}"
+    rows = []
+    for shape in EX.PARTITIONS:
+        folder = f"{shape}{suffix}"
+        pdir = EX.PARTITIONS_DIR / folder
+        if not (pdir / "partition.json").is_file():
+            continue
+        for site in sorted(d.name for d in pdir.iterdir() if d.is_dir()):
+            for split in ("train", "val"):
+                csv = pdir / site / f"{split}.csv"
+                if not csv.is_file():
+                    continue
+                cols = ["pid", "label", "label_name", "cohort", "filename"]
+                df = pd.read_csv(csv)
+                keep = [c for c in cols if c in df.columns]
+                n_slices = df.groupby("pid").size().rename("n_slices")
+                per_patient = df[keep].drop_duplicates("pid").join(n_slices, on="pid")
+                per_patient.insert(0, "seed", seed)
+                per_patient.insert(1, "partition_shape", shape)
+                per_patient.insert(2, "partition_dir", folder)
+                per_patient.insert(3, "site", site)
+                per_patient.insert(4, "split", split)
+                rows.append(per_patient.drop(columns=[c for c in ("filename",)
+                                                      if c in per_patient.columns]))
+    if not rows:
+        return pd.DataFrame()
+    out = pd.concat(rows, ignore_index=True)
+    return out.sort_values(["partition_shape", "site", "split", "pid"],
+                           ignore_index=True)
+
+
+def held_out_patients() -> pd.DataFrame:
+    """The global validation and test patients.
+
+    Identical for every seed. They come from the `test` column of the BreastDCEDL
+    metadata rather than being drawn here, which is what makes results measured at
+    different seeds comparable: the scoring set never moves.
+    """
+    rows = []
+    for split in ("val", "test"):
+        csv = EX.GLOBAL_DIR / f"{split}.csv"
+        if not csv.is_file():
+            continue
+        df = pd.read_csv(csv)
+        keep = [c for c in ("pid", "label", "label_name", "cohort") if c in df.columns]
+        n_slices = df.groupby("pid").size().rename("n_slices")
+        per_patient = df[keep].drop_duplicates("pid").join(n_slices, on="pid")
+        per_patient.insert(0, "split", f"global_{split}")
+        rows.append(per_patient)
+    return (pd.concat(rows, ignore_index=True).sort_values(["split", "pid"],
+                                                           ignore_index=True)
+            if rows else pd.DataFrame())
+
+
 # --------------------------------------------------------------------------- #
 # Main                                                                         #
 # --------------------------------------------------------------------------- #
-def main() -> None:
-    p = argparse.ArgumentParser(description=__doc__,
-                                formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--figures", type=Path, default=EX.FIGURES_DIR)
-    p.add_argument("--tables", type=Path, default=EX.DATASETS_DIR)
-    p.add_argument("--pdf", action="store_true",
-                   help="also write a vector .pdf beside every .png")
-    args = p.parse_args()
+def seed_readme(seed: int, allrows: pd.DataFrame, gl: pd.DataFrame,
+                assignments: pd.DataFrame) -> str:
+    """The documentation written beside each seed's tables. Numbers come from the
+    tables themselves, so the text cannot drift from the data it describes."""
+    is_base = seed == EX.TRAINING.seed
+    tr = EX.TRAINING
 
-    global SAVE_PDF
-    SAVE_PDF = args.pdf
+    glob_rows = "\n".join(
+        f"| {r['split']} | {int(r['patients'])} | {int(r['images'])} | "
+        + " | ".join(str(int(r.get(f'patients_{c}', 0))) for c in CLASSES) + " |"
+        for _, r in gl.iterrows())
 
-    args.figures.mkdir(parents=True, exist_ok=True)
-    args.tables.mkdir(parents=True, exist_ok=True)
+    fed = allrows[allrows.partition_shape != "pooled"]
+    shape_rows = []
+    for shape in sorted(fed.partition_shape.unique()):
+        sub = fed[fed.partition_shape == shape]
+        part = EX.PARTITIONS[shape]
+        pj = _read_json(EX.PARTITIONS_DIR / sub.partition_dir.iloc[0] /
+                        "partition.json")
+        shape_rows.append(
+            f"| `{sub.partition_dir.iloc[0]}` | {part.n_clients} | {pj.get('mode')} "
+            f"| {int(sub.patients.sum() / sub.name.nunique())} "
+            f"| {int(sub.images.sum() / sub.name.nunique()):,} |")
 
-    gl = global_splits()
+    site_rows = []
+    for shape in sorted(fed.partition_shape.unique()):
+        sub = fed[fed.partition_shape == shape].drop_duplicates(["site", "split"])
+        for _, r in sub.sort_values(["site", "split"]).iterrows():
+            site_rows.append(
+                f"| `{shape}` | {r['site']} | {r['split']} | {int(r['patients'])} "
+                f"| {int(r['images']):,} | "
+                + " | ".join(str(int(r[f'patients_{c}'])) for c in CLASSES) + " |")
+
+    n_shapes = fed.partition_shape.nunique()
+    return f"""# Dataset organization — seed {seed}
+
+How the data is divided for every experiment run at seed {seed}, and the listings
+that make that division reproducible.
+
+{'This is the original split. Every result in `results/thesis/` was measured on it.'
+ if is_base else
+ 'A replica of the seed ' + str(tr.seed) + ' protocol. Same code, same model, same '
+ 'hyperparameters, same training loop and same evaluation. The only thing that '
+ 'differs is which training patients each hospital holds.'}
+
+## What the seed changes, and what it does not
+
+The seed controls two things and nothing else:
+
+1. Which of the {int(gl[gl.split == 'train'].patients.sum()) if 'train' in set(gl.split) else 1527} training patients each hospital receives.
+2. Which of its own patients each hospital holds back as its local validation split.
+
+It does not touch the global validation and test sets. Those are read from the
+`test` column of the BreastDCEDL metadata, not drawn here, so they are identical at
+every seed and results measured at different seeds are directly comparable.
+
+It does not touch the images. `partition_data.py` hardlinks the PNGs that
+`dataset/multi_subtype_80mm` already holds. Nothing is resampled, re-cropped,
+re-normalised or re-encoded.
+
+It does not touch any hyperparameter. Model `{tr.model_name}`, ImageNet-pretrained,
+frozen up to `{tr.freeze_until}`, {tr.image_size}x{tr.image_size} input,
+{tr.optimizer} at lr {tr.learning_rate}, weight decay {tr.weight_decay}, dropout
+{tr.dropout}, label smoothing {tr.label_smoothing}, batch {tr.batch_size} with at
+most {tr.max_slices_per_patient_per_batch} slice per patient,
+{EX.FEDERATION.num_rounds} rounds x {EX.FEDERATION.local_epochs} local epoch,
+selection on `{EX.FEDERATION.key_metric}`, patient-level `{tr.aggregation}`
+aggregation. All of it comes from `config/experiments.py` and is shared with every
+other seed.
+
+## The held-out sets, identical at every seed
+
+| split | patients | images | {' | '.join(CLASSES)} |
+|---|---:|---:|{'---:|' * len(CLASSES)}
+{glob_rows}
+
+## The partitions
+
+{n_shapes} shapes, each covering all training patients exactly once.
+
+| folder | hospitals | mode | patients | images |
+|---|---:|---|---:|---:|
+{chr(10).join(shape_rows)}
+
+`mode` is how patients are dealt out. `stratified` splits within each class, so
+every site keeps the global class ratio and the sites differ only in quantity.
+`cohort` gives each site one whole source cohort, which is the only genuinely
+non-IID partition here. A cohort partition's site membership does not depend on the
+seed, because the cohorts are fixed; only its local validation split moves.
+
+## Per hospital and per split
+
+| partition | hospital | split | patients | images | {' | '.join(CLASSES)} |
+|---|---|---|---:|---:|{'---:|' * len(CLASSES)}
+{chr(10).join(site_rows)}
+
+## The files
+
+| file | what it holds |
+|---|---|
+| `all_distributions.csv` | one row per experiment, hospital and split, with patient and image counts, per-class counts, cohort counts and percentages |
+| `all_distributions.json` | the same, nested per experiment, plus the split rules |
+| `global_splits.csv` | the held-out validation and test sets |
+| `global_held_out_patients.csv` | every held-out patient, with label, cohort and slice count |
+| `patient_assignments.csv` | **the sample listing**: {len(assignments):,} rows, one per patient per partition, saying which hospital and which split it landed in |
+| `figures/` | one distribution figure per experiment, plus three overviews |
+
+Slice-level listings are the per-site `train.csv` and `val.csv` under
+`deployment/data/partitions/<folder>/<hospital>/`. They carry one row per image and
+are what the clients actually read. This folder describes them; it does not replace
+them.
+
+## How to rebuild it
+
+```bash
+python deployment/code/scripts/partition_data.py --seed {seed}{'' if is_base else f' --suffix _s{seed}'} --hardlink
+python deployment/code/scripts/build_distribution_report.py --seed {seed}
+```
+
+The allocation is deterministic given the seed, so this reproduces the same split.
+"""
+
+
+def build_for_seed(seed: int, out_root: Path, gl: pd.DataFrame) -> pd.DataFrame:
+    """Every figure and table describing how the data is divided at one seed."""
+    suffix = "" if seed == EX.TRAINING.seed else f"_s{seed}"
+    out = out_root / f"seed_{seed}"
+    figures, tables = out / "figures", out
+    figures.mkdir(parents=True, exist_ok=True)
+
+    experiments = [e for e in EX.all_runs() if e.train_seed == seed]
+
     print("=" * 74)
-    print("DATASET DISTRIBUTION — nine experiments")
+    print(f"DATASET ORGANIZATION — seed {seed}")
     print("=" * 74)
 
     combined, frames = [], {}
-    for experiment in EX.EXPERIMENTS:
+    for experiment in experiments:
         df = frame_for(experiment)
         if experiment.partition:
             frames[experiment.partition] = df
         stem = f"{experiment.name}_distribution"
-        experiment_figure(experiment, df, gl, args.figures / stem)
+        experiment_figure(experiment, df, gl, figures / stem)
 
         table = df.copy()
-        table.insert(0, "experiment", experiment.id)
-        table.insert(1, "name", experiment.name)
-        table.insert(2, "algorithm", experiment.algorithm or "centralized")
-        table.insert(3, "partition", experiment.partition or "pooled")
+        table.insert(0, "seed", seed)
+        table.insert(1, "experiment", experiment.id)
+        table.insert(2, "name", experiment.name)
+        table.insert(3, "algorithm", experiment.algorithm or "centralized")
+        table.insert(4, "partition_shape", experiment.partition or "pooled")
+        table.insert(5, "partition_dir", experiment.partition_dir or "pooled")
         total_p = table.patients.sum()
         total_i = table.images.sum()
         table["pct_patients"] = (100 * table.patients / total_p).round(2)
@@ -487,40 +677,110 @@ def main() -> None:
         combined.append(table)
 
         sites = table.site.nunique()
-        print(f"  {experiment.id}  {experiment.name:<24} {sites} site(s)  "
-              f"{int(total_p):>4} patients  {int(total_i):>6,} images  "
-              f"-> {stem}.png")
+        print(f"  {experiment.id:<12} {experiment.name:<32} {sites} site(s)  "
+              f"{int(total_p):>4} patients  {int(total_i):>6,} images")
 
     allrows = pd.concat(combined, ignore_index=True)
-    allrows.to_csv(args.tables / "all_distributions.csv", index=False)
+    allrows.to_csv(tables / "all_distributions.csv", index=False)
 
-    overview_figure(frames, args.figures / "overview_balanced_vs_skewed")
-    global_figure(gl, args.figures / "overview_task_and_classes")
-    cohort_overview_figure(args.figures / "overview_cohorts")
-    gl.to_csv(args.tables / "global_splits.csv", index=False)
+    overview_figure(frames, figures / "overview_balanced_vs_skewed")
+    global_figure(gl, figures / "overview_task_and_classes", suffix)
+    cohort_overview_figure(figures / "overview_cohorts")
+    gl.to_csv(tables / "global_splits.csv", index=False)
 
-    (args.tables / "all_distributions.json").write_text(json.dumps({
+    # The listings. These are what let somebody rebuild or audit the split.
+    assignments = patient_assignments(seed)
+    assignments.to_csv(tables / "patient_assignments.csv", index=False)
+    held_out_patients().to_csv(tables / "global_held_out_patients.csv", index=False)
+    (tables / "README.md").write_text(seed_readme(seed, allrows, gl, assignments))
+
+    (tables / "all_distributions.json").write_text(json.dumps({
+        "seed": seed,
         "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "source_dataset": str(EX.SOURCE_DATASET),
         "classes": CLASSES,
         "split_rule": "patient-level; every slice of a patient goes to one hospital",
-        "stratified": True,
-        "note": ("All partitions are stratified, so hospitals differ in QUANTITY "
-                 "only. Tests 08/09 are quantity skew, not label-distribution "
-                 "heterogeneity."),
+        "global_split_rule": ("read from the `test` column of the BreastDCEDL "
+                              "metadata, not drawn here, so it does not depend on "
+                              "the seed"),
+        "note": ("Stratified partitions vary QUANTITY only. 3_clients_cohort is one "
+                 "real cohort per site and its site membership does not depend on "
+                 "the seed; only its local validation split does."),
         "global_splits": gl.to_dict("records"),
         "experiments": {
             e.name: {
-                "id": e.id, "algorithm": e.algorithm or "centralized",
-                "partition": e.partition or "pooled",
+                "id": e.id, "seed": e.train_seed,
+                "algorithm": e.algorithm or "centralized",
+                "partition_shape": e.partition or "pooled",
+                "partition_dir": e.partition_dir or "pooled",
                 "n_hospitals": e.n_clients, "split_label": e.split_label,
                 "rows": allrows[allrows.name == e.name].to_dict("records"),
-            } for e in EX.EXPERIMENTS},
+            } for e in experiments},
     }, indent=2, default=str))
 
-    print(f"\n  figures -> {args.figures}")
-    print(f"  tables  -> {args.tables}")
-    print(f"\n  {len(EX.EXPERIMENTS)} experiment figures + 3 overviews")
+    print(f"  -> {out}")
+    return allrows
+
+
+def seed_comparison(per_seed: dict[int, pd.DataFrame], out: Path) -> pd.DataFrame:
+    """One row per shape, site and split, with the counts side by side per seed.
+
+    The point of the table is to show what did NOT change. Patients per site and
+    per class are fixed by the stratified allocation, so they must match across
+    seeds; only WHICH patients, and therefore the image counts, move.
+    """
+    rows = []
+    for seed, df in sorted(per_seed.items()):
+        sub = df[df.partition_shape != "pooled"].copy()
+        sub["seed"] = seed
+        rows.append(sub[["seed", "partition_shape", "site", "split", "patients",
+                         "images"] + [f"patients_{c}" for c in CLASSES]])
+    long = pd.concat(rows, ignore_index=True).drop_duplicates(
+        ["seed", "partition_shape", "site", "split"])
+    wide = long.pivot_table(index=["partition_shape", "site", "split"],
+                            columns="seed",
+                            values=["patients", "images"] +
+                                   [f"patients_{c}" for c in CLASSES])
+    wide.columns = [f"{a}_seed{b}" for a, b in wide.columns]
+    wide = wide.reset_index()
+    wide.to_csv(out, index=False)
+    return wide
+
+
+def main() -> None:
+    p = argparse.ArgumentParser(description=__doc__,
+                                formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("--out", type=Path, default=EX.FIGURES_DIR,
+                   help="root for the per-seed folders")
+    p.add_argument("--seed", type=int, action="append", default=None, metavar="N",
+                   help="describe this seed only. Repeatable. Default: every seed "
+                        "in config/experiments.py::SEEDS that has been built.")
+    p.add_argument("--pdf", action="store_true",
+                   help="also write a vector .pdf beside every .png")
+    args = p.parse_args()
+
+    global SAVE_PDF
+    SAVE_PDF = args.pdf
+
+    seeds = args.seed or list(EX.SEEDS)
+    gl = global_splits()
+
+    built = {}
+    for seed in seeds:
+        suffix = "" if seed == EX.TRAINING.seed else f"_s{seed}"
+        probe = EX.PARTITIONS_DIR / f"4_clients_balanced{suffix}" / "partition.json"
+        if not probe.is_file():
+            print(f"seed {seed}: not built, skipped "
+                  f"(partition_data.py --seed {seed} --suffix _s{seed})")
+            continue
+        built[seed] = build_for_seed(seed, args.out, gl)
+
+    if len(built) > 1:
+        wide = seed_comparison(built, args.out / "seed_comparison.csv")
+        print(f"\n  cross-seed comparison: {len(wide)} rows -> "
+              f"{args.out / 'seed_comparison.csv'}")
+
+    print(f"\n  {len(built)} seed(s) described under {args.out}")
 
 
 if __name__ == "__main__":

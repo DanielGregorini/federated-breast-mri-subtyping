@@ -124,7 +124,6 @@ def build_config(training, dataset_dir: Path, *, epochs: int, seed: int | None =
     `train.csv` / `val.csv` — so the same loader serves both.
     """
     cfg = ThesisConfig(
-        pipeline="thesis",
         task="subtype",
         model=training.model_name,
         image_size=training.image_size,

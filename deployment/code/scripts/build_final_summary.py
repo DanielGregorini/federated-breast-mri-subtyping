@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build `results/final_summary/` — every number, table and figure, in one pass.
+"""Build `results/thesis/final_summary/` — every number, table and figure, in one pass.
 
     python deployment/code/scripts/build_final_summary.py
     python deployment/code/scripts/build_final_summary.py --require-complete   # for the final thesis run
@@ -75,12 +75,15 @@ from config import experiments as EX                                 # noqa: E40
 
 CLASSES = list(EX.CLASS_NAMES)
 N_CLASSES = EX.NUM_CLASSES
-OUT_DIR = EX.RESULTS_DIR / "final_summary"
+# The reported runs live under results/thesis/, so the summary built from them
+# belongs there too. RESULTS_DIR below still points at the working area; --results-dir
+# overrides both.
+OUT_DIR = EX.THESIS_DIR / "final_summary"
 
 # Where the per-experiment folders are read from. Overridable with --results-dir so a
 # results tree copied back from the GPU host can be summarised in place, without
 # moving it into the repository first.
-RESULTS_DIR = EX.RESULTS_DIR
+RESULTS_DIR = EX.THESIS_DIR if list(EX.THESIS_DIR.glob("seed_*")) else EX.RESULTS_DIR
 
 # The measured seed-to-seed spread on this task. Printed everywhere a difference is.
 NOISE_FLOOR = 0.067
@@ -251,11 +254,26 @@ def discover(only: str | None = None) -> list[Run]:
     except Exception:
         find_global_model = None
 
+    # Two layouts. A campaign you run yourself lands flat, one folder per experiment
+    # name. The 39 reported runs were curated into seed_<n>/<test>/, so the same
+    # thirteen names appear three times and the seed comes from the parent folder.
+    per_seed = bool(list(RESULTS_DIR.glob("seed_*")))
+    alvos = []
+    if per_seed:
+        for seed_dir in sorted(RESULTS_DIR.glob("seed_*")):
+            seed = int(seed_dir.name.split("_")[1])
+            for experiment in EX.EXPERIMENTS:
+                alvos.append((EX.seed_replica(experiment, seed)
+                              if seed != EX.TRAINING.seed and experiment.kind == "federated"
+                              else experiment,
+                              seed_dir / experiment.name))
+    else:
+        alvos = [(e, RESULTS_DIR / e.name) for e in EX.all_runs()]
+
     runs: list[Run] = []
-    for experiment in EX.EXPERIMENTS:
-        if only and only not in (experiment.id, experiment.name):
+    for experiment, d in alvos:
+        if only and only not in (experiment.id, experiment.name, d.name):
             continue
-        d = RESULTS_DIR / experiment.name
         if not d.is_dir():
             runs.append(Run(experiment, "not_run", f"no folder at {d}"))
             continue
@@ -1275,7 +1293,7 @@ python deployment/code/scripts/build_final_summary.py
 | Flag | Effect |
 |---|---|
 | `--out DIR` | write somewhere other than the default |
-| `--results-dir DIR` | read runs from somewhere other than `results/federated/` |
+| `--results-dir DIR` | read runs from somewhere other than `results/thesis/` |
 | `--only ID` | build one experiment |
 | `--no-client-eval` | skip the per-hospital evaluation, which is the slow part |
 | `--pdf` | also write a vector `.pdf` beside every `.png` |

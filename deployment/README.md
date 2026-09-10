@@ -16,8 +16,8 @@ No hyperparameter is defined twice. Everything comes from
 |---|---|
 | `code/` | Everything the federation runs. The configuration table, the recipes, the client loop, the shared library and the operational scripts. |
 | `workspace/` | One startup kit per participant, written by `nvflare provision`. Each holds that participant's certificate, private key and start script. Contains real private keys and is never committed. |
-| `data/` | The images and manifests each participant reads. `global/` is the shared validation and test set, `partitions/` is the six per-hospital splits. |
-| `jobs/` | Twelve complete NVFLARE jobs, one per federated experiment. Each carries the code the hospitals run. Generated, never written by hand. |
+| `data/` | The images and manifests each participant reads. `global/` is the shared validation and test set, `partitions/` is the six per-hospital splits at each of the three seeds. |
+| `jobs/` | Thirty-six complete NVFLARE jobs: twelve federated experiments at three seeds. Each carries the code the hospitals run. Generated, never written by hand. |
 | `project.yml` | The provisioning file. Participants, organisations, ports and builders. |
 
 Those six things are everything the federation needs. Copy this folder to a machine,
@@ -47,10 +47,20 @@ Run every command from the repository root.
 
 ### 1. Build the data
 
-Notebook 07 writes `data/global/` and all six partitions under `data/partitions/`.
+Notebook 07 writes `data/global/` and the six seed-42 partitions under
+`data/partitions/`.
 
 ```bash
 jupyter notebook notebooks/07_federated_setup.ipynb
+```
+
+The other two seeds re-deal the same six shapes. `global/` is not rebuilt: which
+patients are training, validation and test comes from the BreastDCEDL metadata and
+does not depend on a seed, so all three seeds are scored on the same test set.
+
+```bash
+python deployment/code/scripts/partition_data.py --seed 19 --suffix _s19 --hardlink
+python deployment/code/scripts/partition_data.py --seed 50 --suffix _s50 --hardlink
 ```
 
 ### 2. Provision the identities
@@ -70,21 +80,33 @@ error that never mentions provisioning.
 ### 3. Generate the jobs
 
 ```bash
-python deployment/code/scripts/generate_jobs.py
+python deployment/code/scripts/generate_jobs.py --seed 19 --seed 50
 ```
 
-Writes the twelve job folders under `jobs/` and copies them into the admin's
-`transfer/` directory.
+Writes the thirty-six job folders under `jobs/` and copies them into the admin's
+`transfer/` directory. Each job names its own partition folder and its own seed on
+the client command line.
 
 ### 4. Start the federation
 
 Open a terminal and point the hospital processes at this repository:
 
 ```bash
+export BREAST_DATA_ROOT="$PWD/deployment/data"
+export BREAST_RESULTS_ROOT="$PWD"
 export FEDBREAST_ROOT="$PWD/deployment/code"
 export BREAST_CORE_ROOT="$PWD/src"
 export OMP_NUM_THREADS=1
 ```
+
+`BREAST_DATA_ROOT` is how a client finds its own folder, and `BREAST_RESULTS_ROOT`
+is where its per-round CSVs go. The job supplies the partition name and NVFLARE
+supplies the site name, so those two variables serve every job and nothing has to be
+restarted between them. On a machine that holds only its own hospital's data, point
+`BREAST_DATA_ROOT` at whatever folder has `partitions/<name>/<site>/` underneath it.
+
+The last two are only for running `federation/client.py` outside a job. A submitted
+job carries its own code and ignores them.
 
 Start the server, and wait until port 8003 is accepting connections:
 
@@ -109,6 +131,12 @@ From the admin console, by name:
 
 ```
 submit_job test10_fedavg_cohort
+```
+
+A seed replica is another name in the same list:
+
+```
+submit_job test10_fedavg_cohort_s19
 ```
 
 Or from the shell, which also runs the pre-flight and writes `job.json`:
@@ -145,8 +173,12 @@ deregister the client from the server.
 ## Moving a hospital to its own machine
 
 Change the hospital's address in `project.yml` and in
-`code/config/federation.py`, re-provision, and copy that hospital's startup
-kit and its folder under `data/partitions/` to the other machine. Nothing else
+`code/config/federation.py`, re-provision, and copy that hospital's startup kit and
+its folders under `data/partitions/` to the other machine. Copy with `rsync -aH`:
+the images are hardlinks, and without `-H` every site expands into its own full set
+of files.
+
+That machine then sets `BREAST_DATA_ROOT` to wherever it put them. Nothing else
 changes.
 
 Full walkthrough, including troubleshooting: [../docs/DEPLOYMENT.md](../docs/DEPLOYMENT.md)

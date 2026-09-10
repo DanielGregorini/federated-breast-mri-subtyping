@@ -1,0 +1,35 @@
+{
+  "conjunto_reportado": "13 experimentos em cada uma das seeds 42, 19 e 50",
+  "corridas": {
+    "total": 39,
+    "federadas": 36,
+    "centralizadas": 3
+  },
+  "test_set": {
+    "pacientes": 268,
+    "baseline_trivial": 0.5112
+  },
+  "federado_vs_centralizado": {
+    "centralizado_media": 0.6125,
+    "federado_media": 0.5867,
+    "diferenca": 0.0258
+  },
+  "fedavg_vs_fedprox": {
+    "pares": 18,
+    "fedprox_ganha": 11,
+    "diferenca_media": 0.008,
+    "wilcoxon_p": 0.0987
+  },
+  "coorte_vs_sizematched": {
+    "pares": 6,
+    "coorte_perde": 5,
+    "diferenca_media": -0.0323,
+    "wilcoxon_p": 0.0625,
+    "t_pareado_p": 0.0174
+  },
+  "efeito_da_seed": {
+    "amplitude_media_por_experimento": 0.0309,
+    "amplitude_maxima": 0.0537
+  },
+  "acuracia_acima_do_baseline": 2
+}

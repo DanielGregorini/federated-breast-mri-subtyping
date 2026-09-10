@@ -1,0 +1,164 @@
+{
+  "experiment": "test01",
+  "name": "test01_centralized",
+  "kind": "centralized",
+  "seed": 19,
+  "epochs": 30,
+  "best_epoch": 0,
+  "train_acc_at_best": 0.43574313741653614,
+  "generalisation_gap": {
+    "val": -0.0754508924342101,
+    "test": 0.021564032938924227
+  },
+  "source": "/dev/shm/tese/data/source",
+  "architecture": "2d3031acc2075813",
+  "finished": "2026-09-08T19:56:09+00:00",
+  "config": {
+    "task": "subtype",
+    "model": "resnet18",
+    "cohorts": [
+      "spy2"
+    ],
+    "image_size": 224,
+    "batch_size": 24,
+    "num_workers": 8,
+    "max_slices_per_patient_per_batch": 1,
+    "optimizer": "adamw",
+    "learning_rate": 0.0001,
+    "weight_decay": 0.0005,
+    "scheduler": "cosine",
+    "epochs": 30,
+    "early_stopping_patience": 0,
+    "label_smoothing": 0.1,
+    "class_weighted_loss": true,
+    "dropout": 0.5,
+    "freeze_until": "layer3",
+    "freeze_bn": false,
+    "mixup_alpha": 0.0,
+    "augmentation": "default",
+    "seed": 19,
+    "mixed_precision": true,
+    "aggregation": "mean",
+    "monitor_metric": "auc",
+    "dataset_name": "/dev/shm/tese/data/source",
+    "notes": "",
+    "num_classes": 3,
+    "class_names": [
+      "HRposHER2neg",
+      "TripleNeg",
+      "HER2pos"
+    ]
+  },
+  "splits": {
+    "val": {
+      "n_patients": 268,
+      "auc": 0.6911239726690578,
+      "accuracy": 0.5111940298507462,
+      "balanced_accuracy": 0.5113503455608718,
+      "macro_f1": 0.49405864743181765,
+      "macro_precision": 0.5395594601476954,
+      "macro_recall": 0.5113503455608718,
+      "per_class_auc": [
+        0.6956,
+        0.7068,
+        0.6709
+      ],
+      "per_class_precision": [
+        0.6857,
+        0.6136,
+        0.3193
+      ],
+      "per_class_recall": [
+        0.5455,
+        0.3553,
+        0.6333
+      ],
+      "per_class_f1": [
+        0.6076,
+        0.45,
+        0.4246
+      ],
+      "class_counts": [
+        132,
+        76,
+        60
+      ],
+      "confusion": [
+        [
+          72,
+          11,
+          49
+        ],
+        [
+          17,
+          27,
+          32
+        ],
+        [
+          16,
+          6,
+          38
+        ]
+      ],
+      "trivial_baseline_accuracy": 0.4925373134328358,
+      "slice_accuracy": 0.4849906191369606,
+      "slice_loss": 1.0267343521118164,
+      "n_slices": 2132
+    },
+    "test": {
+      "n_patients": 268,
+      "auc": 0.610736173086217,
+      "accuracy": 0.4141791044776119,
+      "balanced_accuracy": 0.4279136753313864,
+      "macro_f1": 0.4037520632468275,
+      "macro_precision": 0.4472537652742256,
+      "macro_recall": 0.4279136753313864,
+      "per_class_auc": [
+        0.6325,
+        0.6691,
+        0.5306
+      ],
+      "per_class_precision": [
+        0.6196,
+        0.4902,
+        0.232
+      ],
+      "per_class_recall": [
+        0.4161,
+        0.3205,
+        0.5472
+      ],
+      "per_class_f1": [
+        0.4978,
+        0.3876,
+        0.3258
+      ],
+      "class_counts": [
+        137,
+        78,
+        53
+      ],
+      "confusion": [
+        [
+          57,
+          18,
+          62
+        ],
+        [
+          19,
+          25,
+          34
+        ],
+        [
+          16,
+          8,
+          29
+        ]
+      ],
+      "trivial_baseline_accuracy": 0.5111940298507462,
+      "slice_accuracy": 0.40236406619385345,
+      "slice_loss": 1.129197597503662,
+      "n_slices": 2115
+    }
+  }
+}

@@ -1,0 +1,77 @@
+seed,experiment,name,algorithm,partition_shape,partition_dir,site,split,patients,images,patients_HRposHER2neg,patients_TripleNeg,patients_HER2pos,cohorts,pct_patients,pct_images
+50,test02_s50,test02_fedavg_2h_s50,fedavg,2_clients_balanced,2_clients_balanced_s50,hospital_1,train,612,4862,310,164,138,"{""spy2"": 401, ""duke"": 314, ""spy1"": 49}",40.08,40.08
+50,test02_s50,test02_fedavg_2h_s50,fedavg,2_clients_balanced,2_clients_balanced_s50,hospital_1,val,152,1204,77,41,34,"{""spy2"": 401, ""duke"": 314, ""spy1"": 49}",9.95,9.92
+50,test02_s50,test02_fedavg_2h_s50,fedavg,2_clients_balanced,2_clients_balanced_s50,hospital_2,train,611,4853,309,164,138,"{""spy2"": 383, ""duke"": 328, ""spy1"": 52}",40.01,40.0
+50,test02_s50,test02_fedavg_2h_s50,fedavg,2_clients_balanced,2_clients_balanced_s50,hospital_2,val,152,1212,77,41,34,"{""spy2"": 383, ""duke"": 328, ""spy1"": 52}",9.95,9.99
+50,test03_s50,test03_fedprox_2h_s50,fedprox,2_clients_balanced,2_clients_balanced_s50,hospital_1,train,612,4862,310,164,138,"{""spy2"": 401, ""duke"": 314, ""spy1"": 49}",40.08,40.08
+50,test03_s50,test03_fedprox_2h_s50,fedprox,2_clients_balanced,2_clients_balanced_s50,hospital_1,val,152,1204,77,41,34,"{""spy2"": 401, ""duke"": 314, ""spy1"": 49}",9.95,9.92
+50,test03_s50,test03_fedprox_2h_s50,fedprox,2_clients_balanced,2_clients_balanced_s50,hospital_2,train,611,4853,309,164,138,"{""spy2"": 383, ""duke"": 328, ""spy1"": 52}",40.01,40.0
+50,test03_s50,test03_fedprox_2h_s50,fedprox,2_clients_balanced,2_clients_balanced_s50,hospital_2,val,152,1212,77,41,34,"{""spy2"": 383, ""duke"": 328, ""spy1"": 52}",9.95,9.99
+50,test04_s50,test04_fedavg_3h_s50,fedavg,3_clients_balanced,3_clients_balanced_s50,hospital_1,train,408,3243,206,110,92,"{""spy2"": 272, ""duke"": 211, ""spy1"": 27}",26.72,26.73
+50,test04_s50,test04_fedavg_3h_s50,fedavg,3_clients_balanced,3_clients_balanced_s50,hospital_1,val,102,816,52,27,23,"{""spy2"": 272, ""duke"": 211, ""spy1"": 27}",6.68,6.73
+50,test04_s50,test04_fedavg_3h_s50,fedavg,3_clients_balanced,3_clients_balanced_s50,hospital_2,train,408,3245,206,110,92,"{""spy2"": 255, ""duke"": 212, ""spy1"": 43}",26.72,26.75
+50,test04_s50,test04_fedavg_3h_s50,fedavg,3_clients_balanced,3_clients_balanced_s50,hospital_2,val,102,805,52,27,23,"{""spy2"": 255, ""duke"": 212, ""spy1"": 43}",6.68,6.64
+50,test04_s50,test04_fedavg_3h_s50,fedavg,3_clients_balanced,3_clients_balanced_s50,hospital_3,train,406,3217,206,109,91,"{""spy2"": 257, ""duke"": 219, ""spy1"": 31}",26.59,26.52
+50,test04_s50,test04_fedavg_3h_s50,fedavg,3_clients_balanced,3_clients_balanced_s50,hospital_3,val,101,805,51,27,23,"{""spy2"": 257, ""duke"": 219, ""spy1"": 31}",6.61,6.64
+50,test05_s50,test05_fedprox_3h_s50,fedprox,3_clients_balanced,3_clients_balanced_s50,hospital_1,train,408,3243,206,110,92,"{""spy2"": 272, ""duke"": 211, ""spy1"": 27}",26.72,26.73
+50,test05_s50,test05_fedprox_3h_s50,fedprox,3_clients_balanced,3_clients_balanced_s50,hospital_1,val,102,816,52,27,23,"{""spy2"": 272, ""duke"": 211, ""spy1"": 27}",6.68,6.73
+50,test05_s50,test05_fedprox_3h_s50,fedprox,3_clients_balanced,3_clients_balanced_s50,hospital_2,train,408,3245,206,110,92,"{""spy2"": 255, ""duke"": 212, ""spy1"": 43}",26.72,26.75
+50,test05_s50,test05_fedprox_3h_s50,fedprox,3_clients_balanced,3_clients_balanced_s50,hospital_2,val,102,805,52,27,23,"{""spy2"": 255, ""duke"": 212, ""spy1"": 43}",6.68,6.64
+50,test05_s50,test05_fedprox_3h_s50,fedprox,3_clients_balanced,3_clients_balanced_s50,hospital_3,train,406,3217,206,109,91,"{""spy2"": 257, ""duke"": 219, ""spy1"": 31}",26.59,26.52
+50,test05_s50,test05_fedprox_3h_s50,fedprox,3_clients_balanced,3_clients_balanced_s50,hospital_3,val,101,805,51,27,23,"{""spy2"": 257, ""duke"": 219, ""spy1"": 31}",6.61,6.64
+50,test06_s50,test06_fedavg_4h_s50,fedavg,4_clients_balanced,4_clients_balanced_s50,hospital_1,train,306,2435,155,82,69,"{""spy2"": 202, ""duke"": 160, ""spy1"": 21}",20.04,20.07
+50,test06_s50,test06_fedavg_4h_s50,fedavg,4_clients_balanced,4_clients_balanced_s50,hospital_1,val,77,615,39,21,17,"{""spy2"": 202, ""duke"": 160, ""spy1"": 21}",5.04,5.07
+50,test06_s50,test06_fedavg_4h_s50,fedavg,4_clients_balanced,4_clients_balanced_s50,hospital_2,train,305,2418,154,82,69,"{""spy2"": 199, ""duke"": 154, ""spy1"": 29}",19.97,19.93
+50,test06_s50,test06_fedavg_4h_s50,fedavg,4_clients_balanced,4_clients_balanced_s50,hospital_2,val,77,606,39,21,17,"{""spy2"": 199, ""duke"": 154, ""spy1"": 29}",5.04,5.0
+50,test06_s50,test06_fedavg_4h_s50,fedavg,4_clients_balanced,4_clients_balanced_s50,hospital_3,train,305,2423,154,82,69,"{""spy2"": 194, ""duke"": 160, ""spy1"": 27}",19.97,19.97
+50,test06_s50,test06_fedavg_4h_s50,fedavg,4_clients_balanced,4_clients_balanced_s50,hospital_3,val,76,608,39,20,17,"{""spy2"": 194, ""duke"": 160, ""spy1"": 27}",4.98,5.01
+50,test06_s50,test06_fedavg_4h_s50,fedavg,4_clients_balanced,4_clients_balanced_s50,hospital_4,train,305,2422,154,82,69,"{""spy2"": 189, ""duke"": 168, ""spy1"": 24}",19.97,19.97
+50,test06_s50,test06_fedavg_4h_s50,fedavg,4_clients_balanced,4_clients_balanced_s50,hospital_4,val,76,604,39,20,17,"{""spy2"": 189, ""duke"": 168, ""spy1"": 24}",4.98,4.98
+50,test07_s50,test07_fedprox_4h_s50,fedprox,4_clients_balanced,4_clients_balanced_s50,hospital_1,train,306,2435,155,82,69,"{""spy2"": 202, ""duke"": 160, ""spy1"": 21}",20.04,20.07
+50,test07_s50,test07_fedprox_4h_s50,fedprox,4_clients_balanced,4_clients_balanced_s50,hospital_1,val,77,615,39,21,17,"{""spy2"": 202, ""duke"": 160, ""spy1"": 21}",5.04,5.07
+50,test07_s50,test07_fedprox_4h_s50,fedprox,4_clients_balanced,4_clients_balanced_s50,hospital_2,train,305,2418,154,82,69,"{""spy2"": 199, ""duke"": 154, ""spy1"": 29}",19.97,19.93
+50,test07_s50,test07_fedprox_4h_s50,fedprox,4_clients_balanced,4_clients_balanced_s50,hospital_2,val,77,606,39,21,17,"{""spy2"": 199, ""duke"": 154, ""spy1"": 29}",5.04,5.0
+50,test07_s50,test07_fedprox_4h_s50,fedprox,4_clients_balanced,4_clients_balanced_s50,hospital_3,train,305,2423,154,82,69,"{""spy2"": 194, ""duke"": 160, ""spy1"": 27}",19.97,19.97
+50,test07_s50,test07_fedprox_4h_s50,fedprox,4_clients_balanced,4_clients_balanced_s50,hospital_3,val,76,608,39,20,17,"{""spy2"": 194, ""duke"": 160, ""spy1"": 27}",4.98,5.01
+50,test07_s50,test07_fedprox_4h_s50,fedprox,4_clients_balanced,4_clients_balanced_s50,hospital_4,train,305,2422,154,82,69,"{""spy2"": 189, ""duke"": 168, ""spy1"": 24}",19.97,19.97
+50,test07_s50,test07_fedprox_4h_s50,fedprox,4_clients_balanced,4_clients_balanced_s50,hospital_4,val,76,604,39,20,17,"{""spy2"": 189, ""duke"": 168, ""spy1"": 24}",4.98,4.98
+50,test08_s50,test08_fedavg_skewed_s50,fedavg,4_clients_skewed,4_clients_skewed_s50,hospital_1,train,678,5384,343,182,153,"{""spy2"": 434, ""duke"": 359, ""spy1"": 55}",44.4,44.38
+50,test08_s50,test08_fedavg_skewed_s50,fedavg,4_clients_skewed,4_clients_skewed_s50,hospital_1,val,170,1353,86,46,38,"{""spy2"": 434, ""duke"": 359, ""spy1"": 55}",11.13,11.15
+50,test08_s50,test08_fedavg_skewed_s50,fedavg,4_clients_skewed,4_clients_skewed_s50,hospital_2,train,273,2167,138,73,62,"{""spy2"": 180, ""duke"": 135, ""spy1"": 25}",17.88,17.86
+50,test08_s50,test08_fedavg_skewed_s50,fedavg,4_clients_skewed,4_clients_skewed_s50,hospital_2,val,67,536,34,18,15,"{""spy2"": 180, ""duke"": 135, ""spy1"": 25}",4.39,4.42
+50,test08_s50,test08_fedavg_skewed_s50,fedavg,4_clients_skewed,4_clients_skewed_s50,hospital_3,train,136,1082,69,37,30,"{""spy2"": 84, ""duke"": 70, ""spy1"": 16}",8.91,8.92
+50,test08_s50,test08_fedavg_skewed_s50,fedavg,4_clients_skewed,4_clients_skewed_s50,hospital_3,val,34,272,17,9,8,"{""spy2"": 84, ""duke"": 70, ""spy1"": 16}",2.23,2.24
+50,test08_s50,test08_fedavg_skewed_s50,fedavg,4_clients_skewed,4_clients_skewed_s50,hospital_4,train,135,1072,69,36,30,"{""spy2"": 86, ""duke"": 78, ""spy1"": 5}",8.84,8.84
+50,test08_s50,test08_fedavg_skewed_s50,fedavg,4_clients_skewed,4_clients_skewed_s50,hospital_4,val,34,265,17,9,8,"{""spy2"": 86, ""duke"": 78, ""spy1"": 5}",2.23,2.18
+50,test09_s50,test09_fedprox_skewed_s50,fedprox,4_clients_skewed,4_clients_skewed_s50,hospital_1,train,678,5384,343,182,153,"{""spy2"": 434, ""duke"": 359, ""spy1"": 55}",44.4,44.38
+50,test09_s50,test09_fedprox_skewed_s50,fedprox,4_clients_skewed,4_clients_skewed_s50,hospital_1,val,170,1353,86,46,38,"{""spy2"": 434, ""duke"": 359, ""spy1"": 55}",11.13,11.15
+50,test09_s50,test09_fedprox_skewed_s50,fedprox,4_clients_skewed,4_clients_skewed_s50,hospital_2,train,273,2167,138,73,62,"{""spy2"": 180, ""duke"": 135, ""spy1"": 25}",17.88,17.86
+50,test09_s50,test09_fedprox_skewed_s50,fedprox,4_clients_skewed,4_clients_skewed_s50,hospital_2,val,67,536,34,18,15,"{""spy2"": 180, ""duke"": 135, ""spy1"": 25}",4.39,4.42
+50,test09_s50,test09_fedprox_skewed_s50,fedprox,4_clients_skewed,4_clients_skewed_s50,hospital_3,train,136,1082,69,37,30,"{""spy2"": 84, ""duke"": 70, ""spy1"": 16}",8.91,8.92
+50,test09_s50,test09_fedprox_skewed_s50,fedprox,4_clients_skewed,4_clients_skewed_s50,hospital_3,val,34,272,17,9,8,"{""spy2"": 84, ""duke"": 70, ""spy1"": 16}",2.23,2.24
+50,test09_s50,test09_fedprox_skewed_s50,fedprox,4_clients_skewed,4_clients_skewed_s50,hospital_4,train,135,1072,69,36,30,"{""spy2"": 86, ""duke"": 78, ""spy1"": 5}",8.84,8.84
+50,test09_s50,test09_fedprox_skewed_s50,fedprox,4_clients_skewed,4_clients_skewed_s50,hospital_4,val,34,265,17,9,8,"{""spy2"": 86, ""duke"": 78, ""spy1"": 5}",2.23,2.18
+50,test10_s50,test10_fedavg_cohort_s50,fedavg,3_clients_cohort,3_clients_cohort_s50,hospital_1,train,514,4052,341,82,91,"{""duke"": 642}",33.66,33.4
+50,test10_s50,test10_fedavg_cohort_s50,fedavg,3_clients_cohort,3_clients_cohort_s50,hospital_1,val,128,1022,85,20,23,"{""duke"": 642}",8.38,8.42
+50,test10_s50,test10_fedavg_cohort_s50,fedavg,3_clients_cohort,3_clients_cohort_s50,hospital_2,train,82,652,34,22,26,"{""spy1"": 101}",5.37,5.37
+50,test10_s50,test10_fedavg_cohort_s50,fedavg,3_clients_cohort,3_clients_cohort_s50,hospital_2,val,19,152,8,5,6,"{""spy1"": 101}",1.24,1.25
+50,test10_s50,test10_fedavg_cohort_s50,fedavg,3_clients_cohort,3_clients_cohort_s50,hospital_3,train,627,5009,244,225,158,"{""spy2"": 784}",41.06,41.29
+50,test10_s50,test10_fedavg_cohort_s50,fedavg,3_clients_cohort,3_clients_cohort_s50,hospital_3,val,157,1244,61,56,40,"{""spy2"": 784}",10.28,10.25
+50,test12_s50,test12_fedavg_sizematched_s50,fedavg,3_clients_sizematched,3_clients_sizematched_s50,hospital_1,train,514,4089,260,138,116,"{""spy2"": 338, ""duke"": 266, ""spy1"": 38}",33.66,33.71
+50,test12_s50,test12_fedavg_sizematched_s50,fedavg,3_clients_sizematched,3_clients_sizematched_s50,hospital_1,val,128,1017,65,34,29,"{""spy2"": 338, ""duke"": 266, ""spy1"": 38}",8.38,8.38
+50,test12_s50,test12_fedavg_sizematched_s50,fedavg,3_clients_sizematched,3_clients_sizematched_s50,hospital_2,train,81,633,41,22,18,"{""spy2"": 54, ""duke"": 37, ""spy1"": 10}",5.3,5.22
+50,test12_s50,test12_fedavg_sizematched_s50,fedavg,3_clients_sizematched,3_clients_sizematched_s50,hospital_2,val,20,159,10,5,5,"{""spy2"": 54, ""duke"": 37, ""spy1"": 10}",1.31,1.31
+50,test12_s50,test12_fedavg_sizematched_s50,fedavg,3_clients_sizematched,3_clients_sizematched_s50,hospital_3,train,628,4997,318,169,141,"{""spy2"": 392, ""duke"": 339, ""spy1"": 53}",41.13,41.19
+50,test12_s50,test12_fedavg_sizematched_s50,fedavg,3_clients_sizematched,3_clients_sizematched_s50,hospital_3,val,156,1236,79,42,35,"{""spy2"": 392, ""duke"": 339, ""spy1"": 53}",10.22,10.19
+50,test11_s50,test11_fedprox_cohort_s50,fedprox,3_clients_cohort,3_clients_cohort_s50,hospital_1,train,514,4052,341,82,91,"{""duke"": 642}",33.66,33.4
+50,test11_s50,test11_fedprox_cohort_s50,fedprox,3_clients_cohort,3_clients_cohort_s50,hospital_1,val,128,1022,85,20,23,"{""duke"": 642}",8.38,8.42
+50,test11_s50,test11_fedprox_cohort_s50,fedprox,3_clients_cohort,3_clients_cohort_s50,hospital_2,train,82,652,34,22,26,"{""spy1"": 101}",5.37,5.37
+50,test11_s50,test11_fedprox_cohort_s50,fedprox,3_clients_cohort,3_clients_cohort_s50,hospital_2,val,19,152,8,5,6,"{""spy1"": 101}",1.24,1.25
+50,test11_s50,test11_fedprox_cohort_s50,fedprox,3_clients_cohort,3_clients_cohort_s50,hospital_3,train,627,5009,244,225,158,"{""spy2"": 784}",41.06,41.29
+50,test11_s50,test11_fedprox_cohort_s50,fedprox,3_clients_cohort,3_clients_cohort_s50,hospital_3,val,157,1244,61,56,40,"{""spy2"": 784}",10.28,10.25
+50,test13_s50,test13_fedprox_sizematched_s50,fedprox,3_clients_sizematched,3_clients_sizematched_s50,hospital_1,train,514,4089,260,138,116,"{""spy2"": 338, ""duke"": 266, ""spy1"": 38}",33.66,33.71
+50,test13_s50,test13_fedprox_sizematched_s50,fedprox,3_clients_sizematched,3_clients_sizematched_s50,hospital_1,val,128,1017,65,34,29,"{""spy2"": 338, ""duke"": 266, ""spy1"": 38}",8.38,8.38
+50,test13_s50,test13_fedprox_sizematched_s50,fedprox,3_clients_sizematched,3_clients_sizematched_s50,hospital_2,train,81,633,41,22,18,"{""spy2"": 54, ""duke"": 37, ""spy1"": 10}",5.3,5.22
+50,test13_s50,test13_fedprox_sizematched_s50,fedprox,3_clients_sizematched,3_clients_sizematched_s50,hospital_2,val,20,159,10,5,5,"{""spy2"": 54, ""duke"": 37, ""spy1"": 10}",1.31,1.31
+50,test13_s50,test13_fedprox_sizematched_s50,fedprox,3_clients_sizematched,3_clients_sizematched_s50,hospital_3,train,628,4997,318,169,141,"{""spy2"": 392, ""duke"": 339, ""spy1"": 53}",41.13,41.19
+50,test13_s50,test13_fedprox_sizematched_s50,fedprox,3_clients_sizematched,3_clients_sizematched_s50,hospital_3,val,156,1236,79,42,35,"{""spy2"": 392, ""duke"": 339, ""spy1"": 53}",10.22,10.19

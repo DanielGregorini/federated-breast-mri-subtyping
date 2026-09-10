@@ -274,13 +274,25 @@ its own Python interpreter, its own memory, its own certificate and its own port
 A client that tries to register before the server is listening retries with a backoff
 and delays the first round by up to a minute.
 
-Export these before starting a hospital, so its process can find the code:
+Export these before starting a hospital, so its process can find its data and the
+code:
 
 ```bash
+export BREAST_DATA_ROOT="$PWD/deployment/data"
+export BREAST_RESULTS_ROOT="$PWD"
 export FEDBREAST_ROOT="$PWD/deployment/code"
 export BREAST_CORE_ROOT="$PWD/src"
 export OMP_NUM_THREADS=1
 ```
+
+`BREAST_DATA_ROOT` names the folder holding `partitions/`. The job supplies the
+partition name and NVFLARE supplies the site name, so one value serves all
+thirty-six jobs and the hospital does not have to be restarted between them.
+`BREAST_RESULTS_ROOT` is what the job's relative `--results-dir` hangs off; without
+it the per-round CSVs land inside the unpacked job in the client's workspace.
+
+The last two matter only when `federation/client.py` runs outside a job. A submitted
+job carries its own copy of the code.
 
 ```
   started server (pid 41234)
@@ -353,8 +365,12 @@ experiment while it holds the GPU.
 
 ```bash
 python deployment/code/scripts/run_centralized.py            # seed 42
-python deployment/code/scripts/run_centralized.py --seed 1
+python deployment/code/scripts/run_centralized.py --seed 19
+python deployment/code/scripts/run_centralized.py --seed 50
 ```
+
+Each writes `results/federated/test01_centralized/seed_<N>/`, so the three do not
+overwrite each other.
 
 One machine, all the training data, no server and no clients. It is budget-matched to
 the federated arm, 30 epochs against 30 rounds x 1 local epoch, so the comparison reads a
@@ -462,6 +478,7 @@ client processes, so one experiment at a time *is* the parallel case.
 | TLS handshake failure on client start | server and client from different `prod_NN` | stop everything and restart every participant from the same `prod_NN` |
 | client exits with `architecture mismatch` | a site is running a stale `src/` | re-sync the repo on that machine; the fingerprint is a hash of parameter names and shapes |
 | `cannot find src/` | the classifier phase is elsewhere | `export BREAST_CORE_ROOT=/path/to/src` |
+| `no such file .../partitions/<name>/<site>` | the client cannot see its data | `export BREAST_DATA_ROOT=/path/to/deployment/data` |
 | `cannot locate federated/` | client started outside the repo | `export FEDBREAST_ROOT=/path/to/deployment/code` |
 | job submits but no client registers | fewer hospitals started than `min_clients` | start one hospital per site the experiment needs |
 | `NO LOCAL VALIDATION SPLIT` in a client log | partition built without local val | re-run `deployment/code/scripts/partition_data.py` |
@@ -494,10 +511,18 @@ Three things change, and nothing else does.
    `data/partitions/<partition>/<hospital>/` folder to its own machine, and set:
 
    ```bash
+   export BREAST_DATA_ROOT=/path/to/deployment/data
+   export BREAST_RESULTS_ROOT=/path/to/where/results/go
    export FEDBREAST_ROOT=/path/to/deployment/code
    export BREAST_CORE_ROOT=/path/to/src
-   export BREAST_SITE_DIR=/path/to/this/hospitals/data
    ```
+
+   Copy with `rsync -aH`. The images are hardlinks into the processed dataset, and
+   without `-H` each site expands into its own full set of files.
+
+   `BREAST_SITE_DIR=/path/to/this/hospitals/data` still works and overrides the
+   above, but it names one exact site folder, so it pins the machine to a single
+   partition and a single seed and has to be changed between jobs.
 
 The job definitions, the client code and the data layout are untouched. That is the
 entire reason addresses live in one file.

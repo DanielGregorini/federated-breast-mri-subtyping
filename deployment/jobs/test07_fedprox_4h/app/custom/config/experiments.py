@@ -65,7 +65,8 @@ WHICH COMPARISON EACH TEST BELONGS TO
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+import re
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 # --------------------------------------------------------------------------- #
@@ -325,12 +326,23 @@ class Partition:
     # limitation and must be stated in the dissertation: it is quantity skew, not
     # genuine non-IID heterogeneity.
     stratified: bool = True
+    # How the patients are dealt out. The partition carries this, rather than the
+    # command line, because `3_clients_cohort` built without the old `--by-cohort`
+    # flag came out as a random size-only split wearing the cohort partition's
+    # name — the sites had the right sizes and the wrong contents, and nothing
+    # said so.
+    #   "stratified"    per class, so every site keeps the global class ratio
+    #   "unstratified"  by size only, which produces label skew as a side effect
+    #   "cohort"        one real cohort per site
+    mode: str = "stratified"
 
     def __post_init__(self) -> None:
         if len(self.ratio) != self.n_clients:
             raise ValueError(f"{self.name}: {self.n_clients} clients but {len(self.ratio)} ratios")
         if any(r <= 0 for r in self.ratio):
             raise ValueError(f"{self.name}: every share must be positive, got {self.ratio}")
+        if self.mode not in ("stratified", "unstratified", "cohort"):
+            raise ValueError(f"{self.name}: unknown mode {self.mode!r}")
 
     @property
     def fractions(self) -> tuple[float, ...]:
@@ -389,7 +401,7 @@ PARTITIONS: dict[str, Partition] = {
     "3_clients_cohort": Partition(
         name="3_clients_cohort", n_clients=3, ratio=(642, 101, 784),
         label="3 hospitals, one cohort each (DUKE | I-SPY1 | I-SPY2)",
-        stratified=False),
+        stratified=False, mode="cohort"),
     "3_clients_sizematched": Partition(
         name="3_clients_sizematched", n_clients=3, ratio=(642, 101, 784),
         label="3 hospitals, cohorts mixed, sizes matched to 3_clients_cohort"),
@@ -411,6 +423,10 @@ class Experiment:
     partition: str | None = None
     algorithm: str | None = None   # "fedavg" | "fedprox"
     notes: str = ""
+    # None means the shared TRAINING.seed. A number means this row is a SEED
+    # REPLICA of the row it was derived from: same protocol, same partition shape,
+    # a different draw. See `seed_replica` below.
+    seed: int | None = None
 
     @property
     def job_dir(self) -> Path:
@@ -423,6 +439,45 @@ class Experiment:
     @property
     def split_label(self) -> str:
         return "all data pooled" if self.partition is None else PARTITIONS[self.partition].describe()
+
+    @property
+    def train_seed(self) -> int:
+        """The seed the client is started with."""
+        return TRAINING.seed if self.seed is None else self.seed
+
+    @property
+    def partition_dir(self) -> str | None:
+        """Folder name under `data/partitions/` this row reads.
+
+        A replica reads its own folder, not the seed-42 one. The two must move
+        together: a replica that re-seeded the training but kept the seed-42
+        dealing of patients would measure only weight initialisation, which is
+        the smaller of the two sources of variance here.
+        """
+        if self.partition is None:
+            return None
+        return self.partition if self.seed is None else f"{self.partition}_s{self.seed}"
+
+
+def seed_replica(experiment: Experiment, seed: int) -> Experiment:
+    """The same experiment at another seed, as its own row.
+
+    A replica is a separate job with a separate name, so it writes to its own
+    results folder and cannot overwrite the seed-42 record.
+    """
+    if experiment.kind != "federated":
+        raise ValueError(f"{experiment.id} is not federated; run_centralized.py "
+                         "already takes --seed directly")
+    return replace(experiment, id=f"{experiment.id}_s{seed}",
+                   name=f"{experiment.name}_s{seed}", seed=seed)
+
+
+# The seeds the protocol is repeated under. 42 is the original record, already run.
+# 19 and 50 are the replicas: same code, same model, same hyperparameters, same
+# evaluation, and a different draw of the split. They are built by
+# `partition_data.py --seed N --suffix _sN` and turned into jobs by
+# `generate_jobs.py --seed N`.
+SEEDS: tuple[int, ...] = (42, 19, 50)
 
 
 EXPERIMENTS: list[Experiment] = [
@@ -535,13 +590,40 @@ EXPERIMENTS_BY_NAME = {e.name: e for e in EXPERIMENTS}
 
 
 def get(identifier: str) -> Experiment:
-    """Look an experiment up by id (test03) or by folder name."""
+    """Look an experiment up by id (test03) or by folder name.
+
+    A trailing `_sNN` is read as a seed replica of the row it names, so
+    `test06_s19` resolves without the replicas being listed in the table.
+    """
     if identifier in EXPERIMENTS_BY_ID:
         return EXPERIMENTS_BY_ID[identifier]
     if identifier in EXPERIMENTS_BY_NAME:
         return EXPERIMENTS_BY_NAME[identifier]
+
+    match = re.fullmatch(r"(.+)_s(\d+)", identifier)
+    if match:
+        base, seed = match.group(1), int(match.group(2))
+        if base in EXPERIMENTS_BY_ID or base in EXPERIMENTS_BY_NAME:
+            return seed_replica(get(base), seed)
+
     raise KeyError(f"unknown experiment: {identifier}. "
                    f"Known: {', '.join(EXPERIMENTS_BY_ID)}")
+
+
+def all_runs(seeds: tuple[int, ...] = SEEDS) -> list[Experiment]:
+    """Every row of the table, plus a seed replica of each federated row.
+
+    This is what the collection scripts iterate. The centralised baseline is not
+    replicated: `run_centralized.py` takes `--seed` directly and writes one
+    `seed_<N>` folder inside the single `test01_centralized` results folder, so
+    one row already covers all of its seeds.
+    """
+    runs = list(EXPERIMENTS)
+    for seed in seeds:
+        if seed == TRAINING.seed:
+            continue
+        runs += [seed_replica(e, seed) for e in EXPERIMENTS if e.kind == "federated"]
+    return runs
 
 
 def summary() -> str:

@@ -180,17 +180,23 @@ def write_site(site_dir: Path, rows: pd.DataFrame, train_pids: list, val_pids: l
 def build_partition(name: str, partition, rows: pd.DataFrame, patients: pd.DataFrame,
                     src_images: Path, out_root: Path, args) -> dict:
     rng = np.random.default_rng(args.seed)
-    print(f"\n{partition.describe()}")
+    print(f"\n{partition.describe()}   seed {args.seed}")
 
+    # The partition says how it is dealt out. `--by-cohort` and `--stratify none`
+    # still override, but a plain run now builds each partition the way its own
+    # row declares instead of the way the command line happened to be written.
+    mode = partition.mode
     if args.by_cohort:
-        shares = cohort_shares(patients, partition.n_clients)
         mode = "cohort"
-    elif partition.stratified and args.stratify != "none":
+    elif args.stratify == "none" and mode == "stratified":
+        mode = "unstratified"
+
+    if mode == "cohort":
+        shares = cohort_shares(patients, partition.n_clients)
+    elif mode == "stratified":
         shares = stratified_shares(patients, partition.fractions, rng)
-        mode = "stratified"
     else:
         shares = unstratified_shares(patients, partition.fractions, rng)
-        mode = "unstratified"
 
     # Global class weights, computed once from the POOLED training split so no site
     # has to see another site's data to use them. Written into every manifest; the
@@ -200,7 +206,7 @@ def build_partition(name: str, partition, rows: pd.DataFrame, patients: pd.DataF
     counts[counts == 0] = 1.0
     global_weights = (len(per_patient) / (EX.NUM_CLASSES * counts)).tolist()
 
-    out_dir = out_root / name
+    out_dir = out_root / (name + args.suffix)
     if out_dir.exists():
         shutil.rmtree(out_dir)
 
@@ -212,7 +218,7 @@ def build_partition(name: str, partition, rows: pd.DataFrame, patients: pd.DataF
             out_dir / partition.client_names[i], rows, train_pids, val_pids,
             src_images, args.hardlink,
             {"global_class_weights": [round(w, 6) for w in global_weights],
-             "partition": name, "mode": mode})
+             "partition": out_dir.name, "mode": mode})
         sites.append(site)
         all_pids.extend(pids)
         print(f"  {site['site']:<12} train {site['train']['patients']:>4} pat "
@@ -230,7 +236,8 @@ def build_partition(name: str, partition, rows: pd.DataFrame, patients: pd.DataF
                          f"{len(patients)} available")
 
     meta = {
-        "partition": name, "mode": mode, "n_clients": partition.n_clients,
+        "partition": out_dir.name, "shape": name, "mode": mode,
+        "n_clients": partition.n_clients,
         "ratio": list(partition.ratio), "fractions": list(partition.fractions),
         "seed": args.seed, "source": portable(src_images.parent),
         "built": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -253,7 +260,20 @@ def main() -> None:
                    help="one real cohort per hospital, genuinely non-IID")
     p.add_argument("--hardlink", action="store_true")
     p.add_argument("--seed", type=int, default=EX.TRAINING.seed)
+    p.add_argument("--suffix", default="",
+                   help="appended to every output folder name, e.g. _s19. A seed "
+                        "replica needs one so it writes beside the seed-42 split "
+                        "instead of over it.")
     args = p.parse_args()
+
+    # Refusing rather than warning: the seed-42 partitions are what every reported
+    # result was measured on. Rebuilding them under another seed would leave the
+    # results and the data they name silently disagreeing.
+    if args.seed != EX.TRAINING.seed and not args.suffix:
+        raise SystemExit(
+            f"--seed {args.seed} without --suffix would overwrite the seed "
+            f"{EX.TRAINING.seed} partitions.\n"
+            f"  Use: --seed {args.seed} --suffix _s{args.seed}")
 
     src = Path(args.source)
     train_csv = src / "train.csv"

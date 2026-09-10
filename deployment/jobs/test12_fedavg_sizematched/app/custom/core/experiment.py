@@ -51,7 +51,7 @@ def new_experiment(cfg, results_dir: Path | None = None,
                                                     default=str))
     (run_dir / "README.md").write_text(
         f"# {run_dir.name}\n\n"
-        f"Pipeline **{cfg.pipeline}** · task **{cfg.task}** · model **{cfg.model}**\n\n"
+        f"Task **{cfg.task}** · model **{cfg.model}**\n\n"
         f"```\n{cfg.summary()}\n```\n\n"
         f"Generated automatically by `core.experiment.new_experiment`. "
         f"Full configuration in `config.json`; metrics in `metrics.csv`; "
@@ -80,7 +80,7 @@ def load_experiments(results_dir: Path | None = None) -> list[dict]:
         rec = {
             "run": d.name,
             "number": int(m.group(1)) if (m := RUN_PATTERN.match(d.name)) else -1,
-            "pipeline": cfg.get("pipeline"), "task": cfg.get("task"),
+            "task": cfg.get("task"),
             "model": cfg.get("model"), "seed": cfg.get("seed"),
             "cohorts": ",".join(cfg.get("cohorts", [])),
             "augmentation": cfg.get("augmentation"),
