@@ -366,8 +366,10 @@ def fig_slice_selection(D: dict, cfg: dict) -> None:
     for i, z in enumerate(chosen):
         a.axvline(z, color=C_STEP, lw=1.8, ls="--", alpha=0.9,
                   label="kept (8, evenly spaced)" if i == 0 else None)
+    # No cross-reference here. This figure is renumbered when it is placed in a
+    # document, and a legend that names another figure goes stale silently.
     a.axvline(D["z"], color=C_TRAIN, lw=2.6, alpha=0.9,
-              label="the slice in Figure 1")
+              label=f"middle of the {len(chosen)} kept")
 
     a.set_title(f"{len(zs)} slices contain tumour · {len(chosen)} are kept "
                 f"({100 * len(chosen) / len(zs):.0f}%)", fontsize=13.5)
@@ -533,8 +535,12 @@ def main() -> None:
 
     meta = pd.read_csv(DATASET / "metadata.csv", low_memory=False)
     raw = json.loads((DATASET / "config.json").read_text())
+    # `trim_frac` in the August build, `trim_fraction` in the current one.
+    trim = raw.get("trim_frac", raw.get("trim_fraction"))
+    if trim is None:
+        raise SystemExit(f"no trim fraction in {DATASET / 'config.json'}")
     cfg = {"crop_mm": raw["crop_mm"], "n_slices": raw["n_slices"],
-           "trim_frac": raw["trim_frac"], "min_tumor_px": raw["min_tumor_px"]}
+           "trim_frac": trim, "min_tumor_px": raw["min_tumor_px"]}
 
     if args.pid not in set(meta.pid):
         raise SystemExit(f"{args.pid} is not in the dataset")

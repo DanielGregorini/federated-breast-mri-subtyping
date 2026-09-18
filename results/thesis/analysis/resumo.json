@@ -1,5 +1,5 @@
 {
-  "conjunto_reportado": "13 experimentos em cada uma das seeds 42, 19 e 50",
+  "fonte": "os 39 test_metrics.json e results.json em results/thesis/seed_<n>/<test>/",
   "corridas": {
     "total": 39,
     "federadas": 36,
@@ -18,7 +18,7 @@
     "pares": 18,
     "fedprox_ganha": 11,
     "diferenca_media": 0.008,
-    "wilcoxon_p": 0.0987
+    "wilcoxon_p": 0.0936
   },
   "coorte_vs_sizematched": {
     "pares": 6,
@@ -28,7 +28,7 @@
     "t_pareado_p": 0.0174
   },
   "efeito_da_seed": {
-    "amplitude_media_por_experimento": 0.0309,
+    "amplitude_media": 0.0308,
     "amplitude_maxima": 0.0537
   },
   "acuracia_acima_do_baseline": 2
