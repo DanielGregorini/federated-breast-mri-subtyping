@@ -10,6 +10,10 @@ Verified 2026-08-04 against `deployment/code/config/experiments.py`, `deployment
 `deployment/logs/`, and the recorded configs in
 `unused/old_runs/classifier/_from_pod/`, where the classifier phase was archived.
 
+**Re-verified 2026-09-15** for the experiment table, the seed set and every FedOpt entry,
+against `deployment/code/config/experiments.py` and `results/thesis/all_experiments.csv`.
+The rest of this document still carries the 2026-08-04 verification date.
+
 ---
 
 ## 0. How to read this document — three distinct phases
@@ -77,11 +81,11 @@ different trainers.
 | **Mixed precision** | requested `True`; **effective on CUDA only** | both | `TrainingConfig.mixed_precision`; `src/training.py::use_amp_on` |
 | — AMP actually active in the campaign | yes (`device=cuda amp=True`) | both | `sites/train.log` |
 | — GradScaler | `torch.amp.GradScaler("cuda")`, `unscale_()` before clipping | both | `src/training.py::build_scaler` |
-| **FedProx μ** | **0.01** | tests 03, 05, 07, 09 | `FederationConfig.fedprox_mu`; `job.json` |
-| **FedAvg μ** | **0.0** (no proximal term) | tests 02, 04, 06, 08 | `job.json → fedprox_mu: 0.0` |
-| FedOpt server optimiser | SGD, lr 1.0, momentum 0.6, `device="cpu"`, client μ = 0 | tests 10–13 (**cancelled**) | `federation/recipes.py` |
+| **FedProx μ** | **0.01** | tests 03, 05, 07, 09, 11, 13 | `FederationConfig.fedprox_mu`; `job.json` |
+| **FedAvg μ** | **0.0** (no proximal term) | tests 02, 04, 06, 08, 10, 12 | `job.json → fedprox_mu: 0.0` |
+| FedOpt server optimiser | SGD, lr 1.0, momentum 0.6, `device="cpu"`, client μ = 0 | **cancelled; no test id** | `config/experiments.py::FederationConfig.fedopt_lr`, `.fedopt_momentum` |
 | Aggregation weighting | `NUM_STEPS_CURRENT_ROUND = n_patients` (patients, not slices) | federated | `federation/client.py` |
-| **Random seed** | **42** — one run per job | both | `TrainingConfig.seed`; `results.json → seed: 42` |
+| **Random seed** | **42, 19 and 50** — every configuration run once per seed | both | `config/experiments.py::SEEDS`; `results/thesis/all_experiments.csv` |
 | **Early stopping** | **none — no such mechanism in the final campaign** | both | absent from `experiments.py`; absent from `run_centralized.py` |
 | Checkpoint selection, centralised | best validation **macro-AUC** (`monitor_metric = "auc"`) | centralised | `TrainingConfig.monitor_metric`; `run_centralized.py:205` |
 | Checkpoint selection, federated | best **`val_balanced_accuracy`** reported by clients from held-out patients | federated | `FederationConfig.key_metric` |
@@ -227,7 +231,7 @@ Full description with reasoning: `docs/PREPROCESSING.md`.
 The classifier phase chose the configuration; it is **not** the dissertation's result.
 Read from `results/_from_pod/multi/FREEZE_R18_s42/config.json`.
 
-| Parameter | PRELIMINARY (classifier phase) | FINAL (test01–09) |
+| Parameter | PRELIMINARY (classifier phase) | FINAL (test01–13) |
 |---|---|---|
 | epochs | **100** | **30** |
 | early stopping | **patience 30** | **none** |
@@ -236,7 +240,7 @@ Read from `results/_from_pod/multi/FREEZE_R18_s42/config.json`.
 | `monitor_metric` | `patient_auc` | `auc` (centralised) / `val_balanced_accuracy` (federated server) |
 | `mixup_alpha` | 0.0 (off) | field absent |
 | `slice_selection` / `n_central` / `train_mode` | `"all"` / 5 / `"full"` | fields absent |
-| seeds | 1 **and** 42 (two per configuration) | **42 only**, one run per job |
+| seeds | 1 **and** 42 (two per configuration) | **42, 19 and 50**, three runs per configuration |
 | model / lr / wd / batch / dropout / label smoothing / freeze / augmentation | **identical to final** | identical |
 
 The final campaign's configuration was read out of the winning preliminary checkpoint
@@ -256,33 +260,56 @@ count, the partition and the aggregation algorithm vary.
 
 | Test | Kind | Clients | Partition | Algorithm | μ | Rounds × local epochs | Seed |
 |---|---|---:|---|---|---:|---|---:|
-| test01 | centralised | — | all pooled (1,527 patients) | — | — | 30 epochs | 42 |
-| test02 | federated | 2 | `2_clients_balanced` (1:1) | FedAvg | 0.0 | 30 × 1 | 42 |
-| test03 | federated | 2 | `2_clients_balanced` | FedProx | **0.01** | 30 × 1 | 42 |
-| test04 | federated | 3 | `3_clients_balanced` (1:1:1) | FedAvg | 0.0 | 30 × 1 | 42 |
-| test05 | federated | 3 | `3_clients_balanced` | FedProx | **0.01** | 30 × 1 | 42 |
-| test06 | federated | 4 | `4_clients_balanced` (1:1:1:1) | FedAvg | 0.0 | 30 × 1 | 42 |
-| test07 | federated | 4 | `4_clients_balanced` | FedProx | **0.01** | 30 × 1 | 42 |
-| test08 | federated | 4 | `4_clients_skewed` (**5:2:1:1**) | FedAvg | 0.0 | 30 × 1 | 42 |
-| test09 | federated | 4 | `4_clients_skewed` | FedProx | **0.01** | 30 × 1 | 42 |
-| test10–13 | federated | 2/3/4/4 | as 02/04/06/08 | **FedOpt** (server SGD lr 1.0, mom. 0.6) | 0 | 30 × 1 | 42 |
+| test01 | centralised | — | all pooled (1,527 patients) | — | — | 30 epochs | 42, 19, 50 |
+| test02 | federated | 2 | `2_clients_balanced` (1:1) | FedAvg | 0.0 | 30 × 1 | 42, 19, 50 |
+| test03 | federated | 2 | `2_clients_balanced` | FedProx | **0.01** | 30 × 1 | 42, 19, 50 |
+| test04 | federated | 3 | `3_clients_balanced` (1:1:1) | FedAvg | 0.0 | 30 × 1 | 42, 19, 50 |
+| test05 | federated | 3 | `3_clients_balanced` | FedProx | **0.01** | 30 × 1 | 42, 19, 50 |
+| test06 | federated | 4 | `4_clients_balanced` (1:1:1:1) | FedAvg | 0.0 | 30 × 1 | 42, 19, 50 |
+| test07 | federated | 4 | `4_clients_balanced` | FedProx | **0.01** | 30 × 1 | 42, 19, 50 |
+| test08 | federated | 4 | `4_clients_skewed` (**5:2:1:1**) | FedAvg | 0.0 | 30 × 1 | 42, 19, 50 |
+| test09 | federated | 4 | `4_clients_skewed` | FedProx | **0.01** | 30 × 1 | 42, 19, 50 |
+| test10 | federated | 3 | `3_clients_cohort` (**642 / 101 / 784, one cohort per site**) | FedAvg | 0.0 | 30 × 1 | 42, 19, 50 |
+| test11 | federated | 3 | `3_clients_cohort` | FedProx | **0.01** | 30 × 1 | 42, 19, 50 |
+| test12 | federated | 3 | `3_clients_sizematched` (same three sizes, cohorts mixed) | FedAvg | 0.0 | 30 × 1 | 42, 19, 50 |
+| test13 | federated | 3 | `3_clients_sizematched` | FedProx | **0.01** | 30 × 1 | 42, 19, 50 |
 
-**test10–13 were cancelled.** test12/13 failed at launch (`FedOptRecipe` rejects
-`key_metric`); test10 reached round 19 of 30 on CPU and was cancelled by the user; test11
-never ran. **No FedOpt result may be reported.**
+**FedOpt once occupied test10–13 and was removed from the experiment table on
+2026-08-05.** Those four FedOpt runs were cancelled: test12/13 failed at launch
+(`FedOptRecipe` rejects `key_metric`), test10 reached round 19 of 30 on CPU and was
+cancelled by the user, test11 never ran. **No FedOpt result may be reported.** The four ids
+now belong to the heterogeneity pair listed above, which completed at all three seeds. See
+`docs/PROJECT_HISTORY.md` §11.4.
 
-**Patients per site**, from `deployment/datasets/all_distributions.csv`:
+**test10 and test12 are a matched pair and are meaningless apart**, as are test11 and
+test13. Both partitions hold the same three site sizes. The only difference is whether a
+site's patients come from one cohort or from a stratified mix of all three, so what is
+measured between them is cohort identity rather than how much data a site holds.
 
-| Partition | Patients per hospital |
-|---|---|
-| `2_clients_balanced` | 393 / 391 |
-| `3_clients_balanced` | 262 / 262 / 260 |
-| `4_clients_balanced` | 198 / 196 / 195 / 195 |
-| `4_clients_skewed` | 435 / 175 / 87 / 87 |
+**Patients per site**, training split at seed 42, from
+`results/thesis/distributions/seed_42/all_distributions.csv`. The same file exists for
+seeds 19 and 50.
 
-**⚠ All four partitions are stratified** — every hospital keeps the global class ratio,
-maximum spread 0.4 percentage points. Tests 08/09 therefore measure **quantity skew, not
-label or feature non-IID heterogeneity.** This must be stated in the dissertation.
+| Partition | Train patients per hospital | Max class-share spread |
+|---|---|---:|
+| `2_clients_balanced` | 612 / 611 | 0.1 pp |
+| `3_clients_balanced` | 408 / 408 / 406 | 0.2 pp |
+| `4_clients_balanced` | 306 / 305 / 305 / 305 | 0.2 pp |
+| `4_clients_skewed` | 678 / 273 / 136 / 135 | 0.7 pp |
+| `3_clients_cohort` | 514 / 82 / 627 | **27.4 pp** |
+| `3_clients_sizematched` | 514 / 81 / 628 | 0.3 pp |
+
+These are the counts after the 20% local validation carve. The site allocations they come
+from are 642 / 101 / 784 for both three-site partitions.
+
+**Four of the six partitions are stratified.** Every hospital keeps the global class ratio
+to within 0.7 percentage points, so the three balanced partitions and `4_clients_skewed`
+vary quantity and nothing else. Tests 08/09 therefore measure **quantity skew, not label or
+feature non-IID heterogeneity**, and this must be stated in the dissertation.
+`3_clients_cohort` is the one partition that is not stratified: one real cohort per site,
+27.4 pp of class-share spread. `3_clients_sizematched` is its control, holding the same
+three site sizes with the cohorts mixed back together, so tests 10 to 13 isolate cohort
+identity from site size.
 
 ---
 
@@ -290,13 +317,15 @@ label or feature non-IID heterogeneity.** This must be stated in the dissertatio
 
 | item | status |
 |---|---|
-| `--by-cohort` partition (one real cohort per hospital) | implemented in `deployment/code/scripts/partition_data.py`, **never run** |
 | `--stratify none` (label skew) | implemented, **never run** |
 | `class_weight_scope = "global"` | implemented, **never run** |
-| FedOpt (tests 10–13) | implemented, **cancelled** |
+| FedOpt | implemented, **cancelled**; the test ids were reused |
 | `freeze_until = "layer4"` | supported, **never run** |
 | `chanclip` normalisation | implemented; run in the preliminary phase (lost by 0.025), **not used in the final dataset** |
-| Multiple seeds on the federated campaign | **never run** — every federated number is one seed |
+
+**Two entries left this table.** The `--by-cohort` partition was run, as tests 10 and 11,
+with `3_clients_sizematched` as its control in tests 12 and 13. The campaign was then
+repeated at seeds 42, 19 and 50, giving 39 runs. Both are recorded in `results/thesis/`.
 
 ---
 
@@ -329,7 +358,7 @@ The single table for the dissertation. Values are those of the **final campaign*
 | Model selection | val macro-AUC | centralised |
 | Model selection | val balanced accuracy (client hold-out, 20%) | federated |
 | Early stopping | none | both |
-| Seed | 42, single run per experiment | both |
+| Seed | 42, 19 and 50, one run per experiment per seed | both |
 | Train / val / test | 1,527 / 268 / 268 patients, patient-level, from the release | both |
 | Test-set trivial baseline | 0.5112 | both |
 | Reported metric | patient-level macro-AUC (slice probabilities averaged first) | both |
@@ -344,8 +373,9 @@ The single table for the dissertation. Values are those of the **final campaign*
 differing only in seed scored 0.7023 and 0.6351. `seed` fixes initialisation and the split
 but not cuDNN kernel selection, AMP behaviour, or DataLoader worker ordering.
 
-Every federated experiment in this campaign is **a single run at seed 42**, and the full
-spread across the twelve federated tests is 0.0725. No comparison within that table is attributable to
-the factor that distinguishes two runs. The defensible claim is that federated training
-produces models in the **same range** as centralised training on this task — and nothing
-sharper.
+**The campaign now carries three seeds.** Every configuration was run once at seed 42,
+once at 19 and once at 50, which is 13 configurations by 3 seeds and 39 runs in total. The
+seed effect is therefore measured rather than assumed: across the three seeds of one
+configuration the macro-AUC range averages **0.0308** and reaches **0.0537** at its widest
+(`results/thesis/analysis/resumo.json`). Read any two configurations against that range
+before treating a difference between them as real.

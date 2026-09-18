@@ -1,4 +1,4 @@
-# docs
+# Docs
 
 Every document in the project, with what it covers, so you can pick one without
 opening it.

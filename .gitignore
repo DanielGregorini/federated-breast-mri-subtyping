@@ -308,3 +308,7 @@ docs/RESULTS_REFERENCE.md
 # script a partir de results/thesis/; regenerar em vez de editar.
 imagem_mestrado/
 results/thesis/figures/
+
+# Documento de referencia dos numeros, extraido de dataset/, results/thesis/ e do
+# codigo. Regenerar em vez de editar a mao.
+docs/NUMBERS_REFERENCE.md
